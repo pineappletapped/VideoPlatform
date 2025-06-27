@@ -154,7 +154,6 @@ async function initializeComponents(eventData) {
         loadedVT = vt;
         renderLoadedVTPlaceholder(vt);
         window.loadedVT = vt;
-        renderInputSourcesBar(document.getElementById('input-sources'), eventData);
     });
     renderMusicPanel(document.getElementById('music-panel'), eventId);
     

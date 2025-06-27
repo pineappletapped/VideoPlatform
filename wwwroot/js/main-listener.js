@@ -191,7 +191,7 @@ function renderAtem(container) {
                     </div>
                     <div class="mb-2">
                         <label class="block text-sm">IP Address</label>
-                        <input class="border p-1 w-full" name="ip" required />
+                        <input class="border p-1 w-full" name="ip" value="192.168.1.51" required />
                     </div>
                     <div class="flex gap-2 mt-4">
                         <button type="submit" class="control-button btn-sm">Save</button>
@@ -257,7 +257,104 @@ function renderAtem(container) {
 }
 
 function generateAtemPythonScript(atem) {
-    return `# Python ATEM Bridge Script\n# Requires: python-atem-switcher, websockets\n# pip install python-atem-switcher websockets\nimport asyncio\nimport websockets\nfrom atem_switcher import AtemSwitcher\n\nATEM_IP = '${atem.ip}'\nATEM_MODEL = '${atem.model}'\nBRIDGE_PORT = 8765\n\nasync def atem_bridge(websocket, path):\n    atem = AtemSwitcher()\n    await atem.connect(ATEM_IP)\n    print("Connected to ATEM", ATEM_MODEL, "at", ATEM_IP)\n    try:\n        async for message in websocket:\n            # Here you can parse and forward commands to the ATEM\n            print('Received:', message)\n            # Example: atem.cut()\n            # You can expand this to handle more commands\n            await websocket.send('ACK: ' + message)\n    finally:\n        await atem.disconnect()\n\nasync def main():\n    async with websockets.serve(atem_bridge, 'localhost', BRIDGE_PORT):\n        print('ATEM Bridge running on ws://localhost:' + str(BRIDGE_PORT))\n        await asyncio.Future()\n\nif __name__ == '__main__':\n    asyncio.run(main())\n`;
+    const ip = atem.ip || '192.168.1.51';
+    return `"""WebSocket \u2192 Blackmagic ATEM bridge (PyATEMMax)\nDirect-connect version"""
+
+from __future__ import annotations
+
+import argparse
+import asyncio
+import logging
+import platform
+import subprocess
+import sys
+from typing import Tuple
+
+import PyATEMMax  # type: ignore
+import websockets
+
+BRIDGE_HOST = "localhost"
+BRIDGE_PORT = 8765
+HEARTBEAT_SECONDS = 5
+DEFAULT_ATEM_IP = "${ip}"
+
+
+def ping_host(host: str, count: int = 1, timeout: int = 1) -> bool:
+    param = "-n" if platform.system().lower() == "windows" else "-c"
+    cmd = ["ping", param, str(count), "-W", str(timeout), host]
+    try:
+        return subprocess.call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) == 0
+    except FileNotFoundError:
+        return False
+
+
+async def heartbeat(atem: PyATEMMax.ATEMMax):
+    while True:
+        print(f"[HB] alive={atem.switcherAlive} | connected={atem.connected}")
+        await asyncio.sleep(HEARTBEAT_SECONDS)
+
+
+async def atem_bridge(websocket, path):
+    client: Tuple[str, int] = websocket.remote_address
+    print(f"[WS] Client connected from {client}")
+    try:
+        async for message in websocket:
+            print("[WS] Received:", message)
+            cmd = message.strip().upper()
+            if cmd == "CUT":
+                atem.execCut()
+                await websocket.send("ACK: CUT")
+            elif cmd.startswith("PGM ") and cmd[4:].isdigit():
+                atem.setProgramInput(int(cmd[4:]))
+                await websocket.send(f"ACK: PROGRAM\u2192{cmd[4:]}")
+            else:
+                await websocket.send("NACK: UNKNOWN CMD")
+    finally:
+        print(f"[WS] Client {client} disconnected")
+
+
+async def main():
+    p = argparse.ArgumentParser(description="ATEM WebSocket bridge (direct-connect)")
+    p.add_argument("--ip", default=DEFAULT_ATEM_IP, help=f"ATEM IP address (default {DEFAULT_ATEM_IP})")
+    p.add_argument("--timeout", type=float, default=10.0, help="Handshake timeout seconds (default 10)")
+    p.add_argument("--debug", action="store_true", help="Enable PyATEMMax debug log")
+    args = p.parse_args()
+
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG)
+
+    if not ping_host(args.ip):
+        print(f"\u26A0\ufe0f  {args.ip} did not answer ping \u2014 continuing anyway …")
+
+    global atem
+    atem = PyATEMMax.ATEMMax()
+    print(f"Connecting to ATEM at {args.ip} …")
+    atem.connect(args.ip)
+    if not atem.waitForConnection(infinite=False, timeout=args.timeout):
+        raise RuntimeError("Handshake failed \u2014 is Ethernet control enabled and UDP 9910/9911 open?")
+    print(f"\u2705 Connected to ATEM at {args.ip}")
+
+    asyncio.create_task(heartbeat(atem))
+
+    async with websockets.serve(atem_bridge, BRIDGE_HOST, BRIDGE_PORT):
+        print(f"\U0001F310 Bridge listening on ws://{BRIDGE_HOST}:{BRIDGE_PORT}")
+        await asyncio.Future()
+
+
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("\nShutting down…")
+    except Exception as e:
+        print("❌", e)
+        sys.exit(1)
+    finally:
+        try:
+            atem.disconnect()
+        except Exception:
+            pass
+`;
 }
 
 function renderObs(container) {

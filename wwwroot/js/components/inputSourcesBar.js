@@ -1,4 +1,4 @@
-import { ref, get, set } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+import { ref, get, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 import { getDatabaseInstance } from "../firebaseApp.js";
 
 const db = getDatabaseInstance();
@@ -29,12 +29,12 @@ async function sendVTPlayCommand(eventId, vt) {
 
 export async function renderInputSourcesBar(container, eventData) {
     const eventId = eventData.id || 'demo';
-    // Fetch camera sources and loaded VT
-    const [cameras, vt] = await Promise.all([
-        getListenerCameras(eventId),
-        getLoadedVT(eventId)
-    ]);
-    container.innerHTML = `
+
+    let cameras = await getListenerCameras(eventId);
+    let vt = await getLoadedVT(eventId);
+
+    function render() {
+        container.innerHTML = `
         <div class='input-sources-bar'>
             <h2 class="font-bold text-lg mb-2">Input Sources</h2>
             <div id="input-cameras">
@@ -56,24 +56,35 @@ export async function renderInputSourcesBar(container, eventData) {
             </div>
         </div>
     `;
-    // Camera select handler
-    container.querySelectorAll('.camera-source').forEach(btn => {
-        btn.onclick = async () => {
-            const atemInput = btn.getAttribute('data-atem-input');
-            if (atemInput) {
-                await sendAtemProgramChange(eventId, atemInput);
-                btn.classList.add('bg-blue-200');
-                setTimeout(() => btn.classList.remove('bg-blue-200'), 1000);
-            }
-        };
-    });
-    // VT select handler
-    const vtBtn = container.querySelector('.vt-source');
-    if (vtBtn && vt) {
-        vtBtn.onclick = async () => {
-            await sendVTPlayCommand(eventId, vt);
-            vtBtn.classList.add('bg-blue-200');
-            setTimeout(() => vtBtn.classList.remove('bg-blue-200'), 1000);
-        };
+        // Attach handlers
+        container.querySelectorAll('.camera-source').forEach(btn => {
+            btn.onclick = async () => {
+                const atemInput = btn.getAttribute('data-atem-input');
+                if (atemInput) {
+                    await sendAtemProgramChange(eventId, atemInput);
+                    btn.classList.add('bg-blue-200');
+                    setTimeout(() => btn.classList.remove('bg-blue-200'), 1000);
+                }
+            };
+        });
+        const vtBtn = container.querySelector('.vt-source');
+        if (vtBtn && vt) {
+            vtBtn.onclick = async () => {
+                await sendVTPlayCommand(eventId, vt);
+                vtBtn.classList.add('bg-blue-200');
+                setTimeout(() => vtBtn.classList.remove('bg-blue-200'), 1000);
+            };
+        }
     }
+
+    render();
+
+    onValue(ref(db, `status/${eventId}/cameras`), snap => {
+        cameras = snap.val() || [];
+        render();
+    });
+    onValue(ref(db, `status/${eventId}/vt`), snap => {
+        vt = snap.val() || null;
+        render();
+    });
 }
