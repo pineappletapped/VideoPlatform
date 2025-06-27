@@ -58,20 +58,23 @@ export function renderMusicPanel(container, eventId) {
                             <input class="border p-1 w-full" name="name" required />
                         </div>
                         <div class="mb-2">
-                            <label class="block text-sm">Audio File (URL or select file)</label>
-                            <input class="border p-1 w-full" name="audioUrl" placeholder="/uploads/{eventId}/music/yourfile.mp3" />
+                            <label class="block text-sm">Audio File</label>
+                            <input type="file" id="music-audio-file" accept="audio/*" />
+                            <input class="border p-1 w-full mt-1" name="audioUrl" placeholder="/uploads/{eventId}/music/yourfile.mp3" />
                         </div>
                         <div class="mb-2">
-                            <label class="block text-sm">Thumbnail (URL or select file)</label>
-                            <input class="border p-1 w-full" name="thumbnail" placeholder="/uploads/{eventId}/music/thumbnails/yourthumb.jpg" />
+                            <label class="block text-sm">Thumbnail</label>
+                            <input type="file" id="music-thumb-file" accept="image/*" />
+                            <input class="border p-1 w-full mt-1" name="thumbnail" placeholder="/uploads/{eventId}/music/thumbnails/yourthumb.jpg" />
                         </div>
                         <div class="mb-2">
                             <label class="block text-sm">Duration (mm:ss)</label>
                             <input class="border p-1 w-full" name="duration" placeholder="00:00" />
                         </div>
                         <div class="mb-2">
-                            <label class="block text-sm">Music License (optional, URL or select file)</label>
-                            <input class="border p-1 w-full" name="license" placeholder="/uploads/{eventId}/music/licenses/yourlicense.pdf" />
+                            <label class="block text-sm">Music License (optional)</label>
+                            <input type="file" id="music-license-file" />
+                            <input class="border p-1 w-full mt-1" name="license" placeholder="/uploads/{eventId}/music/licenses/yourlicense.pdf" />
                         </div>
                         <input type="hidden" name="idx" />
                         <div class="flex gap-2 mt-4">
@@ -105,12 +108,30 @@ export function renderMusicPanel(container, eventId) {
             form.onsubmit = async e => {
                 e.preventDefault();
                 const data = Object.fromEntries(new FormData(form));
+                let audioUrl = data.audioUrl;
+                if (form['music-audio-file'].files[0]) {
+                    const path = `/uploads/${eventId}/music/${form['music-audio-file'].files[0].name}`;
+                    await uploadLocalFile(form['music-audio-file'].files[0], path);
+                    audioUrl = path;
+                }
+                let thumbnail = data.thumbnail;
+                if (form['music-thumb-file'].files[0]) {
+                    const path = `/uploads/${eventId}/music/thumbnails/${form['music-thumb-file'].files[0].name}`;
+                    await uploadLocalFile(form['music-thumb-file'].files[0], path);
+                    thumbnail = path;
+                }
+                let license = data.license;
+                if (form['music-license-file'].files[0]) {
+                    const path = `/uploads/${eventId}/music/licenses/${form['music-license-file'].files[0].name}`;
+                    await uploadLocalFile(form['music-license-file'].files[0], path);
+                    license = path;
+                }
                 const track = {
                     name: data.name,
-                    audioUrl: data.audioUrl,
-                    thumbnail: data.thumbnail,
+                    audioUrl,
+                    thumbnail,
                     duration: data.duration,
-                    license: data.license
+                    license
                 };
                 if (data.idx) {
                     tracks[data.idx] = track;
@@ -128,6 +149,9 @@ export function renderMusicPanel(container, eventId) {
             form.thumbnail.value = track.thumbnail || '';
             form.duration.value = track.duration || '';
             form.license.value = track.license || '';
+            form['music-audio-file'].value = '';
+            form['music-thumb-file'].value = '';
+            form['music-license-file'].value = '';
             form.idx.value = idx;
             container.querySelector('#music-modal-title').textContent = idx === '' ? 'Add Track' : 'Edit Track';
         }
@@ -181,7 +205,7 @@ export function renderMusicPanel(container, eventId) {
             }
             info.innerHTML = `<span class="font-semibold">${track.name}</span> <span class="text-xs text-gray-500">${track.duration || '--:--'}</span>`;
         }
-        function updateTime(track) {
+function updateTime(track) {
             if (!currentAudio || !track) {
                 timeSpan.textContent = '';
                 return;
@@ -191,5 +215,18 @@ export function renderMusicPanel(container, eventId) {
             const secs = Math.floor(remaining % 60);
             timeSpan.textContent = `Time Remaining: ${mins}:${secs.toString().padStart(2, '0')}`;
         }
+    }
+}
+
+async function uploadLocalFile(file, path) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('path', path);
+    try {
+        await fetch('/upload', { method: 'POST', body: formData });
+        return path;
+    } catch (err) {
+        console.error('Upload failed', err);
+        return null;
     }
 }

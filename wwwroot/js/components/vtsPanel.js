@@ -43,20 +43,23 @@ export function renderVtsPanel(container, eventId, onLoadVT) {
                             <input class="border p-1 w-full" name="name" required />
                         </div>
                         <div class="mb-2">
-                            <label class="block text-sm">Video File (URL or select file)</label>
-                            <input class="border p-1 w-full" name="videoUrl" placeholder="/uploads/{eventId}/vts/yourfile.mp4" />
+                            <label class="block text-sm">Video File</label>
+                            <input type="file" id="vt-video-file" accept="video/*" />
+                            <input class="border p-1 w-full mt-1" name="videoUrl" placeholder="/uploads/{eventId}/vts/yourfile.mp4" />
                         </div>
                         <div class="mb-2">
-                            <label class="block text-sm">Thumbnail (URL or select file)</label>
-                            <input class="border p-1 w-full" name="thumbnail" placeholder="/uploads/{eventId}/vts/thumbnails/yourthumb.jpg" />
+                            <label class="block text-sm">Thumbnail</label>
+                            <input type="file" id="vt-thumb-file" accept="image/*" />
+                            <input class="border p-1 w-full mt-1" name="thumbnail" placeholder="/uploads/{eventId}/vts/thumbnails/yourthumb.jpg" />
                         </div>
                         <div class="mb-2">
                             <label class="block text-sm">Duration (mm:ss)</label>
                             <input class="border p-1 w-full" name="duration" placeholder="00:00" />
                         </div>
                         <div class="mb-2">
-                            <label class="block text-sm">Music License (optional, URL or select file)</label>
-                            <input class="border p-1 w-full" name="license" placeholder="/uploads/{eventId}/vts/licenses/yourlicense.pdf" />
+                            <label class="block text-sm">Music License (optional)</label>
+                            <input type="file" id="vt-license-file" />
+                            <input class="border p-1 w-full mt-1" name="license" placeholder="/uploads/{eventId}/vts/licenses/yourlicense.pdf" />
                         </div>
                         <input type="hidden" name="idx" />
                         <div class="flex gap-2 mt-4">
@@ -93,12 +96,30 @@ export function renderVtsPanel(container, eventId, onLoadVT) {
             form.onsubmit = async e => {
                 e.preventDefault();
                 const data = Object.fromEntries(new FormData(form));
+                let videoUrl = data.videoUrl;
+                if (form['vt-video-file'].files[0]) {
+                    const path = `/uploads/${eventId}/vts/${form['vt-video-file'].files[0].name}`;
+                    await uploadLocalFile(form['vt-video-file'].files[0], path);
+                    videoUrl = path;
+                }
+                let thumbnail = data.thumbnail;
+                if (form['vt-thumb-file'].files[0]) {
+                    const path = `/uploads/${eventId}/vts/thumbnails/${form['vt-thumb-file'].files[0].name}`;
+                    await uploadLocalFile(form['vt-thumb-file'].files[0], path);
+                    thumbnail = path;
+                }
+                let license = data.license;
+                if (form['vt-license-file'].files[0]) {
+                    const path = `/uploads/${eventId}/vts/licenses/${form['vt-license-file'].files[0].name}`;
+                    await uploadLocalFile(form['vt-license-file'].files[0], path);
+                    license = path;
+                }
                 const vt = {
                     name: data.name,
-                    videoUrl: data.videoUrl,
-                    thumbnail: data.thumbnail,
+                    videoUrl,
+                    thumbnail,
                     duration: data.duration,
-                    license: data.license
+                    license
                 };
                 if (data.idx) {
                     vts[data.idx] = vt;
@@ -116,8 +137,24 @@ export function renderVtsPanel(container, eventId, onLoadVT) {
             form.thumbnail.value = vt.thumbnail || '';
             form.duration.value = vt.duration || '';
             form.license.value = vt.license || '';
+            form['vt-video-file'].value = '';
+            form['vt-thumb-file'].value = '';
+            form['vt-license-file'].value = '';
             form.idx.value = idx;
             container.querySelector('#vt-modal-title').textContent = idx === '' ? 'Add VT' : 'Edit VT';
         }
+    }
+}
+
+async function uploadLocalFile(file, path) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('path', path);
+    try {
+        await fetch('/upload', { method: 'POST', body: formData });
+        return path;
+    } catch (err) {
+        console.error('Upload failed', err);
+        return null;
     }
 }

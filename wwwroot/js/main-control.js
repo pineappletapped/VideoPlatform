@@ -104,7 +104,7 @@ function setupEventTypeSelector(eventData) {
         await updateEventMetadata(eventId, { ...eventData, eventType: newType });
         
         // Refresh graphics panel with new event type
-        renderGraphicsPanel(document.getElementById('graphics-panel'), {
+        renderGraphicsPanel(document.getElementById('lower-thirds-panel'), {
             ...eventData,
             eventType: newType
         });
@@ -146,18 +146,8 @@ async function initializeComponents(eventData) {
     
     // Initialize main content panels
     renderHoldslatePanel(document.getElementById('holdslate-panel'), onOverlayStateChange);
-    renderGraphicsPanel(document.getElementById('graphics-panel'), eventData);
-    renderProgramPreview(document.getElementById('program-preview'), eventData, onOverlayStateChange);
-
-    // Lower Thirds and Schedule placeholders
-    const lowerThirdsPanel = document.getElementById('graphics-panel');
-    if (lowerThirdsPanel) {
-        lowerThirdsPanel.innerHTML += `<div class='text-gray-400 text-center py-8'>Lower Thirds Panel Coming Soon</div>`;
-    }
-    const schedulePanel = document.getElementById('program-preview');
-    if (schedulePanel) {
-        schedulePanel.innerHTML += `<div class='text-gray-400 text-center py-8'>Schedule Panel Coming Soon</div>`;
-    }
+    renderGraphicsPanel(document.getElementById('lower-thirds-panel'), eventData);
+    renderProgramPreview(document.getElementById('schedule-panel'), eventData, onOverlayStateChange);
 
     // Initialize AV panels
     renderVtsPanel(document.getElementById('vts-panel'), eventId, vt => {
