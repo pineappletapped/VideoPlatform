@@ -1,10 +1,10 @@
 import { eventStorage } from './storage.js';
 import { renderStatusBar } from './components/statusBar.js';
 import OBSWebSocket from 'https://cdn.jsdelivr.net/npm/obs-websocket-js@5.0.3/+esm';
-import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
-import { getApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+import { ref, set } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+import { getDatabaseInstance } from "./firebaseApp.js";
 
-const db = getDatabase(getApp());
+const db = getDatabaseInstance();
 
 const params = new URLSearchParams(window.location.search);
 const eventId = params.get('event_id') || 'demo';
@@ -257,7 +257,7 @@ function renderAtem(container) {
 }
 
 function generateAtemPythonScript(atem) {
-    return `# Python ATEM Bridge Script\n# Requires: python-atem-switcher, websockets\n# pip install python-atem-switcher websockets\nimport asyncio\nimport websockets\nfrom atem_switcher import AtemSwitcher\n\nATEM_IP = '${atem.ip}'\nATEM_MODEL = '${atem.model}'\nBRIDGE_PORT = 8765\n\nasync def atem_bridge(websocket, path):\n    atem = AtemSwitcher()\n    await atem.connect(ATEM_IP)\n    print(f'Connected to ATEM ${ATEM_MODEL} at ${ATEM_IP}')\n    try:\n        async for message in websocket:\n            # Here you can parse and forward commands to the ATEM\n            print('Received:', message)\n            # Example: atem.cut()\n            # You can expand this to handle more commands\n            await websocket.send('ACK: ' + message)\n    finally:\n        await atem.disconnect()\n\nasync def main():\n    async with websockets.serve(atem_bridge, 'localhost', BRIDGE_PORT):\n        print(f'ATEM Bridge running on ws://localhost:${BRIDGE_PORT}')\n        await asyncio.Future()\n\nif __name__ == '__main__':\n    asyncio.run(main())\n`;
+    return `# Python ATEM Bridge Script\n# Requires: python-atem-switcher, websockets\n# pip install python-atem-switcher websockets\nimport asyncio\nimport websockets\nfrom atem_switcher import AtemSwitcher\n\nATEM_IP = '${atem.ip}'\nATEM_MODEL = '${atem.model}'\nBRIDGE_PORT = 8765\n\nasync def atem_bridge(websocket, path):\n    atem = AtemSwitcher()\n    await atem.connect(ATEM_IP)\n    print("Connected to ATEM", ATEM_MODEL, "at", ATEM_IP)\n    try:\n        async for message in websocket:\n            # Here you can parse and forward commands to the ATEM\n            print('Received:', message)\n            # Example: atem.cut()\n            # You can expand this to handle more commands\n            await websocket.send('ACK: ' + message)\n    finally:\n        await atem.disconnect()\n\nasync def main():\n    async with websockets.serve(atem_bridge, 'localhost', BRIDGE_PORT):\n        print('ATEM Bridge running on ws://localhost:' + str(BRIDGE_PORT))\n        await asyncio.Future()\n\nif __name__ == '__main__':\n    asyncio.run(main())\n`;
 }
 
 function renderObs(container) {
@@ -331,6 +331,9 @@ function renderObs(container) {
 async function connectObs(url, password, container) {
     obs = new OBSWebSocket();
     try {
+        if (location.protocol === 'https:' && url.startsWith('ws://')) {
+            url = 'wss://' + url.substring(5);
+        }
         await obs.connect(url, password);
         setObsConnected(true);
         writeStatusToFirebase();

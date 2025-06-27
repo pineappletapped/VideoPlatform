@@ -1,7 +1,7 @@
-import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
-import { getOrInitApp } from "../firebaseApp.js";
+import { ref, get, set } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+import { getDatabaseInstance } from "../firebaseApp.js";
 
-const db = getDatabase(getOrInitApp());
+const db = getDatabaseInstance();
 
 // Helper to get cameras from listener
 async function getListenerCameras(eventId) {
