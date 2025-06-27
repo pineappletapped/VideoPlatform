@@ -1,7 +1,7 @@
-import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
-import { getOrInitApp } from "../firebaseApp.js";
+import { ref, get } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+import { getDatabaseInstance } from "../firebaseApp.js";
 
-const db = getDatabase(getOrInitApp());
+const db = getDatabaseInstance();
 
 let lastStatus = null;
 let lastStatusFetch = 0;
