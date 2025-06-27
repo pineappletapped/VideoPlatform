@@ -1,7 +1,7 @@
-import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
-import { getOrInitApp } from "../firebaseApp.js";
+import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+import { getDatabaseInstance } from "../firebaseApp.js";
 
-const db = getDatabase(getOrInitApp());
+const db = getDatabaseInstance();
 
 function getMusicRef(eventId) {
     return ref(db, `music/${eventId}`);

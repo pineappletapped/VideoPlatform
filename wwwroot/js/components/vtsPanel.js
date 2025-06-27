@@ -1,7 +1,7 @@
-import { getDatabase, ref, set, get, onValue, update } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
-import { getApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+import { ref, set, get, onValue, update } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+import { getDatabaseInstance } from "../firebaseApp.js";
 
-const db = getDatabase(getApp());
+const db = getDatabaseInstance();
 
 function getVtsRef(eventId) {
     return ref(db, `vts/${eventId}`);

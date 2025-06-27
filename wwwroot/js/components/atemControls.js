@@ -1,8 +1,8 @@
 // ATEM controls component
-import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
-import { getApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+import { getDatabaseInstance } from "../firebaseApp.js";
 
-const db = getDatabase(getApp());
+const db = getDatabaseInstance();
 
 export function renderAtemControls(container, eventData) {
     const eventId = eventData.id || 'demo';
