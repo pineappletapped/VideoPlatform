@@ -1,0 +1,105 @@
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+import { getDatabase, ref, set, get, onValue, update } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCXUd4iKZWHeiWe_2gblxWE9uFEXS4pHAI",
+  authDomain: "pineappletapped-graphic-system.firebaseapp.com",
+  projectId: "pineappletapped-graphic-system",
+  storageBucket: "pineappletapped-graphic-system.firebasestorage.app",
+  messagingSenderId: "1028817053613",
+  appId: "1:1028817053613:web:c5061b138676641bde2324",
+  measurementId: "G-2Y6YYBF5R2"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app, "https://pineappletapped-graphic-system-default-rtdb.europe-west1.firebasedatabase.app");
+
+// Event metadata helpers
+export function setEventMetadata(eventId, metadata) {
+  return set(ref(db, `events/${eventId}`), metadata);
+}
+export function updateEventMetadata(eventId, metadata) {
+  return update(ref(db, `events/${eventId}`), metadata);
+}
+export function getEventMetadata(eventId) {
+  return get(ref(db, `events/${eventId}`)).then(snap => snap.val());
+}
+export function listenEventMetadata(eventId, callback) {
+  return onValue(ref(db, `events/${eventId}`), (snapshot) => {
+    callback(snapshot.val());
+  });
+}
+export function getAllEventsMetadata() {
+  return get(ref(db, 'events')).then(snap => snap.val());
+}
+
+// Overlay state helpers (eventId-scoped)
+export function setOverlayState(eventId, state) {
+  return set(ref(db, `overlays/${eventId}`), state);
+}
+
+export function updateOverlayState(eventId, state) {
+  return update(ref(db, `overlays/${eventId}`), state);
+}
+
+export function listenOverlayState(eventId, callback) {
+  return onValue(ref(db, `overlays/${eventId}`), (snapshot) => {
+    callback(snapshot.val());
+  });
+}
+
+export function getOverlayState(eventId) {
+  return get(ref(db, `overlays/${eventId}`)).then(snap => snap.val());
+}
+
+// Graphics helpers (eventId-scoped)
+export function setGraphicsData(eventId, graphics) {
+  return set(ref(db, `graphics/${eventId}`), graphics);
+}
+export function updateGraphicsData(eventId, graphics) {
+  return update(ref(db, `graphics/${eventId}`), graphics);
+}
+export function listenGraphicsData(eventId, callback) {
+  return onValue(ref(db, `graphics/${eventId}`), (snapshot) => {
+    callback(snapshot.val());
+  });
+}
+export function getGraphicsData(eventId) {
+  return get(ref(db, `graphics/${eventId}`)).then(snap => snap.val());
+}
+
+// Branding helpers (eventId-scoped)
+export function setBranding(eventId, branding) {
+  return set(ref(db, `branding/${eventId}`), branding);
+}
+export function updateBranding(eventId, branding) {
+  return update(ref(db, `branding/${eventId}`), branding);
+}
+export function listenBranding(eventId, callback) {
+  return onValue(ref(db, `branding/${eventId}`), (snapshot) => {
+    callback(snapshot.val());
+  });
+}
+export function getBranding(eventId) {
+  return get(ref(db, `branding/${eventId}`)).then(snap => snap.val());
+}
+
+// User management stubs
+export function setUser(userId, userData) {
+  return set(ref(db, `users/${userId}`), userData);
+}
+export function updateUser(userId, userData) {
+  return update(ref(db, `users/${userId}`), userData);
+}
+export function getUser(userId) {
+  return get(ref(db, `users/${userId}`)).then(snap => snap.val());
+}
+export function listenUser(userId, callback) {
+  return onValue(ref(db, `users/${userId}`), (snapshot) => {
+    callback(snapshot.val());
+  });
+}
+export function getAllUsers() {
+  return get(ref(db, 'users')).then(snap => snap.val());
+}
