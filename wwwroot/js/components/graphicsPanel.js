@@ -67,6 +67,24 @@ export function renderGraphicsPanel(container, eventData) {
                             <label class="block text-sm">Subtitle</label>
                             <input id="modal-subtitle-input" class="border p-1 w-full" />
                         </div>
+                        <div class="mb-2">
+                            <label class="block text-sm">Style</label>
+                            <select id="modal-style-input" class="border p-1 w-full">
+                                <option value="default">Default</option>
+                                <option value="rounded">Rounded</option>
+                                <option value="underline">Underline</option>
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label class="block text-sm">Position</label>
+                            <select id="modal-position-input" class="border p-1 w-full">
+                                <option value="bottom-left">Bottom Left</option>
+                                <option value="bottom-right">Bottom Right</option>
+                                <option value="top-left">Top Left</option>
+                                <option value="top-right">Top Right</option>
+                            </select>
+                            <button type="button" id="modal-pos-default" class="control-button btn-sm mt-1">Default</button>
+                        </div>
                         <div class="flex gap-2 mt-4">
                             <button type="submit" class="control-button btn-sm">Save</button>
                             <button type="button" id="modal-cancel" class="control-button btn-sm bg-gray-400 hover:bg-gray-600">Cancel</button>
@@ -116,17 +134,21 @@ export function renderGraphicsPanel(container, eventData) {
         const form = container.querySelector('#modal-form');
         const titleInput = container.querySelector('#modal-title-input');
         const subtitleInput = container.querySelector('#modal-subtitle-input');
+        const styleInput = container.querySelector('#modal-style-input');
+        const posInput = container.querySelector('#modal-position-input');
         const idInput = container.querySelector('#modal-id');
+        const posDefault = container.querySelector('#modal-pos-default');
         const modalTitle = container.querySelector('#modal-title');
         if (modal) {
             container.querySelector('#modal-cancel').onclick = () => { modal.style.display = 'none'; };
+            if (posDefault) posDefault.onclick = () => { posInput.value = 'bottom-left'; };
             form.onsubmit = e => {
                 e.preventDefault();
                 const isLT = modalTitle.textContent.includes('Lower Third');
                 const arr = isLT ? lowerThirds : titleSlides;
                 const id = idInput.value || (Date.now() + Math.random()).toString(36);
                 const idx = arr.findIndex(x => x.id === id);
-                const obj = { id, title: titleInput.value, subtitle: subtitleInput.value };
+                const obj = { id, title: titleInput.value, subtitle: subtitleInput.value, style: styleInput.value, position: posInput.value };
                 if (idx >= 0) {
                     arr[idx] = obj;
                 } else {
@@ -141,6 +163,8 @@ export function renderGraphicsPanel(container, eventData) {
             modalTitle.textContent = 'Add Lower Third';
             titleInput.value = '';
             subtitleInput.value = '';
+            styleInput.value = 'default';
+            posInput.value = 'bottom-left';
             idInput.value = '';
             modal.style.display = 'flex';
         };
@@ -148,6 +172,8 @@ export function renderGraphicsPanel(container, eventData) {
             modalTitle.textContent = 'Add Title Slide';
             titleInput.value = '';
             subtitleInput.value = '';
+            styleInput.value = 'default';
+            posInput.value = 'bottom-left';
             idInput.value = '';
             modal.style.display = 'flex';
         };
@@ -169,12 +195,14 @@ export function renderGraphicsPanel(container, eventData) {
                     liveTitleSlideId = null;
                     saveLiveState(eventId);
                 } else if (action === 'edit-lt' || action === 'edit-ts') {
-                    const item = (action === 'edit-lt' ? lowerThirds : titleSlides).find(x => x.id === id);
-                    modalTitle.textContent = action === 'edit-lt' ? 'Edit Lower Third' : 'Edit Title Slide';
-                    titleInput.value = item?.title || '';
-                    subtitleInput.value = item?.subtitle || '';
-                    idInput.value = id;
-                    modal.style.display = 'flex';
+                const item = (action === 'edit-lt' ? lowerThirds : titleSlides).find(x => x.id === id);
+                modalTitle.textContent = action === 'edit-lt' ? 'Edit Lower Third' : 'Edit Title Slide';
+                titleInput.value = item?.title || '';
+                subtitleInput.value = item?.subtitle || '';
+                styleInput.value = item?.style || 'default';
+                posInput.value = item?.position || 'bottom-left';
+                idInput.value = id;
+                modal.style.display = 'flex';
                 } else if (action === 'remove-lt') {
                     const idx = lowerThirds.findIndex(x => x.id === id);
                     if (idx >= 0) lowerThirds.splice(idx, 1);

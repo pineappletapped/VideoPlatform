@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """WebSocket \u2192 Blackmagic ATEM bridge (PyATEMMax) \u2013 direct-connect version
 
 This stripped-down build assumes you already know the ATEM's IP address
