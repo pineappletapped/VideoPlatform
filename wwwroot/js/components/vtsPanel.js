@@ -65,6 +65,7 @@ export function renderVtsPanel(container, eventId, onLoadVT) {
                         <div class="flex gap-2 mt-4">
                             <button type="submit" class="control-button btn-sm">Save</button>
                             <button type="button" id="vt-cancel" class="control-button btn-sm bg-gray-400 hover:bg-gray-600">Cancel</button>
+                            <span id="vt-upload-status" class="text-xs text-gray-600 ml-2"></span>
                         </div>
                     </form>
                 </div>
@@ -83,9 +84,11 @@ export function renderVtsPanel(container, eventId, onLoadVT) {
             };
         });
         container.querySelectorAll('button[data-action="load"]').forEach(btn => {
-            btn.onclick = () => {
+            btn.onclick = async () => {
                 const idx = btn.getAttribute('data-idx');
-                if (onLoadVT) onLoadVT(vts[idx]);
+                const vt = vts[idx];
+                if (onLoadVT) onLoadVT(vt);
+                await set(ref(db, `status/${eventId}/vt`), vt);
             };
         });
         // Modal logic
@@ -99,19 +102,25 @@ export function renderVtsPanel(container, eventId, onLoadVT) {
                 let videoUrl = data.videoUrl;
                 if (form['vt-video-file'].files[0]) {
                     const path = `/uploads/${eventId}/vts/${form['vt-video-file'].files[0].name}`;
+                    setStatus('Uploading video...');
                     await uploadLocalFile(form['vt-video-file'].files[0], path);
+                    setStatus('');
                     videoUrl = path;
                 }
                 let thumbnail = data.thumbnail;
                 if (form['vt-thumb-file'].files[0]) {
                     const path = `/uploads/${eventId}/vts/thumbnails/${form['vt-thumb-file'].files[0].name}`;
+                    setStatus('Uploading thumb...');
                     await uploadLocalFile(form['vt-thumb-file'].files[0], path);
+                    setStatus('');
                     thumbnail = path;
                 }
                 let license = data.license;
                 if (form['vt-license-file'].files[0]) {
                     const path = `/uploads/${eventId}/vts/licenses/${form['vt-license-file'].files[0].name}`;
+                    setStatus('Uploading license...');
                     await uploadLocalFile(form['vt-license-file'].files[0], path);
+                    setStatus('');
                     license = path;
                 }
                 const vt = {
@@ -142,8 +151,29 @@ export function renderVtsPanel(container, eventId, onLoadVT) {
             form['vt-license-file'].value = '';
             form.idx.value = idx;
             container.querySelector('#vt-modal-title').textContent = idx === '' ? 'Add VT' : 'Edit VT';
+            form['vt-video-file'].onchange = () => {
+                const file = form['vt-video-file'].files[0];
+                if (file) {
+                    const url = URL.createObjectURL(file);
+                    const video = document.createElement('video');
+                    video.preload = 'metadata';
+                    video.onloadedmetadata = () => {
+                        const dur = video.duration;
+                        const mins = Math.floor(dur / 60);
+                        const secs = Math.floor(dur % 60);
+                        form.duration.value = `${mins}:${secs.toString().padStart(2,'0')}`;
+                        URL.revokeObjectURL(url);
+                    };
+                    video.src = url;
+                }
+            };
         }
     }
+}
+
+function setStatus(text) {
+    const statusEl = document.getElementById('vt-upload-status');
+    if (statusEl) statusEl.textContent = text;
 }
 
 async function uploadLocalFile(file, path) {

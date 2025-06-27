@@ -1,7 +1,7 @@
 import { eventStorage } from './storage.js';
 import { renderStatusBar } from './components/statusBar.js';
 import OBSWebSocket from 'https://cdn.jsdelivr.net/npm/obs-websocket-js@5.0.3/+esm';
-import { ref, set } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 import { getDatabaseInstance } from "./firebaseApp.js";
 
 const db = getDatabaseInstance();
@@ -19,6 +19,18 @@ let atems = JSON.parse(localStorage.getItem('listenerAtems') || '[]');
 let obsConfig = JSON.parse(localStorage.getItem('obsConfig') || '{}');
 let obsConnected = false;
 let obs;
+let atemWs = null;
+let atemWsConnected = false;
+const terminal = document.getElementById('col-blank');
+
+function log(msg) {
+    if (terminal) {
+        const div = document.createElement('div');
+        div.textContent = msg;
+        terminal.appendChild(div);
+        terminal.scrollTop = terminal.scrollHeight;
+    }
+}
 
 function saveCameras() {
     localStorage.setItem('listenerCameras', JSON.stringify(cameras));
@@ -40,11 +52,10 @@ function setObsConnected(connected) {
 
 // --- ATEM/OBS status reporting ---
 function getAtemStatus() {
-    // For now, just use the first ATEM in the list
     if (atems.length > 0) {
-        return { atemConnected: true, atemIp: atems[0].ip };
+        return { atemConnected: atemWsConnected, atemIp: atems[0].ip };
     }
-    return { atemConnected: false };
+    return { atemConnected: atemWsConnected };
 }
 function getObsStatus() {
     return { obsConnected, obsIp: obsConfig.url ? obsConfig.url.replace(/^ws:\/\//, '').split(':')[0] : undefined };
@@ -64,6 +75,22 @@ async function writeStatusToFirebase() {
 setInterval(writeStatusToFirebase, 5 * 60 * 1000); // every 5 min
 writeStatusToFirebase(); // initial write
 // --- end status reporting ---
+
+onValue(ref(db, `status/${eventId}/atemCommand`), snap => {
+    const cmd = snap.val();
+    if (!cmd) return;
+    log(`[CMD] ATEM ${cmd.action || ''} ${cmd.input || ''}`);
+    if (atemWsConnected) {
+        if (cmd.action === 'program') atemWs.send('PGM ' + cmd.input);
+        else if (cmd.action === 'cut') atemWs.send('CUT');
+    }
+});
+
+onValue(ref(db, `status/${eventId}/vtCommand`), snap => {
+    const cmd = snap.val();
+    if (!cmd) return;
+    log(`[CMD] VT ${cmd.vt ? cmd.vt.name : cmd.action}`);
+});
 
 function renderCameras(container) {
     container.innerHTML = `
@@ -91,6 +118,7 @@ function renderCameras(container) {
             const idx = parseInt(btn.getAttribute('data-idx'), 10);
             cameras.splice(idx, 1);
             saveCameras();
+            writeStatusToFirebase();
             renderCameras(container);
         };
     });
@@ -120,7 +148,10 @@ function showCameraModal(idx = null) {
                     </div>
                     <div class="mb-2">
                         <label class="block text-sm">ATEM Input</label>
-                        <input class="border p-1 w-full" name="atemInput" value="${cam.atemInput || ''}" />
+                        ${atems.length > 0 ? `
+                            <select class="border p-1 w-full" name="atemInput">
+                                ${Array.from({length:8},(_,i)=>`<option value="${i+1}" ${cam.atemInput==i+1? 'selected':''}>${i+1}</option>`).join('')}
+                            </select>` : `<input class="border p-1 w-full" name="atemInput" value="${cam.atemInput || ''}" />`}
                     </div>
                     <div class="flex gap-2 mt-4">
                         <button type="submit" class="control-button btn-sm">Save</button>
@@ -149,6 +180,7 @@ function showCameraModal(idx = null) {
         };
         if (idx !== null) cameras[idx] = newCam; else cameras.push(newCam);
         saveCameras();
+        writeStatusToFirebase();
         modal.classList.add('hidden');
         renderCameras(document.getElementById('col-cameras'));
     };
@@ -451,6 +483,25 @@ async function disconnectObs() {
     writeStatusToFirebase();
 }
 
+function connectAtemWs() {
+    try {
+        atemWs = new WebSocket('ws://localhost:8765');
+        atemWs.onopen = () => {
+            atemWsConnected = true;
+            log('[ATEM] bridge connected');
+            writeStatusToFirebase();
+        };
+        atemWs.onclose = () => {
+            atemWsConnected = false;
+            log('[ATEM] bridge disconnected');
+            writeStatusToFirebase();
+        };
+        atemWs.onmessage = (e) => log('[ATEM] ' + e.data);
+    } catch (err) {
+        log('Failed to connect ATEM bridge: ' + err.message);
+    }
+}
+
 async function initializeListener() {
     // Status bar
     const eventData = await eventStorage.loadEvent(eventId);
@@ -459,6 +510,7 @@ async function initializeListener() {
     renderCameras(document.getElementById('col-cameras'));
     renderAtem(document.getElementById('col-atem'));
     renderObs(document.getElementById('col-obs'));
+    connectAtemWs();
 }
 
 // Heartbeat for listener.html

@@ -61,8 +61,20 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             <span style='vertical-align:middle;'><span style='font-weight:bold;font-size:1.2em;'>${lowerThird.title}</span><br><span style='font-size:1em;'>${lowerThird.subtitle}</span></span>
         </div>`
         : '';
-    // Now Playing (stub)
-    document.getElementById('now-playing').innerHTML = `<div class='now-playing' style='position:absolute;top:2rem;right:2rem;background:var(--brand-secondary1);color:#fff;padding:0.5rem 1rem;border-radius:0.5rem;font-family:${branding.font};'>Now Playing: Demo Track</div>`;
+    if (state && state.musicVisible && state.nowPlaying) {
+        document.getElementById('now-playing').innerHTML = `<div class='now-playing' style='position:absolute;top:2rem;right:2rem;background:var(--brand-secondary1);color:#fff;padding:0.5rem 1rem;border-radius:0.5rem;font-family:${branding.font};'>Now Playing: ${state.nowPlaying.name}</div>`;
+        if (!window.musicAudio || window.musicAudio.src !== state.nowPlaying.audioUrl) {
+            if (window.musicAudio) window.musicAudio.pause();
+            window.musicAudio = new Audio(state.nowPlaying.audioUrl);
+            window.musicAudio.play();
+        }
+    } else {
+        document.getElementById('now-playing').innerHTML = '';
+        if (window.musicAudio) {
+            window.musicAudio.pause();
+            window.musicAudio = null;
+        }
+    }
     // Title Slide
     let titleSlide = null;
     let liveTitleSlideId = graphics && graphics.liveTitleSlideId;

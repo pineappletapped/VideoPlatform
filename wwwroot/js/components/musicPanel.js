@@ -1,5 +1,6 @@
 import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 import { getDatabaseInstance } from "../firebaseApp.js";
+import { updateOverlayState } from "../firebase.js";
 
 const db = getDatabaseInstance();
 
@@ -12,6 +13,7 @@ export function renderMusicPanel(container, eventId) {
     let currentIdx = null;
     let loop = false;
     let timeInterval = null;
+    let monitor = false;
 
     onValue(getMusicRef(eventId), (snapshot) => {
         const tracks = snapshot.val() || [];
@@ -80,6 +82,7 @@ export function renderMusicPanel(container, eventId) {
                         <div class="flex gap-2 mt-4">
                             <button type="submit" class="control-button btn-sm">Save</button>
                             <button type="button" id="music-cancel" class="control-button btn-sm bg-gray-400 hover:bg-gray-600">Cancel</button>
+                            <span id="music-upload-status" class="text-xs text-gray-600 ml-2"></span>
                         </div>
                     </form>
                 </div>
@@ -111,19 +114,25 @@ export function renderMusicPanel(container, eventId) {
                 let audioUrl = data.audioUrl;
                 if (form['music-audio-file'].files[0]) {
                     const path = `/uploads/${eventId}/music/${form['music-audio-file'].files[0].name}`;
+                    setStatus('Uploading audio...');
                     await uploadLocalFile(form['music-audio-file'].files[0], path);
+                    setStatus('');
                     audioUrl = path;
                 }
                 let thumbnail = data.thumbnail;
                 if (form['music-thumb-file'].files[0]) {
                     const path = `/uploads/${eventId}/music/thumbnails/${form['music-thumb-file'].files[0].name}`;
+                    setStatus('Uploading thumb...');
                     await uploadLocalFile(form['music-thumb-file'].files[0], path);
+                    setStatus('');
                     thumbnail = path;
                 }
                 let license = data.license;
                 if (form['music-license-file'].files[0]) {
                     const path = `/uploads/${eventId}/music/licenses/${form['music-license-file'].files[0].name}`;
+                    setStatus('Uploading license...');
                     await uploadLocalFile(form['music-license-file'].files[0], path);
+                    setStatus('');
                     license = path;
                 }
                 const track = {
@@ -154,6 +163,22 @@ export function renderMusicPanel(container, eventId) {
             form['music-license-file'].value = '';
             form.idx.value = idx;
             container.querySelector('#music-modal-title').textContent = idx === '' ? 'Add Track' : 'Edit Track';
+            form['music-audio-file'].onchange = () => {
+                const file = form['music-audio-file'].files[0];
+                if (file) {
+                    const url = URL.createObjectURL(file);
+                    const audio = document.createElement('audio');
+                    audio.preload = 'metadata';
+                    audio.onloadedmetadata = () => {
+                        const dur = audio.duration;
+                        const mins = Math.floor(dur / 60);
+                        const secs = Math.floor(dur % 60);
+                        form.duration.value = `${mins}:${secs.toString().padStart(2,'0')}`;
+                        URL.revokeObjectURL(url);
+                    };
+                    audio.src = url;
+                }
+            };
         }
         // Player controls
         const playBtn = container.querySelector('#music-play');
@@ -168,6 +193,7 @@ export function renderMusicPanel(container, eventId) {
             };
             pauseBtn.onclick = () => {
                 if (currentAudio) currentAudio.pause();
+                updateOverlayState(eventId, { nowPlaying: null, musicVisible: false });
             };
         }
         if (loopBox) {
@@ -176,15 +202,25 @@ export function renderMusicPanel(container, eventId) {
                 if (currentAudio) currentAudio.loop = loop;
             };
         }
+        const monitorBtn = document.getElementById('music-monitor');
+        if (monitorBtn) {
+            monitorBtn.onclick = () => {
+                monitor = !monitor;
+                monitorBtn.textContent = monitor ? 'Monitor On' : 'Monitor';
+            };
+        }
         function playTrack(track, idx) {
             if (currentAudio) {
                 currentAudio.pause();
                 currentAudio = null;
             }
             if (!track.audioUrl) return;
-            currentAudio = new Audio(track.audioUrl);
-            currentAudio.loop = loop;
-            currentAudio.play();
+            if (monitor) {
+                currentAudio = new Audio(track.audioUrl);
+                currentAudio.loop = loop;
+                currentAudio.play();
+            }
+            updateOverlayState(eventId, { nowPlaying: track, musicVisible: true });
             currentIdx = idx;
             updatePlayerInfo(track);
             if (timeInterval) clearInterval(timeInterval);
@@ -193,6 +229,7 @@ export function renderMusicPanel(container, eventId) {
                 if (!loop) {
                     updatePlayerInfo(null);
                     if (timeInterval) clearInterval(timeInterval);
+                    updateOverlayState(eventId, { nowPlaying: null, musicVisible: false });
                 }
             };
         }
@@ -205,7 +242,7 @@ export function renderMusicPanel(container, eventId) {
             }
             info.innerHTML = `<span class="font-semibold">${track.name}</span> <span class="text-xs text-gray-500">${track.duration || '--:--'}</span>`;
         }
-function updateTime(track) {
+        function updateTime(track) {
             if (!currentAudio || !track) {
                 timeSpan.textContent = '';
                 return;
@@ -216,6 +253,11 @@ function updateTime(track) {
             timeSpan.textContent = `Time Remaining: ${mins}:${secs.toString().padStart(2, '0')}`;
         }
     }
+}
+
+function setStatus(text) {
+    const el = document.getElementById('music-upload-status');
+    if (el) el.textContent = text;
 }
 
 async function uploadLocalFile(file, path) {
