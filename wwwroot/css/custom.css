@@ -1,16 +1,29 @@
-.status-bar, .program-preview, .input-sources-bar, .graphics-panel, .obs-controls, .atem-controls, .ptz-controls, .branding-modal, .profile-wizard, .calendar-drawer {
-  border: 2px dashed #00ADF1;
-  background: #e0f7ff;
-  color: #004a77;
+:root {
+  --brand-color: #e16316;
+}
+body { margin: 0; }
+.status-bar, .input-sources-bar, .graphics-panel, .obs-controls, .atem-controls, .ptz-controls, .branding-modal, .profile-wizard, .calendar-drawer {
+  border: 2px dashed #e16316;
+  background: #1f2937;
+  color: #f3f4f6;
   padding: 1rem;
   margin-bottom: 1rem;
   border-radius: 0.5rem;
   min-height: 48px;
 }
 
+.status-bar {
+  border: none;
+}
+
+/* Remove dotted border from main graphics panel */
+.graphics-panel {
+  border: none;
+}
+
 .branding-modal, .profile-wizard, .calendar-drawer {
-  background: #fffbe6;
-  color: #b58900;
+  background: #2d2d2d;
+  color: #000;
 }
 
 #top-bar {
@@ -18,7 +31,7 @@
 }
 
 .control-button {
-  background: #00ADF1;
+  background: #e16316;
   color: #fff;
   font-weight: bold;
   padding: 0.18rem 0.5rem;
@@ -32,7 +45,21 @@
 }
 
 .control-button:hover {
-  background: #007fa3;
+  background: #c45012;
+}
+
+/* Preview and live button variants */
+.btn-preview {
+  background: #10b981;
+}
+.btn-preview:hover {
+  background: #059669;
+}
+.btn-live {
+  background: #ef4444;
+}
+.btn-live:hover {
+  background: #dc2626;
 }
 
 .btn-sm {
@@ -45,8 +72,79 @@
 
 /* Additional styles for column layouts */
 .col-cameras, .col-atem, .col-obs {
-  background: #fff;
+  background: #2a2a2a;
   padding: 1rem;
   border-radius: 0.5rem;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
+
+.program-preview {
+  padding: 1rem;
+}
+
+.lower-third-default {
+  background: var(--brand-primary);
+  color: #fff;
+  border-radius: 0.5rem;
+  padding: 1rem 2rem;
+  box-shadow: 0 2px 8px #0003;
+}
+
+.lower-third-rounded {
+  background: var(--brand-primary);
+  color: #fff;
+  padding: 1rem 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 2px 8px #0003;
+}
+
+.lower-third-underline {
+  background: transparent;
+  color: #fff;
+  padding: 0.5rem 0;
+  border-bottom: 4px solid var(--brand-primary);
+}
+
+/* Indicate when a VT clip is fully buffered */
+.vt-buffered {
+  box-shadow: 0 0 0 2px #38a169 inset;
+}
+
+/* Prevent double borders when panels nest */
+.graphics-panel .graphics-panel {
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Generic modal styling */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-window {
+  background: #ffffff;
+  color: #000000;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  min-width: 320px;
+  max-width: 95vw;
+}
+
+.modal-window input,
+.modal-window select,
+.modal-window textarea {
+  color: #000;
+}
+
+#overlay-container { position: relative; width: 1920px; height: 1080px; }
+

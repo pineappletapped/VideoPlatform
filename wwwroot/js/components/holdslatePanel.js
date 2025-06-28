@@ -2,6 +2,7 @@ import { updateOverlayState, listenOverlayState } from '../firebase.js';
 
 let holdslateData = {};
 let holdslateVisible = false;
+let holdslatePreviewVisible = false;
 let countdownInterval = null;
 
 function saveHoldslateData(eventId, data) {
@@ -11,6 +12,11 @@ function saveHoldslateData(eventId, data) {
 function saveHoldslateVisible(eventId, visible) {
     holdslateVisible = visible;
     updateOverlayState(eventId, { holdslateVisible: visible });
+}
+
+function saveHoldslatePreviewVisible(eventId, visible) {
+    holdslatePreviewVisible = visible;
+    updateOverlayState(eventId, { holdslatePreviewVisible: visible });
 }
 
 function renderCountdown(container, countdown) {
@@ -40,6 +46,7 @@ export function renderHoldslatePanel(container, onOverlayStateChange) {
     listenOverlayState(eventId, (state) => {
         holdslateData = (state && state.holdslate) || {};
         holdslateVisible = (state && state.holdslateVisible) || false;
+        holdslatePreviewVisible = (state && state.holdslatePreviewVisible) || false;
         const { image, message, countdown } = holdslateData || {};
         const now = Date.now();
         let countdownDisplay = '';
@@ -54,14 +61,15 @@ export function renderHoldslatePanel(container, onOverlayStateChange) {
                 countdownDisplay = '00:00';
             }
         }
-        const highlight = holdslateVisible ? 'ring-4 ring-green-400' : '';
+        const highlight = holdslateVisible ? 'ring-4 ring-green-400' : holdslatePreviewVisible ? 'ring-4 ring-brand' : '';
         container.innerHTML = `
             <div class='holdslate-panel ${highlight}'>
                 <div class="flex items-center justify-between mb-2">
                     <h2 class="font-bold text-lg">Holdslate</h2>
                     <div>
-                        <button class="control-button btn-sm${holdslateVisible ? ' ring-2 ring-green-400' : ''}" id="show-holdslate">Show</button>
-                        <button class="control-button btn-sm${!holdslateVisible ? ' ring-2 ring-red-400' : ''}" id="hide-holdslate">Hide</button>
+                        <button class="control-button btn-sm btn-preview${holdslatePreviewVisible ? ' ring-2 ring-brand' : ''}" id="preview-holdslate">Preview</button>
+                        <button class="control-button btn-sm btn-live${holdslateVisible ? ' ring-2 ring-green-400' : ''}" id="take-holdslate">Live</button>
+                        <button class="control-button btn-sm${!holdslateVisible && !holdslatePreviewVisible ? ' ring-2 ring-red-400' : ''}" id="hide-holdslate">Hide</button>
                         <button class="control-button btn-sm" id="edit-holdslate">Edit</button>
                     </div>
                 </div>
@@ -74,8 +82,8 @@ export function renderHoldslatePanel(container, onOverlayStateChange) {
                         <div class="text-sm">${countdown ? `<span class="font-semibold">Countdown:</span> <span id="holdslate-countdown"></span>` : ''}</div>
                     </div>
                 </div>
-                <div id="holdslate-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);z-index:1000;align-items:center;justify-content:center;">
-                    <div style="background:#fff;padding:2rem;border-radius:0.5rem;min-width:320px;max-width:95vw;">
+                <div id="holdslate-modal" class="modal-overlay" style="display:none;">
+                    <div class="modal-window">
                         <h3 class="font-bold text-lg mb-2">Edit Holdslate</h3>
                         <form id="holdslate-form">
                             <div class="mb-2">
@@ -123,14 +131,20 @@ export function renderHoldslatePanel(container, onOverlayStateChange) {
                 if (onOverlayStateChange) onOverlayStateChange({ holdslate: newData });
             };
         }
-        // Show/Hide/Edit handlers
-        container.querySelector('#show-holdslate').onclick = () => {
+        // Preview/Take/Hide/Edit handlers
+        container.querySelector('#preview-holdslate').onclick = () => {
+            saveHoldslatePreviewVisible(eventId, true);
+            if (onOverlayStateChange) onOverlayStateChange({ holdslatePreviewVisible: true, holdslate: holdslateData });
+        };
+        container.querySelector('#take-holdslate').onclick = () => {
             saveHoldslateVisible(eventId, true);
-            if (onOverlayStateChange) onOverlayStateChange({ holdslateVisible: true, holdslate: holdslateData });
+            saveHoldslatePreviewVisible(eventId, false);
+            if (onOverlayStateChange) onOverlayStateChange({ holdslateVisible: true, holdslatePreviewVisible: false, holdslate: holdslateData });
         };
         container.querySelector('#hide-holdslate').onclick = () => {
             saveHoldslateVisible(eventId, false);
-            if (onOverlayStateChange) onOverlayStateChange({ holdslateVisible: false, holdslate: holdslateData });
+            saveHoldslatePreviewVisible(eventId, false);
+            if (onOverlayStateChange) onOverlayStateChange({ holdslateVisible: false, holdslatePreviewVisible: false, holdslate: holdslateData });
         };
         container.querySelector('#edit-holdslate').onclick = () => {
             modal.style.display = 'flex';

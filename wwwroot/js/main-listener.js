@@ -1,13 +1,18 @@
 import { eventStorage } from './storage.js';
 import { renderStatusBar } from './components/statusBar.js';
+import './components/topBar.js';
 import OBSWebSocket from 'https://cdn.jsdelivr.net/npm/obs-websocket-js@5.0.3/+esm';
-import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
-import { getApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+import { getDatabaseInstance } from "./firebaseApp.js";
+import { requireAuth, logout } from './auth.js';
+import { renderBrandingModal } from './components/brandingModal.js';
 
-const db = getDatabase(getApp());
+const db = getDatabaseInstance();
 
 const params = new URLSearchParams(window.location.search);
 const eventId = params.get('event_id') || 'demo';
+
+let currentUserId = '';
 
 // Camera state (localStorage for demo)
 let cameras = JSON.parse(localStorage.getItem('listenerCameras') || '[]');
@@ -19,6 +24,18 @@ let atems = JSON.parse(localStorage.getItem('listenerAtems') || '[]');
 let obsConfig = JSON.parse(localStorage.getItem('obsConfig') || '{}');
 let obsConnected = false;
 let obs;
+let atemWs = null;
+let atemWsConnected = false;
+const terminal = document.getElementById('col-blank');
+
+function log(msg) {
+    if (terminal) {
+        const div = document.createElement('div');
+        div.textContent = msg;
+        terminal.appendChild(div);
+        terminal.scrollTop = terminal.scrollHeight;
+    }
+}
 
 function saveCameras() {
     localStorage.setItem('listenerCameras', JSON.stringify(cameras));
@@ -40,11 +57,10 @@ function setObsConnected(connected) {
 
 // --- ATEM/OBS status reporting ---
 function getAtemStatus() {
-    // For now, just use the first ATEM in the list
     if (atems.length > 0) {
-        return { atemConnected: true, atemIp: atems[0].ip };
+        return { atemConnected: atemWsConnected, atemIp: atems[0].ip };
     }
-    return { atemConnected: false };
+    return { atemConnected: atemWsConnected };
 }
 function getObsStatus() {
     return { obsConnected, obsIp: obsConfig.url ? obsConfig.url.replace(/^ws:\/\//, '').split(':')[0] : undefined };
@@ -64,6 +80,22 @@ async function writeStatusToFirebase() {
 setInterval(writeStatusToFirebase, 5 * 60 * 1000); // every 5 min
 writeStatusToFirebase(); // initial write
 // --- end status reporting ---
+
+onValue(ref(db, `status/${eventId}/atemCommand`), snap => {
+    const cmd = snap.val();
+    if (!cmd) return;
+    log(`[CMD] ATEM ${cmd.action || ''} ${cmd.input || ''}`);
+    if (atemWsConnected) {
+        if (cmd.action === 'program') atemWs.send('PGM ' + cmd.input);
+        else if (cmd.action === 'cut') atemWs.send('CUT');
+    }
+});
+
+onValue(ref(db, `status/${eventId}/vtCommand`), snap => {
+    const cmd = snap.val();
+    if (!cmd) return;
+    log(`[CMD] VT ${cmd.vt ? cmd.vt.name : cmd.action}`);
+});
 
 function renderCameras(container) {
     container.innerHTML = `
@@ -91,6 +123,7 @@ function renderCameras(container) {
             const idx = parseInt(btn.getAttribute('data-idx'), 10);
             cameras.splice(idx, 1);
             saveCameras();
+            writeStatusToFirebase();
             renderCameras(container);
         };
     });
@@ -120,7 +153,10 @@ function showCameraModal(idx = null) {
                     </div>
                     <div class="mb-2">
                         <label class="block text-sm">ATEM Input</label>
-                        <input class="border p-1 w-full" name="atemInput" value="${cam.atemInput || ''}" />
+                        ${atems.length > 0 ? `
+                            <select class="border p-1 w-full" name="atemInput">
+                                ${Array.from({length:8},(_,i)=>`<option value="${i+1}" ${cam.atemInput==i+1? 'selected':''}>${i+1}</option>`).join('')}
+                            </select>` : `<input class="border p-1 w-full" name="atemInput" value="${cam.atemInput || ''}" />`}
                     </div>
                     <div class="flex gap-2 mt-4">
                         <button type="submit" class="control-button btn-sm">Save</button>
@@ -149,6 +185,7 @@ function showCameraModal(idx = null) {
         };
         if (idx !== null) cameras[idx] = newCam; else cameras.push(newCam);
         saveCameras();
+        writeStatusToFirebase();
         modal.classList.add('hidden');
         renderCameras(document.getElementById('col-cameras'));
     };
@@ -170,8 +207,8 @@ function renderAtem(container) {
                 `).join('')}
             </ul>
         </div>
-        <div id="atem-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);z-index:1000;align-items:center;justify-content:center;">
-            <div style="background:#fff;padding:2rem;border-radius:0.5rem;min-width:320px;max-width:95vw;">
+        <div id="atem-modal" class="modal-overlay" style="display:none;">
+            <div class="modal-window">
                 <h3 class="font-bold text-lg mb-2">Add ATEM Device</h3>
                 <form id="atem-form">
                     <div class="mb-2">
@@ -191,7 +228,7 @@ function renderAtem(container) {
                     </div>
                     <div class="mb-2">
                         <label class="block text-sm">IP Address</label>
-                        <input class="border p-1 w-full" name="ip" required />
+                        <input class="border p-1 w-full" name="ip" value="192.168.1.51" required />
                     </div>
                     <div class="flex gap-2 mt-4">
                         <button type="submit" class="control-button btn-sm">Save</button>
@@ -200,8 +237,8 @@ function renderAtem(container) {
                 </form>
             </div>
         </div>
-        <div id="atem-script-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);z-index:1000;align-items:center;justify-content:center;">
-            <div style="background:#fff;padding:2rem;border-radius:0.5rem;min-width:320px;max-width:95vw;">
+        <div id="atem-script-modal" class="modal-overlay" style="display:none;">
+            <div class="modal-window">
                 <h3 class="font-bold text-lg mb-2">Python Bridge Script</h3>
                 <textarea id="atem-script-text" class="border p-2 w-full text-xs" rows="16" readonly></textarea>
                 <div class="flex gap-2 mt-4">
@@ -257,7 +294,104 @@ function renderAtem(container) {
 }
 
 function generateAtemPythonScript(atem) {
-    return `# Python ATEM Bridge Script\n# Requires: python-atem-switcher, websockets\n# pip install python-atem-switcher websockets\nimport asyncio\nimport websockets\nfrom atem_switcher import AtemSwitcher\n\nATEM_IP = '${atem.ip}'\nATEM_MODEL = '${atem.model}'\nBRIDGE_PORT = 8765\n\nasync def atem_bridge(websocket, path):\n    atem = AtemSwitcher()\n    await atem.connect(ATEM_IP)\n    print(f'Connected to ATEM ${ATEM_MODEL} at ${ATEM_IP}')\n    try:\n        async for message in websocket:\n            # Here you can parse and forward commands to the ATEM\n            print('Received:', message)\n            # Example: atem.cut()\n            # You can expand this to handle more commands\n            await websocket.send('ACK: ' + message)\n    finally:\n        await atem.disconnect()\n\nasync def main():\n    async with websockets.serve(atem_bridge, 'localhost', BRIDGE_PORT):\n        print(f'ATEM Bridge running on ws://localhost:${BRIDGE_PORT}')\n        await asyncio.Future()\n\nif __name__ == '__main__':\n    asyncio.run(main())\n`;
+    const ip = atem.ip || '192.168.1.51';
+    return `"""WebSocket \u2192 Blackmagic ATEM bridge (PyATEMMax)\nDirect-connect version"""
+
+from __future__ import annotations
+
+import argparse
+import asyncio
+import logging
+import platform
+import subprocess
+import sys
+from typing import Tuple
+
+import PyATEMMax  # type: ignore
+import websockets
+
+BRIDGE_HOST = "localhost"
+BRIDGE_PORT = 8765
+HEARTBEAT_SECONDS = 5
+DEFAULT_ATEM_IP = "${ip}"
+
+
+def ping_host(host: str, count: int = 1, timeout: int = 1) -> bool:
+    param = "-n" if platform.system().lower() == "windows" else "-c"
+    cmd = ["ping", param, str(count), "-W", str(timeout), host]
+    try:
+        return subprocess.call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) == 0
+    except FileNotFoundError:
+        return False
+
+
+async def heartbeat(atem: PyATEMMax.ATEMMax):
+    while True:
+        print(f"[HB] alive={atem.switcherAlive} | connected={atem.connected}")
+        await asyncio.sleep(HEARTBEAT_SECONDS)
+
+
+async def atem_bridge(websocket, path):
+    client: Tuple[str, int] = websocket.remote_address
+    print(f"[WS] Client connected from {client}")
+    try:
+        async for message in websocket:
+            print("[WS] Received:", message)
+            cmd = message.strip().upper()
+            if cmd == "CUT":
+                atem.execCut()
+                await websocket.send("ACK: CUT")
+            elif cmd.startswith("PGM ") and cmd[4:].isdigit():
+                atem.setProgramInput(int(cmd[4:]))
+                await websocket.send(f"ACK: PROGRAM\u2192{cmd[4:]}")
+            else:
+                await websocket.send("NACK: UNKNOWN CMD")
+    finally:
+        print(f"[WS] Client {client} disconnected")
+
+
+async def main():
+    p = argparse.ArgumentParser(description="ATEM WebSocket bridge (direct-connect)")
+    p.add_argument("--ip", default=DEFAULT_ATEM_IP, help=f"ATEM IP address (default {DEFAULT_ATEM_IP})")
+    p.add_argument("--timeout", type=float, default=10.0, help="Handshake timeout seconds (default 10)")
+    p.add_argument("--debug", action="store_true", help="Enable PyATEMMax debug log")
+    args = p.parse_args()
+
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG)
+
+    if not ping_host(args.ip):
+        print(f"\u26A0\ufe0f  {args.ip} did not answer ping \u2014 continuing anyway …")
+
+    global atem
+    atem = PyATEMMax.ATEMMax()
+    print(f"Connecting to ATEM at {args.ip} …")
+    atem.connect(args.ip)
+    if not atem.waitForConnection(infinite=False, timeout=args.timeout):
+        raise RuntimeError("Handshake failed \u2014 is Ethernet control enabled and UDP 9910/9911 open?")
+    print(f"\u2705 Connected to ATEM at {args.ip}")
+
+    asyncio.create_task(heartbeat(atem))
+
+    async with websockets.serve(atem_bridge, BRIDGE_HOST, BRIDGE_PORT):
+        print(f"\U0001F310 Bridge listening on ws://{BRIDGE_HOST}:{BRIDGE_PORT}")
+        await asyncio.Future()
+
+
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("\nShutting down…")
+    except Exception as e:
+        print("❌", e)
+        sys.exit(1)
+    finally:
+        try:
+            atem.disconnect()
+        except Exception:
+            pass
+`;
 }
 
 function renderObs(container) {
@@ -267,8 +401,8 @@ function renderObs(container) {
             <button class="control-button btn-sm mb-2" id="obs-send" ${obsConnected ? '' : 'disabled'}>Send Action</button>
             <div class="text-xs text-gray-600 mt-2">${obsConnected ? `Connected to ${obsConfig.url || ''}` : '(Not connected)'}</div>
         </div>
-        <div id="obs-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);z-index:1000;align-items:center;justify-content:center;">
-            <div style="background:#fff;padding:2rem;border-radius:0.5rem;min-width:320px;max-width:95vw;">
+        <div id="obs-modal" class="modal-overlay" style="display:none;">
+            <div class="modal-window">
                 <h3 class="font-bold text-lg mb-2">Connect to OBS WebSocket</h3>
                 <form id="obs-form">
                     <div class="mb-2">
@@ -331,6 +465,9 @@ function renderObs(container) {
 async function connectObs(url, password, container) {
     obs = new OBSWebSocket();
     try {
+        if (location.protocol === 'https:' && url.startsWith('ws://')) {
+            url = 'wss://' + url.substring(5);
+        }
         await obs.connect(url, password);
         setObsConnected(true);
         writeStatusToFirebase();
@@ -351,14 +488,41 @@ async function disconnectObs() {
     writeStatusToFirebase();
 }
 
-async function initializeListener() {
+function connectAtemWs() {
+    try {
+        atemWs = new WebSocket('ws://localhost:8765');
+        atemWs.onopen = () => {
+            atemWsConnected = true;
+            log('[ATEM] bridge connected');
+            writeStatusToFirebase();
+        };
+        atemWs.onclose = () => {
+            atemWsConnected = false;
+            log('[ATEM] bridge disconnected');
+            writeStatusToFirebase();
+        };
+        atemWs.onmessage = (e) => log('[ATEM] ' + e.data);
+    } catch (err) {
+        log('Failed to connect ATEM bridge: ' + err.message);
+    }
+}
+
+async function initializeListener(user) {
+    currentUserId = user ? user.uid.replace('local-','') : '';
     // Status bar
     const eventData = await eventStorage.loadEvent(eventId);
+    const topBar = document.createElement('top-bar');
+    if (currentUserId === 'ryanadmin') topBar.setAttribute('is-admin','true');
+    topBar.addEventListener('logout', logout);
+    topBar.addEventListener('edit-account', () => alert('Edit account not implemented'));
+    topBar.addEventListener('brand-settings', () => { const modal=document.getElementById('branding-modal'); renderBrandingModal(modal,{ userId: currentUserId }); modal.classList.remove('hidden'); });
+    document.getElementById('top-bar').appendChild(topBar);
     renderStatusBar(document.getElementById('status-bar'), eventData);
     // Columns
     renderCameras(document.getElementById('col-cameras'));
     renderAtem(document.getElementById('col-atem'));
     renderObs(document.getElementById('col-obs'));
+    connectAtemWs();
 }
 
 // Heartbeat for listener.html
@@ -368,4 +532,4 @@ function heartbeat() {
 setInterval(heartbeat, 3000);
 heartbeat();
 
-initializeListener();
+requireAuth(`listener.html?event_id=${eventId}`).then(u => initializeListener(u));

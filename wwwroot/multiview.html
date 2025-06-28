@@ -9,7 +9,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            theme: { extend: { colors: { brand: '#00ADF1' } } }
+            theme: { extend: { colors: { brand: '#e16316' } } }
         };
     </script>
 
@@ -18,7 +18,8 @@
 
     <link rel="stylesheet" href="css/custom.css?v=20240610">
 </head>
-<body class="bg-gray-900">
+<body class="bg-gray-900 text-gray-100">
+    <div id="top-bar"></div>
     <div class="grid grid-cols-2 gap-2 p-2 h-screen">
         <div id="preview-window" class="bg-black"></div>
         <div id="program-window" class="bg-black"></div>
@@ -26,6 +27,7 @@
         <div id="status-panel" class="bg-gray-800 text-white"></div>
     </div>
 
+    <div id="branding-modal" class="hidden"></div>
     <!-- Page-specific entry point -->
     <script type="module" src="js/main-multiview.js?v=20240610"></script>
 </body>

@@ -3,18 +3,53 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Graphics System</title>
+    <title>Event Dashboard</title>
     <link rel="stylesheet" href="css/custom.css?v=20240610">
+    <script src="https://cdn.tailwindcss.com?v=20240610"></script>
+    <script>
+        tailwind.config = { theme: { extend: { colors: { brand: '#e16316' } } } };
+    </script>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col">
+<body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col">
+    <div id="top-bar"></div>
     <div class="container mx-auto p-8">
-        <h1 class="text-3xl font-bold mb-4">Graphics System</h1>
-        <ul class="list-disc ml-8">
-            <li><a href="control.html">Control Panel</a></li>
-            <li><a href="listener.html">Listener Panel</a></li>
-            <li><a href="overlay.html">Overlay</a></li>
-            <li><a href="multiview.html">Multiview</a></li>
-        </ul>
+        <h1 class="text-3xl font-bold mb-4">Event Dashboard</h1>
+        <div id="auth" class="space-y-4">
+            <form id="login-form" class="bg-white p-4 rounded shadow">
+                <h2 class="font-semibold mb-2">Login</h2>
+                <input name="email" type="text" placeholder="Email or username" class="border p-1 w-full mb-2" required>
+                <input name="password" type="password" placeholder="Password" class="border p-1 w-full mb-2" required>
+                <button class="control-button">Login</button>
+            </form>
+            <form id="register-form" class="bg-white p-4 rounded shadow space-y-2">
+                <h2 class="font-semibold">Register</h2>
+                <input name="email" type="text" placeholder="Email or username" class="border p-1 w-full" required>
+                <input name="password" type="password" placeholder="Password" class="border p-1 w-full" required>
+                <select name="tier" class="border p-1 w-full">
+                    <option value="single">Single Event £3.75/month</option>
+                    <option value="three">3 Events £6/month</option>
+                    <option value="eight">8 Events £15/month</option>
+                </select>
+                <div id="card-container" class="border p-2"></div>
+                <button class="control-button w-full">Register &amp; Subscribe</button>
+            </form>
+        </div>
+        <div id="dashboard" class="hidden">
+            <div class="flex gap-2 mb-4">
+                <button id="signout-btn" class="control-button">Sign Out</button>
+                <button id="admin-btn" class="control-button hidden">Admin</button>
+            </div>
+            <form id="create-form" class="bg-white p-4 rounded shadow mb-4">
+                <h2 class="font-semibold mb-2">Create Event</h2>
+                <input name="id" placeholder="Event ID" class="border p-1 w-full mb-2" required>
+                <input name="title" placeholder="Event Title" class="border p-1 w-full mb-2" required>
+                <button class="control-button">Save</button>
+            </form>
+            <ul id="events-list" class="space-y-4"></ul>
+        </div>
     </div>
+    <div id="branding-modal" class="hidden"></div>
+    <script src="https://sandbox.web.squarecdn.com/v1/square.js"></script>
+    <script type="module" src="js/main-index.js?v=20240610"></script>
 </body>
 </html>

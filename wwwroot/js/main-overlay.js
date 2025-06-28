@@ -1,20 +1,43 @@
 import { listenOverlayState, listenGraphicsData, listenBranding } from './firebase.js';
+import { getDatabaseInstance } from './firebaseApp.js';
+import { ref, onValue, set } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
 
 const params = new URLSearchParams(window.location.search);
 const eventId = params.get('event_id') || 'demo';
+const previewMode = params.get('mode') === 'preview';
 
 let countdownInterval = null;
+let vtVideo = null;
+let preloadedVT = null;
+let masterVolume = 1;
+let vtVolume = 1;
+let musicVolume = 1;
 
 // Overlay heartbeat for status bar feedback
 setInterval(() => {
     localStorage.setItem('overlayHeartbeat', Date.now().toString());
 }, 2000);
 
-function applyBranding(branding) {
+const DEFAULT_BRANDING = {
+    primaryColor: '#e16316',
+    secondaryColor1: '#004a77',
+    secondaryColor2: '#e0f7ff',
+    logoPrimary: '',
+    logoSecondary: '',
+    font: 'Arial',
+    logos: { tl:'', tr:'', bl:'', br:'' },
+    sponsors: []
+};
+
+function applyBranding(branding = DEFAULT_BRANDING) {
     document.body.style.fontFamily = branding.font;
     document.documentElement.style.setProperty('--brand-primary', branding.primaryColor);
     document.documentElement.style.setProperty('--brand-secondary1', branding.secondaryColor1);
     document.documentElement.style.setProperty('--brand-secondary2', branding.secondaryColor2);
+    ['tl','tr','bl','br'].forEach(pos=>{
+        const img=document.getElementById(`logo-${pos}`);
+        if(img) img.src = (branding.logos && branding.logos[pos]) ? branding.logos[pos] : '';
+    });
 }
 
 function renderHoldslateCountdown(holdslateData, branding) {
@@ -42,6 +65,37 @@ function renderHoldslateCountdown(holdslateData, branding) {
     holdslateOverlay.innerHTML = `<div style="width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;">${messageHtml}${countdownHtml}</div>`;
 }
 
+function playVT(vt) {
+    const container = document.getElementById('vt-overlay');
+    if (!container) return;
+    if (vtVideo) {
+        vtVideo.pause();
+        container.innerHTML = '';
+    }
+    if (preloadedVT && preloadedVT.src === vt.videoUrl) {
+        vtVideo = preloadedVT;
+        preloadedVT = null;
+    } else {
+        vtVideo = document.createElement('video');
+        vtVideo.src = vt.videoUrl;
+    }
+    vtVideo.style.position = 'absolute';
+    vtVideo.style.top = '0';
+    vtVideo.style.left = '0';
+    vtVideo.style.width = '100%';
+    vtVideo.style.height = '100%';
+    vtVideo.style.objectFit = 'cover';
+    vtVideo.autoplay = true;
+    vtVideo.onended = () => { container.innerHTML = ''; vtVideo = null; };
+    vtVideo.oncanplaythrough = () => {
+        set(ref(db, `status/${eventId}/vtReady`), true);
+    };
+    vtVideo.volume = masterVolume * vtVolume;
+    container.appendChild(vtVideo);
+    vtVideo.play().catch(err => console.warn('VT autoplay failed', err));
+    set(ref(db, `status/${eventId}/vtReady`), false);
+}
+
 function renderOverlayFromFirebase(state, graphics, branding) {
     applyBranding(branding);
     const overlayContainer = document.getElementById('overlay-container');
@@ -49,37 +103,118 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     // Remove overlays
     overlayContainer.querySelector('#program-overlay')?.remove();
     overlayContainer.querySelector('#holdslate-overlay')?.remove();
-    // Lower Third
+    if (!previewMode) overlayContainer.querySelector('#preview-lower-third')?.remove();
+    // Lower Thirds
     let lowerThird = null;
+    let previewLowerThird = null;
     let liveLowerThirdId = graphics && graphics.liveLowerThirdId;
+    let previewLowerThirdId = graphics && graphics.previewLowerThirdId;
     if (graphics && graphics.lowerThirds && liveLowerThirdId) {
         lowerThird = graphics.lowerThirds.find(lt => lt.id === liveLowerThirdId);
     }
-    document.getElementById('lower-third').innerHTML = lowerThird
-        ? `<div class='lower-third' style='position:absolute;bottom:2rem;left:2rem;min-width:300px;background:var(--brand-primary);color:#fff;padding:1rem 2rem;border-radius:0.5rem;box-shadow:0 2px 8px #0003;font-family:${branding.font};'>
-            ${branding.logoPrimary ? `<img src='${branding.logoPrimary}' alt='Logo' style='height:32px;display:inline-block;margin-right:1rem;vertical-align:middle;' />` : ''}
-            <span style='vertical-align:middle;'><span style='font-weight:bold;font-size:1.2em;'>${lowerThird.title}</span><br><span style='font-size:1em;'>${lowerThird.subtitle}</span></span>
-        </div>`
-        : '';
-    // Now Playing (stub)
-    document.getElementById('now-playing').innerHTML = `<div class='now-playing' style='position:absolute;top:2rem;right:2rem;background:var(--brand-secondary1);color:#fff;padding:0.5rem 1rem;border-radius:0.5rem;font-family:${branding.font};'>Now Playing: Demo Track</div>`;
+    if (graphics && graphics.lowerThirds && previewLowerThirdId) {
+        previewLowerThird = graphics.lowerThirds.find(lt => lt.id === previewLowerThirdId);
+    }
+    if (previewMode && previewLowerThird) {
+        const pos = previewLowerThird.position || 'bottom-left';
+        let stylePos = '';
+        if (pos.startsWith('custom')) {
+            const [x,y] = pos.split(':')[1].split(',');
+            stylePos = `top:${y}px;left:${x}px;`;
+        } else if (pos === 'bottom-right') stylePos = 'bottom:2rem;right:2rem;';
+        else if (pos === 'top-left') stylePos = 'top:2rem;left:2rem;';
+        else if (pos === 'top-right') stylePos = 'top:2rem;right:2rem;';
+        else stylePos = 'bottom:2rem;left:2rem;';
+        const styleClass = `lower-third-${previewLowerThird.style || 'default'}`;
+        document.getElementById('preview-lower-third').innerHTML =
+            `<div class='${styleClass}' style='opacity:0.6;position:absolute;${stylePos}min-width:300px;font-family:${branding.font};'>`+
+            `${branding.logoPrimary ? `<img src='${branding.logoPrimary}' alt='Logo' style='height:32px;display:inline-block;margin-right:1rem;vertical-align:middle;' />` : ''}`+
+            `<span style='vertical-align:middle;'><span style='font-weight:bold;font-size:1.2em;'>${previewLowerThird.title}</span><br><span style='font-size:1em;'>${previewLowerThird.subtitle}</span></span>`+
+            `</div>`;
+    } else if (previewMode) {
+        document.getElementById('preview-lower-third').innerHTML = '';
+    }
+    if (!previewMode && lowerThird) {
+        const pos = lowerThird.position || 'bottom-left';
+        let stylePos = '';
+        if (pos.startsWith('custom')) {
+            const [x,y] = pos.split(':')[1].split(',');
+            stylePos = `top:${y}px;left:${x}px;`;
+        } else if (pos === 'bottom-right') stylePos = 'bottom:2rem;right:2rem;';
+        else if (pos === 'top-left') stylePos = 'top:2rem;left:2rem;';
+        else if (pos === 'top-right') stylePos = 'top:2rem;right:2rem;';
+        else stylePos = 'bottom:2rem;left:2rem;';
+        const styleClass = `lower-third-${lowerThird.style || 'default'}`;
+        document.getElementById('lower-third').innerHTML =
+            `<div class='${styleClass}' style='position:absolute;${stylePos}min-width:300px;font-family:${branding.font};'>`+
+            `${branding.logoPrimary ? `<img src='${branding.logoPrimary}' alt='Logo' style='height:32px;display:inline-block;margin-right:1rem;vertical-align:middle;' />` : ''}`+
+            `<span style='vertical-align:middle;'><span style='font-weight:bold;font-size:1.2em;'>${lowerThird.title}</span><br><span style='font-size:1em;'>${lowerThird.subtitle}</span></span>`+
+            `</div>`;
+    } else if (!previewMode) {
+        document.getElementById('lower-third').innerHTML = '';
+    }
+    if (state && state.musicVisible && state.nowPlaying) {
+        document.getElementById('now-playing').innerHTML = `<div class='now-playing' style='position:absolute;top:2rem;right:2rem;background:var(--brand-secondary1);color:#fff;padding:0.5rem 1rem;border-radius:0.5rem;font-family:${branding.font};'>Now Playing: ${state.nowPlaying.name}</div>`;
+        if (!window.musicAudio || window.musicAudio.src !== state.nowPlaying.audioUrl) {
+            if (window.musicAudio) window.musicAudio.pause();
+            window.musicAudio = new Audio(state.nowPlaying.audioUrl);
+            window.musicAudio.volume = masterVolume * musicVolume;
+            window.musicAudio.play().catch(err => console.warn('Music autoplay failed', err));
+        }
+        if (window.musicAudio) window.musicAudio.volume = masterVolume * musicVolume;
+    } else {
+        document.getElementById('now-playing').innerHTML = '';
+        if (window.musicAudio) {
+            window.musicAudio.pause();
+            window.musicAudio = null;
+        }
+    }
     // Title Slide
     let titleSlide = null;
+    let previewTitleSlide = null;
     let liveTitleSlideId = graphics && graphics.liveTitleSlideId;
+    let previewTitleSlideId = graphics && graphics.previewTitleSlideId;
     if (graphics && graphics.titleSlides && liveTitleSlideId) {
         titleSlide = graphics.titleSlides.find(ts => ts.id === liveTitleSlideId);
     }
-    document.getElementById('title-slide').innerHTML = titleSlide
+    if (graphics && graphics.titleSlides && previewTitleSlideId) {
+        previewTitleSlide = graphics.titleSlides.find(ts => ts.id === previewTitleSlideId);
+    }
+    document.getElementById('title-slide').innerHTML = !previewMode && titleSlide
         ? `<div class='title-slide' style='position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);min-width:350px;background:var(--brand-secondary2);color:#004a77;padding:2rem 2.5rem;border-radius:0.5rem;box-shadow:0 2px 8px #0003;font-family:${branding.font};text-align:center;'>
             ${branding.logoSecondary ? `<img src='${branding.logoSecondary}' alt='Logo' style='height:40px;display:block;margin:0 auto 1rem auto;' />` : ''}
             <div style='font-weight:bold;font-size:2em;margin-bottom:0.5rem;'>${titleSlide.title}</div>
             <div style='font-size:1.2em;'>${titleSlide.subtitle}</div>
         </div>`
         : '';
+    if (!previewMode) {
+        document.getElementById('preview-title-slide')?.remove();
+    }
+    if (previewMode && previewTitleSlide) {
+        const div = document.createElement('div');
+        div.id = 'preview-title-slide';
+        div.style.position = 'absolute';
+        div.style.top = '40%';
+        div.style.left = '50%';
+        div.style.transform = 'translate(-50%,-50%)';
+        div.style.minWidth = '350px';
+        div.style.opacity = '0.6';
+        div.style.background = 'var(--brand-secondary2)';
+        div.style.color = '#004a77';
+        div.style.padding = '2rem 2.5rem';
+        div.style.borderRadius = '0.5rem';
+        div.style.boxShadow = '0 2px 8px #0003';
+        div.style.fontFamily = branding.font;
+        div.style.textAlign = 'center';
+        div.innerHTML = `${branding.logoSecondary ? `<img src='${branding.logoSecondary}' alt='Logo' style='height:40px;display:block;margin:0 auto 1rem auto;' />` : ''}<div style='font-weight:bold;font-size:2em;margin-bottom:0.5rem;'>${previewTitleSlide.title}</div><div style='font-size:1.2em;'>${previewTitleSlide.subtitle}</div>`;
+        overlayContainer.appendChild(div);
+    } else if (previewMode) {
+        document.getElementById('preview-title-slide')?.remove();
+    }
     // Program Overlay
     let program = state && state.program;
     let programOverlay = overlayContainer.querySelector('#program-overlay');
-    if (state && state.liveProgramVisible && program && program.length) {
+    if (!previewMode && state && state.liveProgramVisible && program && program.length) {
         if (!programOverlay) {
             programOverlay = document.createElement('div');
             programOverlay.id = 'program-overlay';
@@ -95,13 +230,31 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         programOverlay.style.boxShadow = '0 2px 8px #0003';
         programOverlay.style.fontFamily = branding.font;
         programOverlay.innerHTML = `<div class='font-bold text-lg mb-2'>Program</div><table><tbody>${program.map(item => `<tr><td class='pr-4'>${item.time}</td><td class='pr-4'>${item.title}</td><td>${item.presenter}</td></tr>`).join('')}</tbody></table>`;
+    } else if (previewMode && state && state.previewProgramVisible && program && program.length) {
+        if (!programOverlay) {
+            programOverlay = document.createElement('div');
+            programOverlay.id = 'program-overlay';
+            overlayContainer.appendChild(programOverlay);
+        }
+        programOverlay.style.position = 'absolute';
+        programOverlay.style.bottom = '2rem';
+        programOverlay.style.right = '2rem';
+        programOverlay.style.background = branding.primaryColor + 'cc';
+        programOverlay.style.color = '#fff';
+        programOverlay.style.padding = '1rem 2rem';
+        programOverlay.style.borderRadius = '0.5rem';
+        programOverlay.style.boxShadow = '0 2px 8px #0003';
+        programOverlay.style.fontFamily = branding.font;
+        programOverlay.style.opacity = '0.6';
+        programOverlay.innerHTML = `<div class='font-bold text-lg mb-2'>Program</div><table><tbody>${program.map(item => `<tr><td class='pr-4'>${item.time}</td><td class='pr-4'>${item.title}</td><td>${item.presenter}</td></tr>`).join('')}</tbody></table>`;
     } else if (programOverlay) {
         programOverlay.remove();
     }
     // Holdslate Overlay
     let holdslateOverlay = overlayContainer.querySelector('#holdslate-overlay');
     const holdslateData = state && state.holdslate;
-    if (state && state.holdslateVisible && holdslateData && holdslateData.image) {
+    const holdslateShow = previewMode ? state && state.holdslatePreviewVisible : state && state.holdslateVisible;
+    if (holdslateShow && holdslateData && holdslateData.image) {
         if (!holdslateOverlay) {
             holdslateOverlay = document.createElement('div');
             holdslateOverlay.id = 'holdslate-overlay';
@@ -118,6 +271,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         holdslateOverlay.style.justifyContent = 'center';
         holdslateOverlay.style.zIndex = '100';
         holdslateOverlay.style.fontFamily = branding.font;
+        holdslateOverlay.style.opacity = previewMode ? '0.6' : '1';
         renderHoldslateCountdown(holdslateData, branding);
         if (countdownInterval) clearInterval(countdownInterval);
         if (holdslateData.countdown) {
@@ -131,10 +285,15 @@ function renderOverlayFromFirebase(state, graphics, branding) {
 
 let lastState = null;
 let lastGraphics = null;
-let lastBranding = null;
+let lastBranding = DEFAULT_BRANDING;
 
 function updateOverlay() {
     renderOverlayFromFirebase(lastState, lastGraphics, lastBranding);
+    masterVolume = lastState && lastState.masterVolume !== undefined ? lastState.masterVolume : 1;
+    vtVolume = lastState && lastState.vtVolume !== undefined ? lastState.vtVolume : 1;
+    musicVolume = lastState && lastState.musicVolume !== undefined ? lastState.musicVolume : 1;
+    if (vtVideo) vtVideo.volume = masterVolume * vtVolume;
+    if (window.musicAudio) window.musicAudio.volume = masterVolume * musicVolume;
 }
 
 listenOverlayState(eventId, (state) => {
@@ -142,17 +301,35 @@ listenOverlayState(eventId, (state) => {
     updateOverlay();
 });
 listenGraphicsData(eventId, (graphics) => {
-    lastGraphics = graphics || { lowerThirds: [], titleSlides: [] };
+    lastGraphics = graphics || { lowerThirds: [], titleSlides: [], teams: {} };
     updateOverlay();
 });
 listenBranding(eventId, (branding) => {
-    lastBranding = branding || {
-        primaryColor: '#00ADF1',
-        secondaryColor1: '#004a77',
-        secondaryColor2: '#e0f7ff',
-        logoPrimary: '',
-        logoSecondary: '',
-        font: 'Arial'
-    };
+    lastBranding = branding || DEFAULT_BRANDING;
     updateOverlay();
+});
+
+const db = getDatabaseInstance();
+onValue(ref(db, `status/${eventId}/vtCommand`), snap => {
+    const cmd = snap.val();
+    if (!cmd || cmd.action !== 'play' || !cmd.vt) return;
+    playVT(cmd.vt);
+});
+
+// Preload VT when loaded in control panel
+onValue(ref(db, `status/${eventId}/vt`), snap => {
+    const vt = snap.val();
+    if (vt && vt.videoUrl) {
+        preloadedVT = document.createElement('video');
+        preloadedVT.src = vt.videoUrl;
+        preloadedVT.preload = 'auto';
+        preloadedVT.oncanplaythrough = () => {
+            set(ref(db, `status/${eventId}/vtReady`), true);
+        };
+        preloadedVT.onerror = () => set(ref(db, `status/${eventId}/vtReady`), false);
+        preloadedVT.load();
+    } else {
+        preloadedVT = null;
+        set(ref(db, `status/${eventId}/vtReady`), false);
+    }
 });

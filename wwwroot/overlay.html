@@ -9,7 +9,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            theme: { extend: { colors: { brand: '#00ADF1' } } }
+            theme: { extend: { colors: { brand: '#e16316' } } }
         };
     </script>
 
@@ -20,8 +20,16 @@
 </head>
 <body class="bg-transparent">
     <div id="overlay-container">
+        <div id="corner-logos">
+            <img id="logo-tl" class="absolute top-0 left-0 m-4 h-16" />
+            <img id="logo-tr" class="absolute top-0 right-0 m-4 h-16" />
+            <img id="logo-bl" class="absolute bottom-0 left-0 m-4 h-16" />
+            <img id="logo-br" class="absolute bottom-0 right-0 m-4 h-16" />
+        </div>
+        <div id="preview-lower-third"></div>
         <div id="lower-third"></div>
         <div id="now-playing"></div>
+        <div id="vt-overlay"></div>
         <div id="title-slide"></div>
     </div>
 

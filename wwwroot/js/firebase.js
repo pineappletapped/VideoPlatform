@@ -54,19 +54,39 @@ export function getOverlayState(eventId) {
 }
 
 // Graphics helpers (eventId-scoped)
-export function setGraphicsData(eventId, graphics) {
-  return set(ref(db, `graphics/${eventId}`), graphics);
+export function setGraphicsData(eventId, graphics, mode = 'live') {
+  const path = mode === 'dev' ? `graphicsDev/${eventId}` : `graphics/${eventId}`;
+  return set(ref(db, path), graphics);
 }
-export function updateGraphicsData(eventId, graphics) {
-  return update(ref(db, `graphics/${eventId}`), graphics);
+export function updateGraphicsData(eventId, graphics, mode = 'live') {
+  const path = mode === 'dev' ? `graphicsDev/${eventId}` : `graphics/${eventId}`;
+  return update(ref(db, path), graphics);
 }
-export function listenGraphicsData(eventId, callback) {
-  return onValue(ref(db, `graphics/${eventId}`), (snapshot) => {
+export function listenGraphicsData(eventId, callback, mode = 'live') {
+  const path = mode === 'dev' ? `graphicsDev/${eventId}` : `graphics/${eventId}`;
+  return onValue(ref(db, path), (snapshot) => {
     callback(snapshot.val());
   });
 }
-export function getGraphicsData(eventId) {
-  return get(ref(db, `graphics/${eventId}`)).then(snap => snap.val());
+export function getGraphicsData(eventId, mode = 'live') {
+  const path = mode === 'dev' ? `graphicsDev/${eventId}` : `graphics/${eventId}`;
+  return get(ref(db, path)).then(snap => snap.val());
+}
+
+// Favorites helpers (eventId-scoped)
+export function setFavorites(eventId, data) {
+  return set(ref(db, `favorites/${eventId}`), data);
+}
+export function updateFavorites(eventId, data) {
+  return update(ref(db, `favorites/${eventId}`), data);
+}
+export function listenFavorites(eventId, callback) {
+  return onValue(ref(db, `favorites/${eventId}`), (snapshot) => {
+    callback(snapshot.val());
+  });
+}
+export function getFavorites(eventId) {
+  return get(ref(db, `favorites/${eventId}`)).then(snap => snap.val());
 }
 
 // Branding helpers (eventId-scoped)
@@ -102,4 +122,18 @@ export function listenUser(userId, callback) {
 }
 export function getAllUsers() {
   return get(ref(db, 'users')).then(snap => snap.val());
+}
+
+// User branding helpers
+export function setUserBranding(userId, branding) {
+  return set(ref(db, `userBranding/${userId}`), branding);
+}
+export function updateUserBranding(userId, branding) {
+  return update(ref(db, `userBranding/${userId}`), branding);
+}
+export function getUserBranding(userId) {
+  return get(ref(db, `userBranding/${userId}`)).then(snap => snap.val());
+}
+export function listenUserBranding(userId, cb) {
+  return onValue(ref(db, `userBranding/${userId}`), snap => cb(snap.val()));
 }

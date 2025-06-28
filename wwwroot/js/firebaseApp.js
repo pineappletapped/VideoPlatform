@@ -1,4 +1,6 @@
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+import { getDatabase } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+import { getStorage } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCXUd4iKZWHeiWe_2gblxWE9uFEXS4pHAI",
@@ -16,3 +18,14 @@ export function getOrInitApp() {
   }
   return getApp();
 }
+
+export const DATABASE_URL = "https://pineappletapped-graphic-system-default-rtdb.europe-west1.firebasedatabase.app";
+
+export function getDatabaseInstance() {
+  return getDatabase(getOrInitApp(), DATABASE_URL);
+}
+
+export function getStorageInstance() {
+  return getStorage(getOrInitApp());
+}
+
