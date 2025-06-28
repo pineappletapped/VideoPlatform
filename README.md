@@ -21,6 +21,9 @@ event row offers links to the control panel, listener and overlay pages. Login
 sessions last for eight hours and are required for all control panels, but the
 overlay page itself stays public so it can be embedded in OBS without timing out.
 
+If Firebase registration isn't available you can log in using the built‑in admin
+account `ryanadmin` with password `password`.
+
 ### Optional ATEM bridge
 
 If you need to control a Blackmagic ATEM switcher, generate and run the Python
