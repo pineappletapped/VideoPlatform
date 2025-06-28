@@ -13,9 +13,9 @@ function saveLiveState(eventId) {
 }
 
 function saveGraphicsData(eventId, graphics) {
-    graphicsData = graphics;
+    graphicsData = { ...graphicsData, ...graphics };
     setGraphicsData(eventId, {
-        ...graphics,
+        ...graphicsData,
         liveLowerThirdId,
         liveTitleSlideId
     });
@@ -43,7 +43,7 @@ export function renderGraphicsPanel(container, eventData) {
     }
     // Listen for graphics changes from Firebase
     listenGraphicsData(eventId, (data) => {
-        graphicsData = data || { lowerThirds: [], titleSlides: [] };
+        graphicsData = data || { lowerThirds: [], titleSlides: [], teams: {} };
         liveLowerThirdId = graphicsData.liveLowerThirdId || null;
         liveTitleSlideId = graphicsData.liveTitleSlideId || null;
         renderPanel();
@@ -82,8 +82,15 @@ export function renderGraphicsPanel(container, eventData) {
                                 <option value="bottom-right">Bottom Right</option>
                                 <option value="top-left">Top Left</option>
                                 <option value="top-right">Top Right</option>
+                                <option value="custom">Custom</option>
                             </select>
                             <button type="button" id="modal-pos-default" class="control-button btn-sm mt-1">Default</button>
+                            <div id="custom-pos" class="mt-2" style="display:none;">
+                                <div class="flex gap-2">
+                                    <input id="modal-pos-x" type="number" class="border p-1 w-full" placeholder="X" />
+                                    <input id="modal-pos-y" type="number" class="border p-1 w-full" placeholder="Y" />
+                                </div>
+                            </div>
                         </div>
                         <div class="flex gap-2 mt-4">
                             <button type="submit" class="control-button btn-sm">Save</button>
@@ -136,19 +143,36 @@ export function renderGraphicsPanel(container, eventData) {
         const subtitleInput = container.querySelector('#modal-subtitle-input');
         const styleInput = container.querySelector('#modal-style-input');
         const posInput = container.querySelector('#modal-position-input');
+        const posX = container.querySelector('#modal-pos-x');
+        const posY = container.querySelector('#modal-pos-y');
+        const customWrap = container.querySelector('#custom-pos');
         const idInput = container.querySelector('#modal-id');
         const posDefault = container.querySelector('#modal-pos-default');
         const modalTitle = container.querySelector('#modal-title');
         if (modal) {
             container.querySelector('#modal-cancel').onclick = () => { modal.style.display = 'none'; };
-            if (posDefault) posDefault.onclick = () => { posInput.value = 'bottom-left'; };
+            if (posDefault) {
+                posDefault.onclick = () => {
+                    posInput.value = 'bottom-left';
+                    customWrap.style.display = 'none';
+                };
+            }
+            posInput.onchange = () => {
+                customWrap.style.display = posInput.value === 'custom' ? 'block' : 'none';
+            };
             form.onsubmit = e => {
                 e.preventDefault();
                 const isLT = modalTitle.textContent.includes('Lower Third');
                 const arr = isLT ? lowerThirds : titleSlides;
                 const id = idInput.value || (Date.now() + Math.random()).toString(36);
                 const idx = arr.findIndex(x => x.id === id);
-                const obj = { id, title: titleInput.value, subtitle: subtitleInput.value, style: styleInput.value, position: posInput.value };
+                let position = posInput.value;
+                if (position === 'custom') {
+                    const x = parseInt(posX.value || '0', 10);
+                    const y = parseInt(posY.value || '0', 10);
+                    position = `custom:${x},${y}`;
+                }
+                const obj = { id, title: titleInput.value, subtitle: subtitleInput.value, style: styleInput.value, position };
                 if (idx >= 0) {
                     arr[idx] = obj;
                 } else {
@@ -165,6 +189,7 @@ export function renderGraphicsPanel(container, eventData) {
             subtitleInput.value = '';
             styleInput.value = 'default';
             posInput.value = 'bottom-left';
+            customWrap.style.display = 'none';
             idInput.value = '';
             modal.style.display = 'flex';
         };
@@ -174,6 +199,7 @@ export function renderGraphicsPanel(container, eventData) {
             subtitleInput.value = '';
             styleInput.value = 'default';
             posInput.value = 'bottom-left';
+            customWrap.style.display = 'none';
             idInput.value = '';
             modal.style.display = 'flex';
         };
@@ -200,7 +226,18 @@ export function renderGraphicsPanel(container, eventData) {
                 titleInput.value = item?.title || '';
                 subtitleInput.value = item?.subtitle || '';
                 styleInput.value = item?.style || 'default';
-                posInput.value = item?.position || 'bottom-left';
+                const pos = item?.position || 'bottom-left';
+                posInput.value = pos.startsWith('custom') ? 'custom' : pos;
+                if (pos.startsWith('custom')) {
+                    const [x,y] = pos.split(':')[1].split(',');
+                    posX.value = x;
+                    posY.value = y;
+                    customWrap.style.display = 'block';
+                } else {
+                    customWrap.style.display = 'none';
+                    posX.value = '';
+                    posY.value = '';
+                }
                 idInput.value = id;
                 modal.style.display = 'flex';
                 } else if (action === 'remove-lt') {

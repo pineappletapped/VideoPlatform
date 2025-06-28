@@ -1,4 +1,4 @@
-.status-bar, .program-preview, .input-sources-bar, .graphics-panel, .obs-controls, .atem-controls, .ptz-controls, .branding-modal, .profile-wizard, .calendar-drawer {
+.status-bar, .input-sources-bar, .graphics-panel, .obs-controls, .atem-controls, .ptz-controls, .branding-modal, .profile-wizard, .calendar-drawer {
   border: 2px dashed #00ADF1;
   background: #e0f7ff;
   color: #004a77;
@@ -49,4 +49,31 @@
   padding: 1rem;
   border-radius: 0.5rem;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.program-preview {
+  padding: 1rem;
+}
+
+.lower-third-default {
+  background: var(--brand-primary);
+  color: #fff;
+  border-radius: 0.5rem;
+  padding: 1rem 2rem;
+  box-shadow: 0 2px 8px #0003;
+}
+
+.lower-third-rounded {
+  background: var(--brand-primary);
+  color: #fff;
+  padding: 1rem 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 2px 8px #0003;
+}
+
+.lower-third-underline {
+  background: transparent;
+  color: #fff;
+  padding: 0.5rem 0;
+  border-bottom: 4px solid var(--brand-primary);
 }

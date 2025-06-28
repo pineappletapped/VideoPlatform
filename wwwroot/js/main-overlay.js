@@ -55,12 +55,25 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     if (graphics && graphics.lowerThirds && liveLowerThirdId) {
         lowerThird = graphics.lowerThirds.find(lt => lt.id === liveLowerThirdId);
     }
-    document.getElementById('lower-third').innerHTML = lowerThird
-        ? `<div class='lower-third' style='position:absolute;bottom:2rem;left:2rem;min-width:300px;background:var(--brand-primary);color:#fff;padding:1rem 2rem;border-radius:0.5rem;box-shadow:0 2px 8px #0003;font-family:${branding.font};'>
-            ${branding.logoPrimary ? `<img src='${branding.logoPrimary}' alt='Logo' style='height:32px;display:inline-block;margin-right:1rem;vertical-align:middle;' />` : ''}
-            <span style='vertical-align:middle;'><span style='font-weight:bold;font-size:1.2em;'>${lowerThird.title}</span><br><span style='font-size:1em;'>${lowerThird.subtitle}</span></span>
-        </div>`
-        : '';
+    if (lowerThird) {
+        const pos = lowerThird.position || 'bottom-left';
+        let stylePos = '';
+        if (pos.startsWith('custom')) {
+            const [x,y] = pos.split(':')[1].split(',');
+            stylePos = `top:${y}px;left:${x}px;`;
+        } else if (pos === 'bottom-right') stylePos = 'bottom:2rem;right:2rem;';
+        else if (pos === 'top-left') stylePos = 'top:2rem;left:2rem;';
+        else if (pos === 'top-right') stylePos = 'top:2rem;right:2rem;';
+        else stylePos = 'bottom:2rem;left:2rem;';
+        const styleClass = `lower-third-${lowerThird.style || 'default'}`;
+        document.getElementById('lower-third').innerHTML =
+            `<div class='${styleClass}' style='position:absolute;${stylePos}min-width:300px;font-family:${branding.font};'>`+
+            `${branding.logoPrimary ? `<img src='${branding.logoPrimary}' alt='Logo' style='height:32px;display:inline-block;margin-right:1rem;vertical-align:middle;' />` : ''}`+
+            `<span style='vertical-align:middle;'><span style='font-weight:bold;font-size:1.2em;'>${lowerThird.title}</span><br><span style='font-size:1em;'>${lowerThird.subtitle}</span></span>`+
+            `</div>`;
+    } else {
+        document.getElementById('lower-third').innerHTML = '';
+    }
     if (state && state.musicVisible && state.nowPlaying) {
         document.getElementById('now-playing').innerHTML = `<div class='now-playing' style='position:absolute;top:2rem;right:2rem;background:var(--brand-secondary1);color:#fff;padding:0.5rem 1rem;border-radius:0.5rem;font-family:${branding.font};'>Now Playing: ${state.nowPlaying.name}</div>`;
         if (!window.musicAudio || window.musicAudio.src !== state.nowPlaying.audioUrl) {
@@ -154,7 +167,7 @@ listenOverlayState(eventId, (state) => {
     updateOverlay();
 });
 listenGraphicsData(eventId, (graphics) => {
-    lastGraphics = graphics || { lowerThirds: [], titleSlides: [] };
+    lastGraphics = graphics || { lowerThirds: [], titleSlides: [], teams: {} };
     updateOverlay();
 });
 listenBranding(eventId, (branding) => {

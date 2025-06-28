@@ -7,6 +7,7 @@ import { renderGraphicsPanel } from './components/graphicsPanel.js';
 import { renderScoreboardPanel } from './components/scoreboardPanel.js';
 import { renderLineupPanel } from './components/lineupPanel.js';
 import { renderStatsPanel } from './components/statsPanel.js';
+import { renderTeamsPanel } from './components/teamsPanel.js';
 import { renderObsControls } from './components/obsControls.js';
 import { renderAtemControls } from './components/atemControls.js';
 import { renderPtzControls } from './components/ptzControls.js';
@@ -96,7 +97,7 @@ function setupTabs() {
 function updateGraphicsTabs(type) {
     const tabBar = document.getElementById('graphics-tabs');
     if (!tabBar) return;
-    const sports = ['scoreboard','lineups','stats'];
+    const sports = ['scoreboard','lineups','stats','teams'];
     sports.forEach(t => {
         const btn = tabBar.querySelector(`[data-tab="${t}"]`);
         const panel = document.getElementById(`${t}-panel`);
@@ -146,6 +147,7 @@ function setupEventTypeSelector(eventData) {
             renderScoreboardPanel(document.getElementById('scoreboard-panel'));
             renderLineupPanel(document.getElementById('lineups-panel'));
             renderStatsPanel(document.getElementById('stats-panel'));
+            renderTeamsPanel(document.getElementById('teams-panel'), eventId);
         } else {
             renderProgramPreview(document.getElementById('schedule-panel'), eventData, onOverlayStateChange);
         }
@@ -171,6 +173,7 @@ async function initializeComponents(eventData) {
         renderScoreboardPanel(document.getElementById('scoreboard-panel'));
         renderLineupPanel(document.getElementById('lineups-panel'));
         renderStatsPanel(document.getElementById('stats-panel'));
+        renderTeamsPanel(document.getElementById('teams-panel'), eventId);
     } else {
         renderProgramPreview(document.getElementById('schedule-panel'), eventData, onOverlayStateChange);
     }
