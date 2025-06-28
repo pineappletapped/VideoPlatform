@@ -7,17 +7,17 @@ let previewTitleSlideId = null;
 let graphicsData = null;
 let favorites = { lowerThirds: [], titleSlides: [] };
 
-function saveLiveState(eventId) {
+function saveLiveState(eventId, mode) {
     setGraphicsData(eventId, {
         ...graphicsData,
         liveLowerThirdId,
         previewLowerThirdId,
         liveTitleSlideId,
         previewTitleSlideId
-    });
+    }, mode);
 }
 
-function saveGraphicsData(eventId, graphics) {
+function saveGraphicsData(eventId, graphics, mode) {
     graphicsData = { ...graphicsData, ...graphics };
     setGraphicsData(eventId, {
         ...graphicsData,
@@ -25,10 +25,10 @@ function saveGraphicsData(eventId, graphics) {
         previewLowerThirdId,
         liveTitleSlideId,
         previewTitleSlideId
-    });
+    }, mode);
 }
 
-export function renderGraphicsPanel(container, eventData) {
+export function renderGraphicsPanel(container, eventData, mode = 'live') {
     const eventId = eventData.id || 'demo';
     const eventType = eventData.eventType || 'corporate';
     if (eventType === 'sports') {
@@ -56,7 +56,7 @@ export function renderGraphicsPanel(container, eventData) {
         liveTitleSlideId = graphicsData.liveTitleSlideId || null;
         previewTitleSlideId = graphicsData.previewTitleSlideId || null;
         renderPanel();
-    });
+    }, mode);
     listenFavorites(eventId, (fav) => { favorites = fav || { lowerThirds: [], titleSlides: [] }; renderPanel(); });
 
     function renderPanel() {
@@ -200,7 +200,7 @@ export function renderGraphicsPanel(container, eventData) {
                 } else {
                     arr.push(obj);
                 }
-                saveGraphicsData(eventId, { lowerThirds, titleSlides });
+                saveGraphicsData(eventId, { lowerThirds, titleSlides }, mode);
                 modal.style.display = 'none';
             };
         }
@@ -232,26 +232,26 @@ export function renderGraphicsPanel(container, eventData) {
                 const id = btn.getAttribute('data-id');
                 if (action === 'preview-lt') {
                     previewLowerThirdId = id;
-                    saveLiveState(eventId);
+                    saveLiveState(eventId, mode);
                 } else if (action === 'take-lt') {
                     liveLowerThirdId = id;
                     previewLowerThirdId = null;
-                    saveLiveState(eventId);
+                    saveLiveState(eventId, mode);
                 } else if (action === 'hide-lt') {
                     liveLowerThirdId = null;
                     previewLowerThirdId = null;
-                    saveLiveState(eventId);
+                    saveLiveState(eventId, mode);
                 } else if (action === 'preview-ts') {
                     previewTitleSlideId = id;
-                    saveLiveState(eventId);
+                    saveLiveState(eventId, mode);
                 } else if (action === 'take-ts') {
                     liveTitleSlideId = id;
                     previewTitleSlideId = null;
-                    saveLiveState(eventId);
+                    saveLiveState(eventId, mode);
                 } else if (action === 'hide-ts') {
                     liveTitleSlideId = null;
                     previewTitleSlideId = null;
-                    saveLiveState(eventId);
+                    saveLiveState(eventId, mode);
                 } else if (action === 'edit-lt' || action === 'edit-ts') {
                 const item = (action === 'edit-lt' ? lowerThirds : titleSlides).find(x => x.id === id);
                 modalTitle.textContent = action === 'edit-lt' ? 'Edit Lower Third' : 'Edit Title Slide';
@@ -285,13 +285,13 @@ export function renderGraphicsPanel(container, eventData) {
                     if (idx >= 0) lowerThirds.splice(idx, 1);
                     if (liveLowerThirdId === id) liveLowerThirdId = null;
                     if (previewLowerThirdId === id) previewLowerThirdId = null;
-                    saveGraphicsData(eventId, { lowerThirds, titleSlides });
+                    saveGraphicsData(eventId, { lowerThirds, titleSlides }, mode);
                 } else if (action === 'remove-ts') {
                     const idx = titleSlides.findIndex(x => x.id === id);
                     if (idx >= 0) titleSlides.splice(idx, 1);
                     if (liveTitleSlideId === id) liveTitleSlideId = null;
                     if (previewTitleSlideId === id) previewTitleSlideId = null;
-                    saveGraphicsData(eventId, { lowerThirds, titleSlides });
+                    saveGraphicsData(eventId, { lowerThirds, titleSlides }, mode);
                 }
             };
         });

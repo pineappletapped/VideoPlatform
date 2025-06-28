@@ -1,13 +1,13 @@
 import { listenOverlayState, updateOverlayState, listenGraphicsData, updateGraphicsData } from '../firebase.js';
 import { listenFavorites, updateFavorites } from '../firebase.js';
 
-export function renderActiveGraphicsPanel(container, eventId) {
+export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
     let overlayState = {};
     let graphicsData = {};
     let favorites = { lowerThirds: [], titleSlides: [] };
 
     listenOverlayState(eventId, (state) => { overlayState = state || {}; render(); });
-    listenGraphicsData(eventId, (g) => { graphicsData = g || {}; render(); });
+    listenGraphicsData(eventId, (g) => { graphicsData = g || {}; render(); }, mode);
     listenFavorites(eventId, (fav) => { favorites = fav || { lowerThirds: [], titleSlides: [] }; renderFav(); });
 
     function render() {
@@ -29,8 +29,8 @@ export function renderActiveGraphicsPanel(container, eventId) {
     function hideItem(type){
         if(type==='holdslate') updateOverlayState(eventId,{holdslateVisible:false,holdslatePreviewVisible:false});
         else if(type==='program') updateOverlayState(eventId,{liveProgramVisible:false,previewProgramVisible:false});
-        else if(type==='lowerThird') updateGraphicsData(eventId,{liveLowerThirdId:null});
-        else if(type==='titleSlide') updateGraphicsData(eventId,{liveTitleSlideId:null});
+        else if(type==='lowerThird') updateGraphicsData(eventId,{liveLowerThirdId:null}, mode);
+        else if(type==='titleSlide') updateGraphicsData(eventId,{liveTitleSlideId:null}, mode);
     }
 
     function renderFav() {
@@ -74,8 +74,8 @@ export function renderActiveGraphicsPanel(container, eventId) {
         const liveType = e.target.getAttribute('data-live');
         const id = e.target.getAttribute('data-id');
         if(liveType && id){
-            if(liveType==='lowerThird') updateGraphicsData(eventId,{liveLowerThirdId:id});
-            else if(liveType==='titleSlide') updateGraphicsData(eventId,{liveTitleSlideId:id});
+            if(liveType==='lowerThird') updateGraphicsData(eventId,{liveLowerThirdId:id}, mode);
+            else if(liveType==='titleSlide') updateGraphicsData(eventId,{liveTitleSlideId:id}, mode);
         }
         const remType = e.target.getAttribute('data-remove');
         if(remType && id){
@@ -94,6 +94,6 @@ export function renderActiveGraphicsPanel(container, eventId) {
         const favItems = [];
         favorites.lowerThirds.forEach(id=>{ favItems.push({type:'lowerThird', id}); });
         favorites.titleSlides.forEach(id=>{ favItems.push({type:'titleSlide', id}); });
-        favChecks.forEach((ch,i)=>{ if(ch.checked){ const item=favItems[i]; if(item.type==='lowerThird') updateGraphicsData(eventId,{liveLowerThirdId:item.id}); else if(item.type==='titleSlide') updateGraphicsData(eventId,{liveTitleSlideId:item.id}); }});
+        favChecks.forEach((ch,i)=>{ if(ch.checked){ const item=favItems[i]; if(item.type==='lowerThird') updateGraphicsData(eventId,{liveLowerThirdId:item.id}, mode); else if(item.type==='titleSlide') updateGraphicsData(eventId,{liveTitleSlideId:item.id}, mode); }});
     });
 }

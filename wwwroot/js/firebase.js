@@ -54,19 +54,23 @@ export function getOverlayState(eventId) {
 }
 
 // Graphics helpers (eventId-scoped)
-export function setGraphicsData(eventId, graphics) {
-  return set(ref(db, `graphics/${eventId}`), graphics);
+export function setGraphicsData(eventId, graphics, mode = 'live') {
+  const path = mode === 'dev' ? `graphicsDev/${eventId}` : `graphics/${eventId}`;
+  return set(ref(db, path), graphics);
 }
-export function updateGraphicsData(eventId, graphics) {
-  return update(ref(db, `graphics/${eventId}`), graphics);
+export function updateGraphicsData(eventId, graphics, mode = 'live') {
+  const path = mode === 'dev' ? `graphicsDev/${eventId}` : `graphics/${eventId}`;
+  return update(ref(db, path), graphics);
 }
-export function listenGraphicsData(eventId, callback) {
-  return onValue(ref(db, `graphics/${eventId}`), (snapshot) => {
+export function listenGraphicsData(eventId, callback, mode = 'live') {
+  const path = mode === 'dev' ? `graphicsDev/${eventId}` : `graphics/${eventId}`;
+  return onValue(ref(db, path), (snapshot) => {
     callback(snapshot.val());
   });
 }
-export function getGraphicsData(eventId) {
-  return get(ref(db, `graphics/${eventId}`)).then(snap => snap.val());
+export function getGraphicsData(eventId, mode = 'live') {
+  const path = mode === 'dev' ? `graphicsDev/${eventId}` : `graphics/${eventId}`;
+  return get(ref(db, path)).then(snap => snap.val());
 }
 
 // Favorites helpers (eventId-scoped)

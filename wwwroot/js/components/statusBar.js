@@ -21,7 +21,6 @@ export function renderStatusBar(container, eventData, opts = {}) {
     function render(status) {
         container.innerHTML = `
             <div class='status-bar'>
-                <h2 class="font-bold text-lg mb-2">Status Bar</h2>
                 <div class="flex flex-wrap gap-4 items-center text-sm">
                     <span>Status: <span class="font-semibold">${eventData.status || 'unknown'}</span></span>
                     <span>Date: <span class="font-semibold" id="status-date"></span></span>

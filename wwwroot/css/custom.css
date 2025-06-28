@@ -11,6 +11,10 @@
   min-height: 48px;
 }
 
+.status-bar {
+  border: none;
+}
+
 /* Remove dotted border from main graphics panel */
 .graphics-panel {
   border: none;

@@ -23,6 +23,7 @@ const params = new URLSearchParams(window.location.search);
 const eventId = params.get('event_id') || 'demo';
 
 let loadedVT = null;
+let graphicsMode = 'live';
 
 async function initializeApp() {
     let firebaseStatus = 'Connecting to Firebase...';
@@ -101,32 +102,6 @@ function updateGraphicsTabs(type) {
     }
 }
 
-function setupEventTypeSelector(eventData) {
-    const selector = document.getElementById('event-type');
-    if (!selector) return;
-    if (eventData.eventType) selector.value = eventData.eventType;
-    updateGraphicsTabs(selector.value);
-    selector.addEventListener('change', async () => {
-        const newType = selector.value;
-        await updateEventMetadata(eventId,{...eventData,eventType:newType});
-        renderGraphicsPanel(document.getElementById('lower-thirds-panel'), {...eventData,eventType:newType});
-        updateGraphicsTabs(newType);
-        if (newType === 'sports') {
-            renderSportPanel(document.getElementById('sport-panel'), eventData, async (id,sport)=>{
-                await updateEventMetadata(eventId,{...eventData,sport});
-                eventData.sport = sport;
-                renderScoreboardPanel(document.getElementById('scoreboard-panel'), sport);
-            });
-            renderScoreboardPanel(document.getElementById('scoreboard-panel'), eventData.sport);
-            renderLineupPanel(document.getElementById('lineups-panel'));
-            renderStatsPanel(document.getElementById('stats-panel'));
-            renderTeamsPanel(document.getElementById('teams-panel'), eventId);
-        } else {
-            renderProgramPreview(document.getElementById('schedule-panel'), eventData, onOverlayStateChange);
-        }
-    });
-}
-
 async function initializeComponents(eventData) {
     setupTabs();
     const preview = document.getElementById('video-preview');
@@ -159,11 +134,41 @@ async function initializeComponents(eventData) {
         }
     });
     const topBar = document.createElement('top-bar');
+    topBar.setAttribute('event-type', eventData.eventType || 'corporate');
+    topBar.setAttribute('mode', 'live');
     topBar.addEventListener('logout', logout);
     topBar.addEventListener('edit-account', () => alert('Edit account not implemented'));
+    topBar.addEventListener('event-type-change', async e => {
+        const newType = e.detail;
+        await updateEventMetadata(eventId,{...eventData,eventType:newType});
+        eventData.eventType = newType;
+        renderGraphicsPanel(document.getElementById('lower-thirds-panel'), {...eventData}, graphicsMode);
+        updateGraphicsTabs(newType);
+        if (newType === 'sports') {
+            renderSportPanel(document.getElementById('sport-panel'), eventData, async (id,sport)=>{
+                await updateEventMetadata(eventId,{...eventData,sport});
+                eventData.sport = sport;
+                renderScoreboardPanel(document.getElementById('scoreboard-panel'), sport);
+            });
+            renderScoreboardPanel(document.getElementById('scoreboard-panel'), eventData.sport);
+            renderLineupPanel(document.getElementById('lineups-panel'));
+            renderStatsPanel(document.getElementById('stats-panel'));
+            renderTeamsPanel(document.getElementById('teams-panel'), eventId);
+        } else {
+            renderProgramPreview(document.getElementById('schedule-panel'), eventData, onOverlayStateChange);
+        }
+    });
+    topBar.addEventListener('mode-change', e => {
+        graphicsMode = e.detail;
+        renderGraphicsPanel(document.getElementById('lower-thirds-panel'), {...eventData}, graphicsMode);
+        renderActiveGraphicsPanel(document.getElementById('active-graphics'), eventId, graphicsMode);
+    });
+    topBar.addEventListener('push-live', async () => {
+        const devData = await getGraphicsData(eventId, 'dev');
+        if (devData) await setGraphicsData(eventId, devData, 'live');
+    });
     document.getElementById('top-bar').appendChild(topBar);
     renderStatusBar(document.getElementById('status-bar'), eventData, {listener:false, atem:false, obs:false, sport:true, clock:true});
-    setupEventTypeSelector(eventData);
     updateGraphicsTabs(eventData.eventType || 'corporate');
     if ((eventData.eventType || 'corporate') === 'sports') {
         renderSportPanel(document.getElementById('sport-panel'), eventData, async (id,sport)=>{
@@ -180,11 +185,11 @@ async function initializeComponents(eventData) {
     }
 
     renderHoldslatePanel(document.getElementById('holdslate-panel'), onOverlayStateChange);
-    renderGraphicsPanel(document.getElementById('lower-thirds-panel'), eventData);
+    renderGraphicsPanel(document.getElementById('lower-thirds-panel'), eventData, graphicsMode);
 
     renderVtsPanel(document.getElementById('vts-panel'), eventId, vt => { loadedVT = vt; window.loadedVT = vt; });
     renderMusicPanel(document.getElementById('music-panel'), eventId);
-    renderActiveGraphicsPanel(document.getElementById('active-graphics'), eventId);
+    renderActiveGraphicsPanel(document.getElementById('active-graphics'), eventId, graphicsMode);
     renderBrandingPanel(document.getElementById('branding-panel'), eventId);
 
     setupAudioControls();
@@ -226,7 +231,7 @@ function setupAudioControls() {
 async function cutToProgram() {
     const [state, graphics] = await Promise.all([
         getOverlayState(eventId),
-        getGraphicsData(eventId)
+        getGraphicsData(eventId, graphicsMode)
     ]);
     const overlayUpdates = {};
     const graphicsUpdates = {};
@@ -251,7 +256,7 @@ async function cutToProgram() {
         }
     }
     if (Object.keys(graphicsUpdates).length) {
-        await updateGraphicsData(eventId, graphicsUpdates);
+        await updateGraphicsData(eventId, graphicsUpdates, graphicsMode);
     }
     if (Object.keys(overlayUpdates).length) {
         await updateOverlayState(eventId, overlayUpdates);
