@@ -17,9 +17,10 @@ Make sure the `wwwroot/uploads` directory exists and is writable (e.g. `chmod 77
 ## Login & Events
 
 The landing page is an event dashboard. Sign up or log in and create events. Each
-event row offers links to the control panel, listener and overlay pages. Login
-sessions last for eight hours and are required for all control panels, but the
-overlay page itself stays public so it can be embedded in OBS without timing out.
+event row offers links to the main control panel, a simplified **Graphics** panel,
+the listener and the overlay page. Login sessions last for eight hours and are
+required for all control panels, but the overlay page itself stays public so it
+can be embedded in OBS without timing out.
 
 If Firebase registration isn't available you can log in using the built‑in admin
 account `ryanadmin` with password `password`.
@@ -40,3 +41,9 @@ When you load a VT clip in the control panel, the overlay automatically
 preloads the video. Once the clip can play all the way through, the overlay
 sets `status/<event>/vtReady` to `true`. The input sources bar highlights the
 VT button with a green outline when the clip is buffered and ready to play.
+
+### Graphics-only panel
+
+Use the **Graphics** link from the dashboard if you only need to operate the
+overlay. This stripped down panel removes OBS and ATEM options and embeds a
+small preview of `overlay.html` so you can see graphics live.

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Graphics Control Panel</title>
+
+    <!-- Tailwind (CDN) -->
+    <script src="https://cdn.tailwindcss.com?v=20240610"></script>
+    <script>
+        tailwind.config = { theme: { extend: { colors: { brand: '#00ADF1' } } } };
+    </script>
+
+    <!-- GSAP (CDN) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js?v=20240610"></script>
+
+    <link rel="stylesheet" href="css/custom.css?v=20240610">
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+    <div id="top-bar"></div>
+    <div id="status-bar"></div>
+    <div class="flex-1 flex flex-col md:flex-row container mx-auto p-4 gap-4">
+        <!-- Left Column -->
+        <div class="flex-1 flex flex-col gap-4 min-w-[320px]">
+            <div id="video-preview" class="bg-black rounded-lg shadow-md flex items-center justify-center min-h-[200px] text-white text-lg font-bold">Preview</div>
+            <div id="input-sources"></div>
+        </div>
+        <!-- Right Column -->
+        <div class="flex-1 flex flex-col gap-4 min-w-[320px]">
+            <!-- Event Type Selector -->
+            <div class="bg-white rounded-lg shadow p-4">
+                <select id="event-type" class="w-full p-2 border rounded">
+                    <option value="corporate">Corporate Event</option>
+                    <option value="sports">Sports Event</option>
+                </select>
+            </div>
+
+            <!-- Graphics Control Panel (Tabbed) -->
+            <div class="bg-white rounded-lg shadow flex-1 graphics-panel">
+                <div class="flex border-b" id="graphics-tabs">
+                    <button class="px-4 py-2 border-b-2 border-brand text-brand font-semibold" data-tab="holdslate">Holdslate</button>
+                    <button class="px-4 py-2" data-tab="lower-thirds">Lower Thirds</button>
+                    <button class="px-4 py-2" data-tab="schedule">Schedule</button>
+                    <button class="px-4 py-2 hidden" data-tab="scoreboard">Scoreboard</button>
+                    <button class="px-4 py-2 hidden" data-tab="lineups">Lineups</button>
+                    <button class="px-4 py-2 hidden" data-tab="stats">Stats</button>
+                    <button class="px-4 py-2 hidden" data-tab="teams">Teams</button>
+                    <button class="px-4 py-2 hidden" data-tab="sport">Sport</button>
+                </div>
+                <div class="p-4">
+                    <div id="holdslate-panel" class="tab-content"></div>
+                    <div id="lower-thirds-panel" class="tab-content hidden"></div>
+                    <div id="schedule-panel" class="tab-content hidden program-preview"></div>
+                    <div id="scoreboard-panel" class="tab-content hidden"></div>
+                    <div id="lineups-panel" class="tab-content hidden"></div>
+                    <div id="stats-panel" class="tab-content hidden"></div>
+                    <div id="teams-panel" class="tab-content hidden"></div>
+                    <div id="sport-panel" class="tab-content hidden"></div>
+                </div>
+            </div>
+
+            <!-- AV Control Panel -->
+            <div class="bg-white rounded-lg shadow av-panel">
+                <div class="flex border-b">
+                    <button class="px-4 py-2 border-b-2 border-brand text-brand font-semibold" data-tab="vts">VTs</button>
+                    <button class="px-4 py-2" data-tab="music">Music</button>
+                </div>
+                <div class="p-4 flex">
+                    <div class="flex-1">
+                        <div id="vts-panel" class="tab-content"></div>
+                        <div id="music-panel" class="tab-content hidden"></div>
+                    </div>
+                    <div class="w-32 ml-4 border-l pl-4">
+                        <div class="text-sm font-semibold mb-2">Audio Levels</div>
+                        <div class="space-y-2">
+                            <div>
+                                <label class="text-xs" for="audio-master">Master</label>
+                                <input type="range" id="audio-master" class="w-full" min="0" max="1" step="0.01" value="1" />
+                            </div>
+                            <div>
+                                <label class="text-xs" for="audio-vt">VT</label>
+                                <input type="range" id="audio-vt" class="w-full" min="0" max="1" step="0.01" value="1" />
+                            </div>
+                            <div>
+                                <label class="text-xs" for="audio-music">Music</label>
+                                <input type="range" id="audio-music" class="w-full" min="0" max="1" step="0.01" value="1" />
+                                <button class="control-button btn-xs mt-1 w-full" id="music-monitor">Monitor</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="branding-modal" class="hidden"></div>
+    <div id="profile-wizard" class="hidden"></div>
+    <div id="calendar-drawer" class="hidden"></div>
+    <footer class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-300 flex items-center justify-between px-6 py-2 z-50 shadow">
+        <button id="footer-branding" class="control-button">Event Branding</button>
+    </footer>
+    <script type="module" src="js/main-graphics.js?v=20240610"></script>
+</body>
+</html>
