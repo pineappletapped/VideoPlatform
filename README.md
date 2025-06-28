@@ -45,5 +45,4 @@ VT button with a green outline when the clip is buffered and ready to play.
 ### Graphics-only panel
 
 Use the **Graphics** link from the dashboard if you only need to operate the
-overlay. This stripped down panel removes OBS and ATEM options and embeds a
-small preview of `overlay.html` so you can see graphics live.
+overlay. This stripped down panel removes OBS and ATEM options and embeds side‑by‑side Preview and Program monitors so you can rehearse a graphic before taking it live.

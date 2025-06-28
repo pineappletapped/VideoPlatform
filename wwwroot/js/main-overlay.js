@@ -95,12 +95,37 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     if (!overlayContainer) return;
     // Remove overlays
     overlayContainer.querySelector('#program-overlay')?.remove();
+    overlayContainer.querySelector('#preview-lower-third')?.remove();
     overlayContainer.querySelector('#holdslate-overlay')?.remove();
-    // Lower Third
+    // Lower Thirds
     let lowerThird = null;
+    let previewLowerThird = null;
     let liveLowerThirdId = graphics && graphics.liveLowerThirdId;
+    let previewLowerThirdId = graphics && graphics.previewLowerThirdId;
     if (graphics && graphics.lowerThirds && liveLowerThirdId) {
         lowerThird = graphics.lowerThirds.find(lt => lt.id === liveLowerThirdId);
+    }
+    if (graphics && graphics.lowerThirds && previewLowerThirdId) {
+        previewLowerThird = graphics.lowerThirds.find(lt => lt.id === previewLowerThirdId);
+    }
+    if (previewLowerThird) {
+        const pos = previewLowerThird.position || 'bottom-left';
+        let stylePos = '';
+        if (pos.startsWith('custom')) {
+            const [x,y] = pos.split(':')[1].split(',');
+            stylePos = `top:${y}px;left:${x}px;`;
+        } else if (pos === 'bottom-right') stylePos = 'bottom:2rem;right:2rem;';
+        else if (pos === 'top-left') stylePos = 'top:2rem;left:2rem;';
+        else if (pos === 'top-right') stylePos = 'top:2rem;right:2rem;';
+        else stylePos = 'bottom:2rem;left:2rem;';
+        const styleClass = `lower-third-${previewLowerThird.style || 'default'}`;
+        document.getElementById('preview-lower-third').innerHTML =
+            `<div class='${styleClass}' style='opacity:0.6;position:absolute;${stylePos}min-width:300px;font-family:${branding.font};'>`+
+            `${branding.logoPrimary ? `<img src='${branding.logoPrimary}' alt='Logo' style='height:32px;display:inline-block;margin-right:1rem;vertical-align:middle;' />` : ''}`+
+            `<span style='vertical-align:middle;'><span style='font-weight:bold;font-size:1.2em;'>${previewLowerThird.title}</span><br><span style='font-size:1em;'>${previewLowerThird.subtitle}</span></span>`+
+            `</div>`;
+    } else {
+        document.getElementById('preview-lower-third').innerHTML = '';
     }
     if (lowerThird) {
         const pos = lowerThird.position || 'bottom-left';
@@ -139,9 +164,14 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     }
     // Title Slide
     let titleSlide = null;
+    let previewTitleSlide = null;
     let liveTitleSlideId = graphics && graphics.liveTitleSlideId;
+    let previewTitleSlideId = graphics && graphics.previewTitleSlideId;
     if (graphics && graphics.titleSlides && liveTitleSlideId) {
         titleSlide = graphics.titleSlides.find(ts => ts.id === liveTitleSlideId);
+    }
+    if (graphics && graphics.titleSlides && previewTitleSlideId) {
+        previewTitleSlide = graphics.titleSlides.find(ts => ts.id === previewTitleSlideId);
     }
     document.getElementById('title-slide').innerHTML = titleSlide
         ? `<div class='title-slide' style='position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);min-width:350px;background:var(--brand-secondary2);color:#004a77;padding:2rem 2.5rem;border-radius:0.5rem;box-shadow:0 2px 8px #0003;font-family:${branding.font};text-align:center;'>
@@ -150,6 +180,26 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             <div style='font-size:1.2em;'>${titleSlide.subtitle}</div>
         </div>`
         : '';
+    document.getElementById('preview-title-slide')?.remove();
+    if (previewTitleSlide) {
+        const div = document.createElement('div');
+        div.id = 'preview-title-slide';
+        div.style.position = 'absolute';
+        div.style.top = '40%';
+        div.style.left = '50%';
+        div.style.transform = 'translate(-50%,-50%)';
+        div.style.minWidth = '350px';
+        div.style.opacity = '0.6';
+        div.style.background = 'var(--brand-secondary2)';
+        div.style.color = '#004a77';
+        div.style.padding = '2rem 2.5rem';
+        div.style.borderRadius = '0.5rem';
+        div.style.boxShadow = '0 2px 8px #0003';
+        div.style.fontFamily = branding.font;
+        div.style.textAlign = 'center';
+        div.innerHTML = `${branding.logoSecondary ? `<img src='${branding.logoSecondary}' alt='Logo' style='height:40px;display:block;margin:0 auto 1rem auto;' />` : ''}<div style='font-weight:bold;font-size:2em;margin-bottom:0.5rem;'>${previewTitleSlide.title}</div><div style='font-size:1.2em;'>${previewTitleSlide.subtitle}</div>`;
+        overlayContainer.appendChild(div);
+    }
     // Program Overlay
     let program = state && state.program;
     let programOverlay = overlayContainer.querySelector('#program-overlay');

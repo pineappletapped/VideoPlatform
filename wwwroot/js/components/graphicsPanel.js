@@ -1,14 +1,18 @@
 import { setGraphicsData, getGraphicsData, listenGraphicsData } from '../firebase.js';
 
 let liveLowerThirdId = null;
+let previewLowerThirdId = null;
 let liveTitleSlideId = null;
+let previewTitleSlideId = null;
 let graphicsData = null;
 
 function saveLiveState(eventId) {
     setGraphicsData(eventId, {
         ...graphicsData,
         liveLowerThirdId,
-        liveTitleSlideId
+        previewLowerThirdId,
+        liveTitleSlideId,
+        previewTitleSlideId
     });
 }
 
@@ -17,7 +21,9 @@ function saveGraphicsData(eventId, graphics) {
     setGraphicsData(eventId, {
         ...graphicsData,
         liveLowerThirdId,
-        liveTitleSlideId
+        previewLowerThirdId,
+        liveTitleSlideId,
+        previewTitleSlideId
     });
 }
 
@@ -45,7 +51,9 @@ export function renderGraphicsPanel(container, eventData) {
     listenGraphicsData(eventId, (data) => {
         graphicsData = data || { lowerThirds: [], titleSlides: [], teams: {} };
         liveLowerThirdId = graphicsData.liveLowerThirdId || null;
+        previewLowerThirdId = graphicsData.previewLowerThirdId || null;
         liveTitleSlideId = graphicsData.liveTitleSlideId || null;
+        previewTitleSlideId = graphicsData.previewTitleSlideId || null;
         renderPanel();
     });
 
@@ -54,8 +62,8 @@ export function renderGraphicsPanel(container, eventData) {
         const titleSlides = graphicsData.titleSlides || [];
         // Modal HTML (hidden by default)
         const modalHtml = `
-            <div id="graphics-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);z-index:1000;align-items:center;justify-content:center;">
-                <div style="background:#fff;padding:2rem;border-radius:0.5rem;min-width:300px;max-width:90vw;">
+            <div id="graphics-modal" class="modal-overlay" style="display:none;">
+                <div class="modal-window">
                     <h3 id="modal-title" class="font-bold text-lg mb-2">Add/Edit</h3>
                     <form id="modal-form">
                         <input id="modal-id" type="hidden" />
@@ -104,34 +112,44 @@ export function renderGraphicsPanel(container, eventData) {
             <div class='graphics-panel'>
                 <h2 class="font-bold text-lg mb-2">Graphics Panel</h2>
                 <div class="mb-2">
-                    <strong>Lower Thirds:</strong>
-                    <button class="control-button btn-sm" id="add-lt">Add</button>
-                    <ul class="list-disc ml-5 mt-2">
-                        ${lowerThirds.length === 0 ? `<li class='text-gray-400'>No lower thirds yet.</li>` : lowerThirds.map(lt => `
-                            <li data-id="${lt.id}" class="graphics-row${liveLowerThirdId === lt.id ? ' bg-yellow-200' : ''}" style="padding:0.5rem 0;">
-                                <span>${lt.title} <span class="text-xs text-gray-500">(${lt.subtitle})</span></span>
-                                <button class="control-button btn-sm" data-action="edit-lt" data-id="${lt.id}">Edit</button>
-                                <button class="control-button btn-sm" data-action="remove-lt" data-id="${lt.id}">Remove</button>
-                                <button class="control-button btn-sm" data-action="show-lt" data-id="${lt.id}">Show</button>
-                                <button class="control-button btn-sm" data-action="hide-lt" data-id="${lt.id}">Hide</button>
-                            </li>
-                        `).join('')}
-                    </ul>
+                    <div class="flex items-center justify-between mb-1">
+                        <strong>Lower Thirds:</strong>
+                        <button class="control-button btn-sm" id="add-lt">Add</button>
+                    </div>
+                    <table class="w-full text-sm">
+                        <tbody>
+                            ${lowerThirds.length === 0 ? `<tr><td class='text-gray-400'>No lower thirds yet.</td></tr>` : lowerThirds.map(lt => `
+                                <tr data-id="${lt.id}" class="${liveLowerThirdId === lt.id ? 'bg-yellow-200' : previewLowerThirdId === lt.id ? 'ring-2 ring-brand' : ''}">
+                                    <td class="pr-2 py-1">${lt.title} <span class="text-xs text-gray-500">(${lt.subtitle})</span></td>
+                                    <td class="py-1"><button class="control-button btn-sm" data-action="preview-lt" data-id="${lt.id}">Preview</button></td>
+                                    <td class="py-1"><button class="control-button btn-sm" data-action="take-lt" data-id="${lt.id}">Take</button></td>
+                                    <td class="py-1"><button class="control-button btn-sm" data-action="hide-lt" data-id="${lt.id}">Hide</button></td>
+                                    <td class="py-1"><button class="control-button btn-sm" data-action="edit-lt" data-id="${lt.id}">Edit</button></td>
+                                    <td class="py-1"><button class="control-button btn-sm" data-action="remove-lt" data-id="${lt.id}">Remove</button></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
                 </div>
                 <div>
-                    <strong>Title Slides:</strong>
-                    <button class="control-button btn-sm" id="add-ts">Add</button>
-                    <ul class="list-disc ml-5 mt-2">
-                        ${titleSlides.length === 0 ? `<li class='text-gray-400'>No title slides yet.</li>` : titleSlides.map(ts => `
-                            <li data-id="${ts.id}" class="graphics-row${liveTitleSlideId === ts.id ? ' bg-yellow-200' : ''}" style="padding:0.5rem 0;">
-                                <span>${ts.title} <span class="text-xs text-gray-500">(${ts.subtitle})</span></span>
-                                <button class="control-button btn-sm" data-action="edit-ts" data-id="${ts.id}">Edit</button>
-                                <button class="control-button btn-sm" data-action="remove-ts" data-id="${ts.id}">Remove</button>
-                                <button class="control-button btn-sm" data-action="show-ts" data-id="${ts.id}">Show</button>
-                                <button class="control-button btn-sm" data-action="hide-ts" data-id="${ts.id}">Hide</button>
-                            </li>
-                        `).join('')}
-                    </ul>
+                    <div class="flex items-center justify-between mb-1">
+                        <strong>Title Slides:</strong>
+                        <button class="control-button btn-sm" id="add-ts">Add</button>
+                    </div>
+                    <table class="w-full text-sm">
+                        <tbody>
+                            ${titleSlides.length === 0 ? `<tr><td class='text-gray-400'>No title slides yet.</td></tr>` : titleSlides.map(ts => `
+                                <tr data-id="${ts.id}" class="${liveTitleSlideId === ts.id ? 'bg-yellow-200' : previewTitleSlideId === ts.id ? 'ring-2 ring-brand' : ''}">
+                                    <td class="pr-2 py-1">${ts.title} <span class="text-xs text-gray-500">(${ts.subtitle})</span></td>
+                                    <td class="py-1"><button class="control-button btn-sm" data-action="preview-ts" data-id="${ts.id}">Preview</button></td>
+                                    <td class="py-1"><button class="control-button btn-sm" data-action="take-ts" data-id="${ts.id}">Take</button></td>
+                                    <td class="py-1"><button class="control-button btn-sm" data-action="hide-ts" data-id="${ts.id}">Hide</button></td>
+                                    <td class="py-1"><button class="control-button btn-sm" data-action="edit-ts" data-id="${ts.id}">Edit</button></td>
+                                    <td class="py-1"><button class="control-button btn-sm" data-action="remove-ts" data-id="${ts.id}">Remove</button></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
                 </div>
                 ${modalHtml}
             </div>
@@ -208,17 +226,25 @@ export function renderGraphicsPanel(container, eventData) {
             btn.onclick = e => {
                 const action = btn.getAttribute('data-action');
                 const id = btn.getAttribute('data-id');
-                if (action === 'show-lt') {
-                    liveLowerThirdId = id;
+                if (action === 'preview-lt') {
+                    previewLowerThirdId = id;
+                    saveLiveState(eventId);
+                } else if (action === 'take-lt') {
+                    liveLowerThirdId = previewLowerThirdId = id;
                     saveLiveState(eventId);
                 } else if (action === 'hide-lt') {
                     liveLowerThirdId = null;
+                    previewLowerThirdId = null;
                     saveLiveState(eventId);
-                } else if (action === 'show-ts') {
-                    liveTitleSlideId = id;
+                } else if (action === 'preview-ts') {
+                    previewTitleSlideId = id;
+                    saveLiveState(eventId);
+                } else if (action === 'take-ts') {
+                    liveTitleSlideId = previewTitleSlideId = id;
                     saveLiveState(eventId);
                 } else if (action === 'hide-ts') {
                     liveTitleSlideId = null;
+                    previewTitleSlideId = null;
                     saveLiveState(eventId);
                 } else if (action === 'edit-lt' || action === 'edit-ts') {
                 const item = (action === 'edit-lt' ? lowerThirds : titleSlides).find(x => x.id === id);
@@ -244,11 +270,13 @@ export function renderGraphicsPanel(container, eventData) {
                     const idx = lowerThirds.findIndex(x => x.id === id);
                     if (idx >= 0) lowerThirds.splice(idx, 1);
                     if (liveLowerThirdId === id) liveLowerThirdId = null;
+                    if (previewLowerThirdId === id) previewLowerThirdId = null;
                     saveGraphicsData(eventId, { lowerThirds, titleSlides });
                 } else if (action === 'remove-ts') {
                     const idx = titleSlides.findIndex(x => x.id === id);
                     if (idx >= 0) titleSlides.splice(idx, 1);
                     if (liveTitleSlideId === id) liveTitleSlideId = null;
+                    if (previewTitleSlideId === id) previewTitleSlideId = null;
                     saveGraphicsData(eventId, { lowerThirds, titleSlides });
                 }
             };

@@ -74,8 +74,8 @@ export function renderHoldslatePanel(container, onOverlayStateChange) {
                         <div class="text-sm">${countdown ? `<span class="font-semibold">Countdown:</span> <span id="holdslate-countdown"></span>` : ''}</div>
                     </div>
                 </div>
-                <div id="holdslate-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);z-index:1000;align-items:center;justify-content:center;">
-                    <div style="background:#fff;padding:2rem;border-radius:0.5rem;min-width:320px;max-width:95vw;">
+                <div id="holdslate-modal" class="modal-overlay" style="display:none;">
+                    <div class="modal-window">
                         <h3 class="font-bold text-lg mb-2">Edit Holdslate</h3>
                         <form id="holdslate-form">
                             <div class="mb-2">

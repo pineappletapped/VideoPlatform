@@ -34,8 +34,8 @@ export function renderVtsPanel(container, eventId, onLoadVT) {
                     </li>
                 `).join('')}
             </ul>
-            <div id="vt-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);z-index:1000;align-items:center;justify-content:center;">
-                <div style="background:#fff;padding:2rem;border-radius:0.5rem;min-width:320px;max-width:95vw;">
+            <div id="vt-modal" class="modal-overlay" style="display:none;">
+                <div class="modal-window">
                     <h3 class="font-bold text-lg mb-2" id="vt-modal-title">Add VT</h3>
                     <form id="vt-form">
                         <div class="mb-2">

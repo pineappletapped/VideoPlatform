@@ -126,12 +126,20 @@ function setupEventTypeSelector(eventData) {
 async function initializeComponents(eventData) {
     setupTabs();
     const preview = document.getElementById('video-preview');
+    const program = document.getElementById('video-program');
     if (preview) {
         const iframe = document.createElement('iframe');
         iframe.src = `overlay.html?event_id=${eventId}`;
         iframe.className = 'w-full h-full rounded';
         preview.innerHTML = '';
         preview.appendChild(iframe);
+    }
+    if (program) {
+        const iframe = document.createElement('iframe');
+        iframe.src = `overlay.html?event_id=${eventId}`;
+        iframe.className = 'w-full h-full rounded';
+        program.innerHTML = '';
+        program.appendChild(iframe);
     }
     const topBar = document.createElement('top-bar');
     topBar.addEventListener('logout', logout);

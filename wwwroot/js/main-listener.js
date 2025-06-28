@@ -204,8 +204,8 @@ function renderAtem(container) {
                 `).join('')}
             </ul>
         </div>
-        <div id="atem-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);z-index:1000;align-items:center;justify-content:center;">
-            <div style="background:#fff;padding:2rem;border-radius:0.5rem;min-width:320px;max-width:95vw;">
+        <div id="atem-modal" class="modal-overlay" style="display:none;">
+            <div class="modal-window">
                 <h3 class="font-bold text-lg mb-2">Add ATEM Device</h3>
                 <form id="atem-form">
                     <div class="mb-2">
@@ -234,8 +234,8 @@ function renderAtem(container) {
                 </form>
             </div>
         </div>
-        <div id="atem-script-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);z-index:1000;align-items:center;justify-content:center;">
-            <div style="background:#fff;padding:2rem;border-radius:0.5rem;min-width:320px;max-width:95vw;">
+        <div id="atem-script-modal" class="modal-overlay" style="display:none;">
+            <div class="modal-window">
                 <h3 class="font-bold text-lg mb-2">Python Bridge Script</h3>
                 <textarea id="atem-script-text" class="border p-2 w-full text-xs" rows="16" readonly></textarea>
                 <div class="flex gap-2 mt-4">
@@ -398,8 +398,8 @@ function renderObs(container) {
             <button class="control-button btn-sm mb-2" id="obs-send" ${obsConnected ? '' : 'disabled'}>Send Action</button>
             <div class="text-xs text-gray-600 mt-2">${obsConnected ? `Connected to ${obsConfig.url || ''}` : '(Not connected)'}</div>
         </div>
-        <div id="obs-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);z-index:1000;align-items:center;justify-content:center;">
-            <div style="background:#fff;padding:2rem;border-radius:0.5rem;min-width:320px;max-width:95vw;">
+        <div id="obs-modal" class="modal-overlay" style="display:none;">
+            <div class="modal-window">
                 <h3 class="font-bold text-lg mb-2">Connect to OBS WebSocket</h3>
                 <form id="obs-form">
                     <div class="mb-2">

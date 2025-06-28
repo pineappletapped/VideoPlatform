@@ -85,3 +85,33 @@
 .vt-buffered {
   box-shadow: 0 0 0 2px #38a169 inset;
 }
+
+/* Prevent double borders when panels nest */
+.graphics-panel .graphics-panel {
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Generic modal styling */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-window {
+  background: #2d2d2d;
+  color: #f3f4f6;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  min-width: 320px;
+  max-width: 95vw;
+}
