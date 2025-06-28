@@ -1,6 +1,7 @@
 :root {
   --brand-color: #e16316;
 }
+body { margin: 0; }
 .status-bar, .input-sources-bar, .graphics-panel, .obs-controls, .atem-controls, .ptz-controls, .branding-modal, .profile-wizard, .calendar-drawer {
   border: 2px dashed #e16316;
   background: #1f2937;

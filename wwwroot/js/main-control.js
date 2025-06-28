@@ -154,7 +154,6 @@ async function initializeComponents(eventData) {
     // Top bar
     const topBar = document.createElement('top-bar');
     topBar.setAttribute('event-type', eventData.eventType || 'corporate');
-    topBar.setAttribute('mode', 'live');
     if (currentUserId === 'ryanadmin') topBar.setAttribute('is-admin','true');
     topBar.addEventListener('logout', logout);
     topBar.addEventListener('edit-account', () => alert('Edit account not implemented'));
@@ -178,15 +177,6 @@ async function initializeComponents(eventData) {
         } else {
             renderProgramPreview(document.getElementById('schedule-panel'), eventData, onOverlayStateChange);
         }
-    });
-    topBar.addEventListener('mode-change', e => {
-        graphicsMode = e.detail;
-        renderGraphicsPanel(document.getElementById('lower-thirds-panel'), { ...eventData }, graphicsMode);
-        renderActiveGraphicsPanel(document.getElementById('active-graphics'), eventId, graphicsMode);
-    });
-    topBar.addEventListener('push-live', async () => {
-        const devData = await getGraphicsData(eventId, 'dev');
-        if (devData) await setGraphicsData(eventId, devData, 'live');
     });
     document.getElementById('top-bar').appendChild(topBar);
 

@@ -5,7 +5,6 @@ export class TopBar extends HTMLElement {
     }
 
     connectedCallback() {
-        this.mode = this.getAttribute('mode') || 'live';
         this.eventType = this.getAttribute('event-type') || 'corporate';
         this.isAdmin = this.getAttribute('is-admin') === 'true';
         this.render();
@@ -80,11 +79,6 @@ export class TopBar extends HTMLElement {
                         <option value="corporate" ${this.eventType === 'corporate' ? 'selected' : ''}>Corporate Event</option>
                         <option value="sports" ${this.eventType === 'sports' ? 'selected' : ''}>Sports Event</option>
                     </select>
-                    <label class="text-xs flex items-center gap-1">
-                        <input type="checkbox" id="mode-toggle" ${this.mode === 'dev' ? 'checked' : ''}/>
-                        Dev
-                    </label>
-                    <button id="push-live" class="${this.mode === 'dev' ? '' : 'hidden'}">Push Dev→Live</button>
                     <div class="menu">
                         <button id="account-btn">Account ▾</button>
                         <div class="menu-items" id="account-menu">
@@ -119,16 +113,6 @@ export class TopBar extends HTMLElement {
         this.shadowRoot.getElementById('event-type').onchange = (e) => {
             this.eventType = e.target.value;
             this.dispatchEvent(new CustomEvent('event-type-change', { detail: this.eventType }));
-        };
-        this.shadowRoot.getElementById('mode-toggle').onchange = (e) => {
-            this.mode = e.target.checked ? 'dev' : 'live';
-            this.render();
-            this.dispatchEvent(new CustomEvent('mode-change', { detail: this.mode }));
-        };
-        this.shadowRoot.getElementById('push-live').onclick = () => {
-            if (confirm('Push development graphics to live?')) {
-                this.dispatchEvent(new CustomEvent('push-live'));
-            }
         };
     }
 }
