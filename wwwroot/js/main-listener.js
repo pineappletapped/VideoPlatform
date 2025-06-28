@@ -3,6 +3,7 @@ import { renderStatusBar } from './components/statusBar.js';
 import OBSWebSocket from 'https://cdn.jsdelivr.net/npm/obs-websocket-js@5.0.3/+esm';
 import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 import { getDatabaseInstance } from "./firebaseApp.js";
+import { requireAuth } from './auth.js';
 
 const db = getDatabaseInstance();
 
@@ -520,4 +521,4 @@ function heartbeat() {
 setInterval(heartbeat, 3000);
 heartbeat();
 
-initializeListener();
+requireAuth(`listener.html?event_id=${eventId}`).then(initializeListener);

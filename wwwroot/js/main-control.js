@@ -19,6 +19,7 @@ import { renderHoldslatePanel } from './components/holdslatePanel.js';
 import { updateOverlayState, getOverlayState, getEventMetadata, updateEventMetadata } from './firebase.js';
 import { renderVtsPanel } from './components/vtsPanel.js';
 import { renderMusicPanel } from './components/musicPanel.js';
+import { requireAuth } from './auth.js';
 
 // Get event ID from URL params
 const params = new URLSearchParams(window.location.search);
@@ -283,5 +284,5 @@ function setupAudioControls() {
     update();
 }
 
-// Initialize the app
-initializeApp();
+// Require login then initialize
+requireAuth(`control.html?event_id=${eventId}`).then(initializeApp);

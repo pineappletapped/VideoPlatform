@@ -12,7 +12,14 @@ Use PHP's built‑in server:
 php -S localhost:8080 -t wwwroot
 ```
 
-Make sure the `wwwroot/uploads` directory exists and is writable (e.g. `chmod 777 wwwroot/uploads`). Then open `http://localhost:8080/control.html?event_id=demo` in your browser.
+Make sure the `wwwroot/uploads` directory exists and is writable (e.g. `chmod 777 wwwroot/uploads`). Then open `http://localhost:8080/index.html`.
+
+## Login & Events
+
+The landing page is an event dashboard. Sign up or log in and create events. Each
+event row offers links to the control panel, listener and overlay pages. Login
+sessions last for eight hours and are required for all control panels, but the
+overlay page itself stays public so it can be embedded in OBS without timing out.
 
 ### Optional ATEM bridge
 

@@ -1,5 +1,6 @@
 import { eventStorage } from './storage.js';
 import { supabase } from './supabaseMock.js';
+import { requireAuth } from './auth.js';
 
 const params = new URLSearchParams(window.location.search);
 const eventId = params.get('event_id') || 'demo';
@@ -16,4 +17,4 @@ async function initializeMultiview() {
     }
 }
 
-initializeMultiview();
+requireAuth(`multiview.html?event_id=${eventId}`).then(initializeMultiview);
