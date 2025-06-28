@@ -13,3 +13,13 @@ php -S localhost:8080 -t wwwroot
 ```
 
 Make sure the `wwwroot/uploads` directory exists and is writable (e.g. `chmod 777 wwwroot/uploads`). Then open `http://localhost:8080/control.html?event_id=demo` in your browser.
+
+### Optional ATEM bridge
+
+If you need to control a Blackmagic ATEM switcher, generate and run the Python
+script shown under **Add ATEM** in `listener.html`. It simply bridges WebSocket
+messages from the app to the ATEM using [PyATEMMax]. Run it with Python 3:
+
+```bash
+python3 wwwroot/atem_websocket_bridge.py
+```

@@ -16,7 +16,16 @@ setInterval(() => {
     localStorage.setItem('overlayHeartbeat', Date.now().toString());
 }, 2000);
 
-function applyBranding(branding) {
+const DEFAULT_BRANDING = {
+    primaryColor: '#00ADF1',
+    secondaryColor1: '#004a77',
+    secondaryColor2: '#e0f7ff',
+    logoPrimary: '',
+    logoSecondary: '',
+    font: 'Arial'
+};
+
+function applyBranding(branding = DEFAULT_BRANDING) {
     document.body.style.fontFamily = branding.font;
     document.documentElement.style.setProperty('--brand-primary', branding.primaryColor);
     document.documentElement.style.setProperty('--brand-secondary1', branding.secondaryColor1);
@@ -67,6 +76,7 @@ function playVT(vt) {
     vtVideo.onended = () => { container.innerHTML = ''; vtVideo = null; };
     vtVideo.volume = masterVolume * vtVolume;
     container.appendChild(vtVideo);
+    vtVideo.play().catch(err => console.warn('VT autoplay failed', err));
 }
 
 function renderOverlayFromFirebase(state, graphics, branding) {
@@ -107,7 +117,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             if (window.musicAudio) window.musicAudio.pause();
             window.musicAudio = new Audio(state.nowPlaying.audioUrl);
             window.musicAudio.volume = masterVolume * musicVolume;
-            window.musicAudio.play();
+            window.musicAudio.play().catch(err => console.warn('Music autoplay failed', err));
         }
         if (window.musicAudio) window.musicAudio.volume = masterVolume * musicVolume;
     } else {
@@ -185,7 +195,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
 
 let lastState = null;
 let lastGraphics = null;
-let lastBranding = null;
+let lastBranding = DEFAULT_BRANDING;
 
 function updateOverlay() {
     renderOverlayFromFirebase(lastState, lastGraphics, lastBranding);
@@ -205,14 +215,7 @@ listenGraphicsData(eventId, (graphics) => {
     updateOverlay();
 });
 listenBranding(eventId, (branding) => {
-    lastBranding = branding || {
-        primaryColor: '#00ADF1',
-        secondaryColor1: '#004a77',
-        secondaryColor2: '#e0f7ff',
-        logoPrimary: '',
-        logoSecondary: '',
-        font: 'Arial'
-    };
+    lastBranding = branding || DEFAULT_BRANDING;
     updateOverlay();
 });
 
