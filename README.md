@@ -46,3 +46,11 @@ VT button with a green outline when the clip is buffered and ready to play.
 
 Use the **Graphics** link from the dashboard if you only need to operate the
 overlay. This stripped down panel removes OBS and ATEM options and embeds side‑by‑side Preview and Program monitors so you can rehearse a graphic before taking it live.
+
+### Preview workflow
+
+Each graphic item has **Preview** and **Live** buttons. Previewing sends the
+graphic only to the left monitor, allowing you to check positioning. Taking it
+live removes it from preview and displays it in the right monitor as well as on
+`overlay.html`. The **Cut** button above the preview monitor promotes anything in
+preview to live in one click.

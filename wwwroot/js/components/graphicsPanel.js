@@ -1,4 +1,4 @@
-import { setGraphicsData, getGraphicsData, listenGraphicsData, listenFavorites, updateFavorites } from '../firebase.js';
+import { setGraphicsData, updateGraphicsData, getGraphicsData, listenGraphicsData, listenFavorites, updateFavorites } from '../firebase.js';
 
 let liveLowerThirdId = null;
 let previewLowerThirdId = null;
@@ -8,8 +8,8 @@ let graphicsData = null;
 let favorites = { lowerThirds: [], titleSlides: [] };
 
 function saveLiveState(eventId, mode) {
-    setGraphicsData(eventId, {
-        ...graphicsData,
+    // Only update visibility IDs so preview actions don't overwrite graphics data
+    updateGraphicsData(eventId, {
         liveLowerThirdId,
         previewLowerThirdId,
         liveTitleSlideId,
