@@ -1,6 +1,7 @@
 import { updateOverlayState, listenOverlayState } from '../firebase.js';
 
 let liveProgramVisible = false;
+let previewProgramVisible = false;
 let programData = null;
 
 function saveProgramData(eventId, program) {
@@ -11,9 +12,9 @@ function saveProgramData(eventId, program) {
 function loadProgramData(eventId, fallback, callback) {
     listenOverlayState(eventId, (state) => {
         if (state && state.program) {
-            callback(state.program, state.liveProgramVisible);
+            callback(state.program, state.liveProgramVisible, state.previewProgramVisible);
         } else {
-            callback(fallback, false);
+            callback(fallback, false, false);
         }
     });
 }
@@ -23,11 +24,17 @@ function saveLiveProgramVisible(eventId, visible) {
     updateOverlayState(eventId, { liveProgramVisible: visible });
 }
 
+function savePreviewProgramVisible(eventId, visible) {
+    previewProgramVisible = visible;
+    updateOverlayState(eventId, { previewProgramVisible: visible });
+}
+
 export function renderProgramPreview(container, eventData, onOverlayStateChange) {
     const eventId = eventData.id || 'demo';
-    loadProgramData(eventId, eventData.program, (loadedProgram, liveVisible) => {
+    loadProgramData(eventId, eventData.program, (loadedProgram, liveVisible, previewVisible) => {
         programData = loadedProgram;
         liveProgramVisible = liveVisible;
+        previewProgramVisible = previewVisible;
         // Modal HTML (hidden by default)
         const modalHtml = `
             <div id="program-modal" class="modal-overlay" style="display:none;">
@@ -58,8 +65,9 @@ export function renderProgramPreview(container, eventData, onOverlayStateChange)
                 <div class="flex items-center justify-between mb-2">
                     <h2 class="font-bold text-lg">Program Preview</h2>
                     <div>
-                        <button class="control-button btn-sm${liveProgramVisible ? ' ring-2 ring-green-400' : ''}" id="show-program">Show</button>
-                        <button class="control-button btn-sm${!liveProgramVisible ? ' ring-2 ring-red-400' : ''}" id="hide-program">Hide</button>
+                        <button class="control-button btn-sm${previewProgramVisible ? ' ring-2 ring-brand' : ''}" id="preview-program">Preview</button>
+                        <button class="control-button btn-sm${liveProgramVisible ? ' ring-2 ring-green-400' : ''}" id="take-program">Take</button>
+                        <button class="control-button btn-sm${!liveProgramVisible && !previewProgramVisible ? ' ring-2 ring-red-400' : ''}" id="hide-program">Hide</button>
                         <button class="control-button btn-sm" id="edit-program">Edit</button>
                     </div>
                 </div>
@@ -121,16 +129,22 @@ export function renderProgramPreview(container, eventData, onOverlayStateChange)
                 if (onOverlayStateChange) onOverlayStateChange({ program: programData });
             };
         }
-        // Show/Hide/Edit handlers
-        container.querySelector('#show-program').onclick = () => {
+        // Preview/Take/Hide/Edit handlers
+        container.querySelector('#preview-program').onclick = () => {
+            savePreviewProgramVisible(eventId, true);
+            if (onOverlayStateChange) onOverlayStateChange({ previewProgramVisible: true, program: programData });
+        };
+        container.querySelector('#take-program').onclick = () => {
             saveLiveProgramVisible(eventId, true);
+            savePreviewProgramVisible(eventId, false);
             renderProgramPreview(container, eventData, onOverlayStateChange);
-            if (onOverlayStateChange) onOverlayStateChange({ liveProgramVisible: true, program: programData });
+            if (onOverlayStateChange) onOverlayStateChange({ liveProgramVisible: true, previewProgramVisible: false, program: programData });
         };
         container.querySelector('#hide-program').onclick = () => {
             saveLiveProgramVisible(eventId, false);
+            savePreviewProgramVisible(eventId, false);
             renderProgramPreview(container, eventData, onOverlayStateChange);
-            if (onOverlayStateChange) onOverlayStateChange({ liveProgramVisible: false, program: programData });
+            if (onOverlayStateChange) onOverlayStateChange({ liveProgramVisible: false, previewProgramVisible: false, program: programData });
         };
         container.querySelector('#edit-program').onclick = () => {
             modal.style.display = 'flex';

@@ -4,6 +4,7 @@ import { ref, onValue, set } from 'https://www.gstatic.com/firebasejs/9.22.2/fir
 
 const params = new URLSearchParams(window.location.search);
 const eventId = params.get('event_id') || 'demo';
+const previewMode = params.get('mode') === 'preview';
 
 let countdownInterval = null;
 let vtVideo = null;
@@ -95,8 +96,8 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     if (!overlayContainer) return;
     // Remove overlays
     overlayContainer.querySelector('#program-overlay')?.remove();
-    overlayContainer.querySelector('#preview-lower-third')?.remove();
     overlayContainer.querySelector('#holdslate-overlay')?.remove();
+    if (!previewMode) overlayContainer.querySelector('#preview-lower-third')?.remove();
     // Lower Thirds
     let lowerThird = null;
     let previewLowerThird = null;
@@ -108,7 +109,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     if (graphics && graphics.lowerThirds && previewLowerThirdId) {
         previewLowerThird = graphics.lowerThirds.find(lt => lt.id === previewLowerThirdId);
     }
-    if (previewLowerThird) {
+    if (previewMode && previewLowerThird) {
         const pos = previewLowerThird.position || 'bottom-left';
         let stylePos = '';
         if (pos.startsWith('custom')) {
@@ -124,10 +125,10 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             `${branding.logoPrimary ? `<img src='${branding.logoPrimary}' alt='Logo' style='height:32px;display:inline-block;margin-right:1rem;vertical-align:middle;' />` : ''}`+
             `<span style='vertical-align:middle;'><span style='font-weight:bold;font-size:1.2em;'>${previewLowerThird.title}</span><br><span style='font-size:1em;'>${previewLowerThird.subtitle}</span></span>`+
             `</div>`;
-    } else {
+    } else if (previewMode) {
         document.getElementById('preview-lower-third').innerHTML = '';
     }
-    if (lowerThird) {
+    if (!previewMode && lowerThird) {
         const pos = lowerThird.position || 'bottom-left';
         let stylePos = '';
         if (pos.startsWith('custom')) {
@@ -143,7 +144,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             `${branding.logoPrimary ? `<img src='${branding.logoPrimary}' alt='Logo' style='height:32px;display:inline-block;margin-right:1rem;vertical-align:middle;' />` : ''}`+
             `<span style='vertical-align:middle;'><span style='font-weight:bold;font-size:1.2em;'>${lowerThird.title}</span><br><span style='font-size:1em;'>${lowerThird.subtitle}</span></span>`+
             `</div>`;
-    } else {
+    } else if (!previewMode) {
         document.getElementById('lower-third').innerHTML = '';
     }
     if (state && state.musicVisible && state.nowPlaying) {
@@ -173,15 +174,17 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     if (graphics && graphics.titleSlides && previewTitleSlideId) {
         previewTitleSlide = graphics.titleSlides.find(ts => ts.id === previewTitleSlideId);
     }
-    document.getElementById('title-slide').innerHTML = titleSlide
+    document.getElementById('title-slide').innerHTML = !previewMode && titleSlide
         ? `<div class='title-slide' style='position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);min-width:350px;background:var(--brand-secondary2);color:#004a77;padding:2rem 2.5rem;border-radius:0.5rem;box-shadow:0 2px 8px #0003;font-family:${branding.font};text-align:center;'>
             ${branding.logoSecondary ? `<img src='${branding.logoSecondary}' alt='Logo' style='height:40px;display:block;margin:0 auto 1rem auto;' />` : ''}
             <div style='font-weight:bold;font-size:2em;margin-bottom:0.5rem;'>${titleSlide.title}</div>
             <div style='font-size:1.2em;'>${titleSlide.subtitle}</div>
         </div>`
         : '';
-    document.getElementById('preview-title-slide')?.remove();
-    if (previewTitleSlide) {
+    if (!previewMode) {
+        document.getElementById('preview-title-slide')?.remove();
+    }
+    if (previewMode && previewTitleSlide) {
         const div = document.createElement('div');
         div.id = 'preview-title-slide';
         div.style.position = 'absolute';
@@ -199,11 +202,13 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         div.style.textAlign = 'center';
         div.innerHTML = `${branding.logoSecondary ? `<img src='${branding.logoSecondary}' alt='Logo' style='height:40px;display:block;margin:0 auto 1rem auto;' />` : ''}<div style='font-weight:bold;font-size:2em;margin-bottom:0.5rem;'>${previewTitleSlide.title}</div><div style='font-size:1.2em;'>${previewTitleSlide.subtitle}</div>`;
         overlayContainer.appendChild(div);
+    } else if (previewMode) {
+        document.getElementById('preview-title-slide')?.remove();
     }
     // Program Overlay
     let program = state && state.program;
     let programOverlay = overlayContainer.querySelector('#program-overlay');
-    if (state && state.liveProgramVisible && program && program.length) {
+    if (!previewMode && state && state.liveProgramVisible && program && program.length) {
         if (!programOverlay) {
             programOverlay = document.createElement('div');
             programOverlay.id = 'program-overlay';
@@ -219,13 +224,31 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         programOverlay.style.boxShadow = '0 2px 8px #0003';
         programOverlay.style.fontFamily = branding.font;
         programOverlay.innerHTML = `<div class='font-bold text-lg mb-2'>Program</div><table><tbody>${program.map(item => `<tr><td class='pr-4'>${item.time}</td><td class='pr-4'>${item.title}</td><td>${item.presenter}</td></tr>`).join('')}</tbody></table>`;
+    } else if (previewMode && state && state.previewProgramVisible && program && program.length) {
+        if (!programOverlay) {
+            programOverlay = document.createElement('div');
+            programOverlay.id = 'program-overlay';
+            overlayContainer.appendChild(programOverlay);
+        }
+        programOverlay.style.position = 'absolute';
+        programOverlay.style.bottom = '2rem';
+        programOverlay.style.right = '2rem';
+        programOverlay.style.background = branding.primaryColor + 'cc';
+        programOverlay.style.color = '#fff';
+        programOverlay.style.padding = '1rem 2rem';
+        programOverlay.style.borderRadius = '0.5rem';
+        programOverlay.style.boxShadow = '0 2px 8px #0003';
+        programOverlay.style.fontFamily = branding.font;
+        programOverlay.style.opacity = '0.6';
+        programOverlay.innerHTML = `<div class='font-bold text-lg mb-2'>Program</div><table><tbody>${program.map(item => `<tr><td class='pr-4'>${item.time}</td><td class='pr-4'>${item.title}</td><td>${item.presenter}</td></tr>`).join('')}</tbody></table>`;
     } else if (programOverlay) {
         programOverlay.remove();
     }
     // Holdslate Overlay
     let holdslateOverlay = overlayContainer.querySelector('#holdslate-overlay');
     const holdslateData = state && state.holdslate;
-    if (state && state.holdslateVisible && holdslateData && holdslateData.image) {
+    const holdslateShow = previewMode ? state && state.holdslatePreviewVisible : state && state.holdslateVisible;
+    if (holdslateShow && holdslateData && holdslateData.image) {
         if (!holdslateOverlay) {
             holdslateOverlay = document.createElement('div');
             holdslateOverlay.id = 'holdslate-overlay';
@@ -242,6 +265,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         holdslateOverlay.style.justifyContent = 'center';
         holdslateOverlay.style.zIndex = '100';
         holdslateOverlay.style.fontFamily = branding.font;
+        holdslateOverlay.style.opacity = previewMode ? '0.6' : '1';
         renderHoldslateCountdown(holdslateData, branding);
         if (countdownInterval) clearInterval(countdownInterval);
         if (holdslateData.countdown) {

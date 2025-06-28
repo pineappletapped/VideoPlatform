@@ -2,6 +2,7 @@ import { updateOverlayState, listenOverlayState } from '../firebase.js';
 
 let holdslateData = {};
 let holdslateVisible = false;
+let holdslatePreviewVisible = false;
 let countdownInterval = null;
 
 function saveHoldslateData(eventId, data) {
@@ -11,6 +12,11 @@ function saveHoldslateData(eventId, data) {
 function saveHoldslateVisible(eventId, visible) {
     holdslateVisible = visible;
     updateOverlayState(eventId, { holdslateVisible: visible });
+}
+
+function saveHoldslatePreviewVisible(eventId, visible) {
+    holdslatePreviewVisible = visible;
+    updateOverlayState(eventId, { holdslatePreviewVisible: visible });
 }
 
 function renderCountdown(container, countdown) {
@@ -40,6 +46,7 @@ export function renderHoldslatePanel(container, onOverlayStateChange) {
     listenOverlayState(eventId, (state) => {
         holdslateData = (state && state.holdslate) || {};
         holdslateVisible = (state && state.holdslateVisible) || false;
+        holdslatePreviewVisible = (state && state.holdslatePreviewVisible) || false;
         const { image, message, countdown } = holdslateData || {};
         const now = Date.now();
         let countdownDisplay = '';
@@ -54,14 +61,15 @@ export function renderHoldslatePanel(container, onOverlayStateChange) {
                 countdownDisplay = '00:00';
             }
         }
-        const highlight = holdslateVisible ? 'ring-4 ring-green-400' : '';
+        const highlight = holdslateVisible ? 'ring-4 ring-green-400' : holdslatePreviewVisible ? 'ring-4 ring-brand' : '';
         container.innerHTML = `
             <div class='holdslate-panel ${highlight}'>
                 <div class="flex items-center justify-between mb-2">
                     <h2 class="font-bold text-lg">Holdslate</h2>
                     <div>
-                        <button class="control-button btn-sm${holdslateVisible ? ' ring-2 ring-green-400' : ''}" id="show-holdslate">Show</button>
-                        <button class="control-button btn-sm${!holdslateVisible ? ' ring-2 ring-red-400' : ''}" id="hide-holdslate">Hide</button>
+                        <button class="control-button btn-sm${holdslatePreviewVisible ? ' ring-2 ring-brand' : ''}" id="preview-holdslate">Preview</button>
+                        <button class="control-button btn-sm${holdslateVisible ? ' ring-2 ring-green-400' : ''}" id="take-holdslate">Take</button>
+                        <button class="control-button btn-sm${!holdslateVisible && !holdslatePreviewVisible ? ' ring-2 ring-red-400' : ''}" id="hide-holdslate">Hide</button>
                         <button class="control-button btn-sm" id="edit-holdslate">Edit</button>
                     </div>
                 </div>
@@ -123,14 +131,20 @@ export function renderHoldslatePanel(container, onOverlayStateChange) {
                 if (onOverlayStateChange) onOverlayStateChange({ holdslate: newData });
             };
         }
-        // Show/Hide/Edit handlers
-        container.querySelector('#show-holdslate').onclick = () => {
+        // Preview/Take/Hide/Edit handlers
+        container.querySelector('#preview-holdslate').onclick = () => {
+            saveHoldslatePreviewVisible(eventId, true);
+            if (onOverlayStateChange) onOverlayStateChange({ holdslatePreviewVisible: true, holdslate: holdslateData });
+        };
+        container.querySelector('#take-holdslate').onclick = () => {
             saveHoldslateVisible(eventId, true);
-            if (onOverlayStateChange) onOverlayStateChange({ holdslateVisible: true, holdslate: holdslateData });
+            saveHoldslatePreviewVisible(eventId, false);
+            if (onOverlayStateChange) onOverlayStateChange({ holdslateVisible: true, holdslatePreviewVisible: false, holdslate: holdslateData });
         };
         container.querySelector('#hide-holdslate').onclick = () => {
             saveHoldslateVisible(eventId, false);
-            if (onOverlayStateChange) onOverlayStateChange({ holdslateVisible: false, holdslate: holdslateData });
+            saveHoldslatePreviewVisible(eventId, false);
+            if (onOverlayStateChange) onOverlayStateChange({ holdslateVisible: false, holdslatePreviewVisible: false, holdslate: holdslateData });
         };
         container.querySelector('#edit-holdslate').onclick = () => {
             modal.style.display = 'flex';

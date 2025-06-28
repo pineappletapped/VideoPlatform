@@ -127,9 +127,10 @@ async function initializeComponents(eventData) {
     setupTabs();
     const preview = document.getElementById('video-preview');
     const program = document.getElementById('video-program');
-    function loadIframe(target){
+    function loadIframe(target, preview){
         const iframe = document.createElement('iframe');
-        iframe.src = `overlay.html?event_id=${eventId}`;
+        const mode = preview ? '&mode=preview' : '';
+        iframe.src = `overlay.html?event_id=${eventId}${mode}`;
         iframe.style.width = '1920px';
         iframe.style.height = '1080px';
         iframe.className = 'rounded';
@@ -139,8 +140,8 @@ async function initializeComponents(eventData) {
         iframe.style.transform = `scale(${scale})`;
         iframe.style.transformOrigin = 'top left';
     }
-    if (preview) loadIframe(preview);
-    if (program) loadIframe(program);
+    if (preview) loadIframe(preview, true);
+    if (program) loadIframe(program, false);
     window.addEventListener('resize',()=>{
         if (preview && preview.firstChild) {
             const scale = preview.clientWidth/1920;
