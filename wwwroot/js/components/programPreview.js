@@ -65,8 +65,8 @@ export function renderProgramPreview(container, eventData, onOverlayStateChange)
                 <div class="flex items-center justify-between mb-2">
                     <h2 class="font-bold text-lg">Program Preview</h2>
                     <div>
-                        <button class="control-button btn-sm${previewProgramVisible ? ' ring-2 ring-brand' : ''}" id="preview-program">Preview</button>
-                        <button class="control-button btn-sm${liveProgramVisible ? ' ring-2 ring-green-400' : ''}" id="take-program">Take</button>
+                        <button class="control-button btn-sm btn-preview${previewProgramVisible ? ' ring-2 ring-brand' : ''}" id="preview-program">Preview</button>
+                        <button class="control-button btn-sm btn-live${liveProgramVisible ? ' ring-2 ring-green-400' : ''}" id="take-program">Live</button>
                         <button class="control-button btn-sm${!liveProgramVisible && !previewProgramVisible ? ' ring-2 ring-red-400' : ''}" id="hide-program">Hide</button>
                         <button class="control-button btn-sm" id="edit-program">Edit</button>
                     </div>

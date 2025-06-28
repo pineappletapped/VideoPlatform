@@ -121,8 +121,8 @@ export function renderGraphicsPanel(container, eventData) {
                             ${lowerThirds.length === 0 ? `<tr><td class='text-gray-400'>No lower thirds yet.</td></tr>` : lowerThirds.map(lt => `
                                 <tr data-id="${lt.id}" class="${liveLowerThirdId === lt.id ? 'bg-yellow-200' : previewLowerThirdId === lt.id ? 'ring-2 ring-brand' : ''}">
                                     <td class="pr-2 py-1">${lt.title} <span class="text-xs text-gray-500">(${lt.subtitle})</span></td>
-                                    <td class="py-1"><button class="control-button btn-sm" data-action="preview-lt" data-id="${lt.id}">Preview</button></td>
-                                    <td class="py-1"><button class="control-button btn-sm" data-action="take-lt" data-id="${lt.id}">Take</button></td>
+                                    <td class="py-1"><button class="control-button btn-sm btn-preview" data-action="preview-lt" data-id="${lt.id}">Preview</button></td>
+                                    <td class="py-1"><button class="control-button btn-sm btn-live" data-action="take-lt" data-id="${lt.id}">Live</button></td>
                                     <td class="py-1"><button class="control-button btn-sm" data-action="hide-lt" data-id="${lt.id}">Hide</button></td>
                                     <td class="py-1"><button class="control-button btn-sm" data-action="edit-lt" data-id="${lt.id}">Edit</button></td>
                                     <td class="py-1"><button class="control-button btn-sm" data-action="remove-lt" data-id="${lt.id}">Remove</button></td>
@@ -141,8 +141,8 @@ export function renderGraphicsPanel(container, eventData) {
                             ${titleSlides.length === 0 ? `<tr><td class='text-gray-400'>No title slides yet.</td></tr>` : titleSlides.map(ts => `
                                 <tr data-id="${ts.id}" class="${liveTitleSlideId === ts.id ? 'bg-yellow-200' : previewTitleSlideId === ts.id ? 'ring-2 ring-brand' : ''}">
                                     <td class="pr-2 py-1">${ts.title} <span class="text-xs text-gray-500">(${ts.subtitle})</span></td>
-                                    <td class="py-1"><button class="control-button btn-sm" data-action="preview-ts" data-id="${ts.id}">Preview</button></td>
-                                    <td class="py-1"><button class="control-button btn-sm" data-action="take-ts" data-id="${ts.id}">Take</button></td>
+                                    <td class="py-1"><button class="control-button btn-sm btn-preview" data-action="preview-ts" data-id="${ts.id}">Preview</button></td>
+                                    <td class="py-1"><button class="control-button btn-sm btn-live" data-action="take-ts" data-id="${ts.id}">Live</button></td>
                                     <td class="py-1"><button class="control-button btn-sm" data-action="hide-ts" data-id="${ts.id}">Hide</button></td>
                                     <td class="py-1"><button class="control-button btn-sm" data-action="edit-ts" data-id="${ts.id}">Edit</button></td>
                                     <td class="py-1"><button class="control-button btn-sm" data-action="remove-ts" data-id="${ts.id}">Remove</button></td>
@@ -230,7 +230,8 @@ export function renderGraphicsPanel(container, eventData) {
                     previewLowerThirdId = id;
                     saveLiveState(eventId);
                 } else if (action === 'take-lt') {
-                    liveLowerThirdId = previewLowerThirdId = id;
+                    liveLowerThirdId = id;
+                    previewLowerThirdId = null;
                     saveLiveState(eventId);
                 } else if (action === 'hide-lt') {
                     liveLowerThirdId = null;
@@ -240,7 +241,8 @@ export function renderGraphicsPanel(container, eventData) {
                     previewTitleSlideId = id;
                     saveLiveState(eventId);
                 } else if (action === 'take-ts') {
-                    liveTitleSlideId = previewTitleSlideId = id;
+                    liveTitleSlideId = id;
+                    previewTitleSlideId = null;
                     saveLiveState(eventId);
                 } else if (action === 'hide-ts') {
                     liveTitleSlideId = null;

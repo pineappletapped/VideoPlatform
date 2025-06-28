@@ -12,7 +12,7 @@ import { renderBrandingModal } from './components/brandingModal.js';
 import { renderProfileWizard } from './components/profileWizard.js';
 import { renderCalendarDrawer } from './components/calendarDrawer.js';
 import { renderHoldslatePanel } from './components/holdslatePanel.js';
-import { updateOverlayState, getOverlayState, getEventMetadata, updateEventMetadata } from './firebase.js';
+import { updateOverlayState, getOverlayState, getEventMetadata, updateEventMetadata, getGraphicsData, updateGraphicsData } from './firebase.js';
 import { renderVtsPanel } from './components/vtsPanel.js';
 import { renderMusicPanel } from './components/musicPanel.js';
 import { requireAuth, logout } from './auth.js';
@@ -142,6 +142,8 @@ async function initializeComponents(eventData) {
     }
     if (preview) loadIframe(preview, true);
     if (program) loadIframe(program, false);
+    const cutBtn = document.getElementById('cut-button');
+    if (cutBtn) cutBtn.onclick = () => { cutToProgram(); };
     window.addEventListener('resize',()=>{
         if (preview && preview.firstChild) {
             const scale = preview.clientWidth/1920;
@@ -213,6 +215,41 @@ function setupAudioControls() {
     if(vt){ vt.value=vtVolume; vt.oninput=()=>{ vtVolume=parseFloat(vt.value); update(); }; }
     if(music){ music.value=musicVolume; music.oninput=()=>{ musicVolume=parseFloat(music.value); update(); }; }
     update();
+}
+
+async function cutToProgram() {
+    const [state, graphics] = await Promise.all([
+        getOverlayState(eventId),
+        getGraphicsData(eventId)
+    ]);
+    const overlayUpdates = {};
+    const graphicsUpdates = {};
+    if (state) {
+        if (state.holdslatePreviewVisible) {
+            overlayUpdates.holdslateVisible = true;
+            overlayUpdates.holdslatePreviewVisible = false;
+        }
+        if (state.previewProgramVisible) {
+            overlayUpdates.liveProgramVisible = true;
+            overlayUpdates.previewProgramVisible = false;
+        }
+    }
+    if (graphics) {
+        if (graphics.previewLowerThirdId) {
+            graphicsUpdates.liveLowerThirdId = graphics.previewLowerThirdId;
+            graphicsUpdates.previewLowerThirdId = null;
+        }
+        if (graphics.previewTitleSlideId) {
+            graphicsUpdates.liveTitleSlideId = graphics.previewTitleSlideId;
+            graphicsUpdates.previewTitleSlideId = null;
+        }
+    }
+    if (Object.keys(graphicsUpdates).length) {
+        await updateGraphicsData(eventId, graphicsUpdates);
+    }
+    if (Object.keys(overlayUpdates).length) {
+        await updateOverlayState(eventId, overlayUpdates);
+    }
 }
 
 requireAuth(`graphics.html?event_id=${eventId}`).then(initializeApp);

@@ -11,9 +11,14 @@
   min-height: 48px;
 }
 
+/* Remove dotted border from main graphics panel */
+.graphics-panel {
+  border: none;
+}
+
 .branding-modal, .profile-wizard, .calendar-drawer {
   background: #2d2d2d;
-  color: #f3f4f6;
+  color: #000;
 }
 
 #top-bar {
@@ -36,6 +41,20 @@
 
 .control-button:hover {
   background: #c45012;
+}
+
+/* Preview and live button variants */
+.btn-preview {
+  background: #10b981;
+}
+.btn-preview:hover {
+  background: #059669;
+}
+.btn-live {
+  background: #ef4444;
+}
+.btn-live:hover {
+  background: #dc2626;
 }
 
 .btn-sm {

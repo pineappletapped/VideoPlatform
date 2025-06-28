@@ -67,8 +67,8 @@ export function renderHoldslatePanel(container, onOverlayStateChange) {
                 <div class="flex items-center justify-between mb-2">
                     <h2 class="font-bold text-lg">Holdslate</h2>
                     <div>
-                        <button class="control-button btn-sm${holdslatePreviewVisible ? ' ring-2 ring-brand' : ''}" id="preview-holdslate">Preview</button>
-                        <button class="control-button btn-sm${holdslateVisible ? ' ring-2 ring-green-400' : ''}" id="take-holdslate">Take</button>
+                        <button class="control-button btn-sm btn-preview${holdslatePreviewVisible ? ' ring-2 ring-brand' : ''}" id="preview-holdslate">Preview</button>
+                        <button class="control-button btn-sm btn-live${holdslateVisible ? ' ring-2 ring-green-400' : ''}" id="take-holdslate">Live</button>
                         <button class="control-button btn-sm${!holdslateVisible && !holdslatePreviewVisible ? ' ring-2 ring-red-400' : ''}" id="hide-holdslate">Hide</button>
                         <button class="control-button btn-sm" id="edit-holdslate">Edit</button>
                     </div>
