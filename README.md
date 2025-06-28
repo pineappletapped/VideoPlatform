@@ -1,13 +1,15 @@
 # VideoPlatform
 
-This project includes a simple Node server that serves the files in `wwwroot` and provides a local upload endpoint at `/upload`.
-Uploaded files are saved under `wwwroot/uploads/` so ensure this directory exists and is writable.
+This project is a static web app for managing live graphics, video and music playback. All files live under `wwwroot` and can be served by any simple web host.
+
+Media uploaded from the control panel is stored in Firebase Storage and metadata is saved in Firebase Realtime Database.
 
 ## Running locally
 
+Use any static HTTP server, e.g. Python's `http.server`:
+
 ```bash
-npm install
-npm start
+python3 -m http.server -d wwwroot 8080
 ```
 
-Then open `http://localhost:3000/control.html?event_id=demo` in your browser.
+Then open `http://localhost:8080/control.html?event_id=demo` in your browser.

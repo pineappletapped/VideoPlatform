@@ -1,5 +1,6 @@
 import { ref, set, get, onValue, update } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
-import { getDatabaseInstance } from "../firebaseApp.js";
+import { getDatabaseInstance, getStorageInstance } from "../firebaseApp.js";
+import { ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-storage.js";
 
 const db = getDatabaseInstance();
 
@@ -45,12 +46,12 @@ export function renderVtsPanel(container, eventId, onLoadVT) {
                         <div class="mb-2">
                             <label class="block text-sm">Video File</label>
                             <input type="file" id="vt-video-file" accept="video/*" />
-                            <input class="border p-1 w-full mt-1" name="videoUrl" placeholder="/uploads/{eventId}/vts/yourfile.mp4" />
+                            <input class="border p-1 w-full mt-1" name="videoUrl" placeholder="Uploaded video URL" />
                         </div>
                         <div class="mb-2">
                             <label class="block text-sm">Thumbnail</label>
                             <input type="file" id="vt-thumb-file" accept="image/*" />
-                            <input class="border p-1 w-full mt-1" name="thumbnail" placeholder="/uploads/{eventId}/vts/thumbnails/yourthumb.jpg" />
+                            <input class="border p-1 w-full mt-1" name="thumbnail" placeholder="Thumbnail URL" />
                         </div>
                         <div class="mb-2">
                             <label class="block text-sm">Duration (mm:ss)</label>
@@ -59,7 +60,7 @@ export function renderVtsPanel(container, eventId, onLoadVT) {
                         <div class="mb-2">
                             <label class="block text-sm">Music License (optional)</label>
                             <input type="file" id="vt-license-file" />
-                            <input class="border p-1 w-full mt-1" name="license" placeholder="/uploads/{eventId}/vts/licenses/yourlicense.pdf" />
+                            <input class="border p-1 w-full mt-1" name="license" placeholder="License file URL" />
                         </div>
                         <input type="hidden" name="idx" />
                         <div class="flex gap-2 mt-4">
@@ -101,27 +102,27 @@ export function renderVtsPanel(container, eventId, onLoadVT) {
                 const data = Object.fromEntries(new FormData(form));
                 let videoUrl = data.videoUrl;
                 if (form['vt-video-file'].files[0]) {
-                    const path = `/uploads/${eventId}/vts/${form['vt-video-file'].files[0].name}`;
+                    const path = `uploads/${eventId}/vts/${form['vt-video-file'].files[0].name}`;
                     setStatus('Uploading video...');
-                    await uploadLocalFile(form['vt-video-file'].files[0], path);
+                    const url = await uploadToFirebase(form['vt-video-file'].files[0], path);
                     setStatus('');
-                    videoUrl = path;
+                    if (url) videoUrl = url;
                 }
                 let thumbnail = data.thumbnail;
                 if (form['vt-thumb-file'].files[0]) {
-                    const path = `/uploads/${eventId}/vts/thumbnails/${form['vt-thumb-file'].files[0].name}`;
+                    const path = `uploads/${eventId}/vts/thumbnails/${form['vt-thumb-file'].files[0].name}`;
                     setStatus('Uploading thumb...');
-                    await uploadLocalFile(form['vt-thumb-file'].files[0], path);
+                    const url = await uploadToFirebase(form['vt-thumb-file'].files[0], path);
                     setStatus('');
-                    thumbnail = path;
+                    if (url) thumbnail = url;
                 }
                 let license = data.license;
                 if (form['vt-license-file'].files[0]) {
-                    const path = `/uploads/${eventId}/vts/licenses/${form['vt-license-file'].files[0].name}`;
+                    const path = `uploads/${eventId}/vts/licenses/${form['vt-license-file'].files[0].name}`;
                     setStatus('Uploading license...');
-                    await uploadLocalFile(form['vt-license-file'].files[0], path);
+                    const url = await uploadToFirebase(form['vt-license-file'].files[0], path);
                     setStatus('');
-                    license = path;
+                    if (url) license = url;
                 }
                 const vt = {
                     name: data.name,
@@ -176,13 +177,12 @@ function setStatus(text) {
     if (statusEl) statusEl.textContent = text;
 }
 
-async function uploadLocalFile(file, path) {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('path', path);
+async function uploadToFirebase(file, path) {
     try {
-        await fetch('/upload', { method: 'POST', body: formData });
-        return path;
+        const storage = getStorageInstance();
+        const storageRef = sRef(storage, path.replace(/^\/+/, ''));
+        await uploadBytes(storageRef, file);
+        return await getDownloadURL(storageRef);
     } catch (err) {
         console.error('Upload failed', err);
         return null;
