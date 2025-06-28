@@ -124,12 +124,22 @@ function updateGraphicsTabs(type) {
     const brandingBtn = tabBar.querySelector('[data-tab="branding"]');
     const brandingPanel = document.getElementById('branding-panel');
     if (scheduleBtn && schedulePanel) {
-        if (type === 'sports') { scheduleBtn.classList.add('hidden'); schedulePanel.classList.add('hidden'); }
-        else scheduleBtn.classList.remove('hidden');
+        if (type === 'sports') {
+            scheduleBtn.classList.add('hidden');
+            schedulePanel.classList.add('hidden');
+        } else {
+            scheduleBtn.classList.remove('hidden');
+            schedulePanel.classList.remove('hidden');
+        }
     }
     if (brandingBtn && brandingPanel) {
-        if (type === 'sports') { brandingBtn.classList.add('hidden'); brandingPanel.classList.add('hidden'); }
-        else brandingBtn.classList.remove('hidden');
+        if (type === 'sports') {
+            brandingBtn.classList.add('hidden');
+            brandingPanel.classList.add('hidden');
+        } else {
+            brandingBtn.classList.remove('hidden');
+            brandingPanel.classList.remove('hidden');
+        }
     }
 }
 

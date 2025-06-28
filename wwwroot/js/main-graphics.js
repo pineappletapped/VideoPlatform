@@ -96,12 +96,22 @@ function updateGraphicsTabs(type) {
     const brandingBtn = tabBar.querySelector('[data-tab="branding"]');
     const brandingPanel = document.getElementById('branding-panel');
     if (scheduleBtn && schedulePanel) {
-        if (type === 'sports') { scheduleBtn.classList.add('hidden'); schedulePanel.classList.add('hidden'); }
-        else scheduleBtn.classList.remove('hidden');
+        if (type === 'sports') {
+            scheduleBtn.classList.add('hidden');
+            schedulePanel.classList.add('hidden');
+        } else {
+            scheduleBtn.classList.remove('hidden');
+            schedulePanel.classList.remove('hidden');
+        }
     }
     if (brandingBtn && brandingPanel) {
-        if (type === 'sports') { brandingBtn.classList.add('hidden'); brandingPanel.classList.add('hidden'); }
-        else brandingBtn.classList.remove('hidden');
+        if (type === 'sports') {
+            brandingBtn.classList.add('hidden');
+            brandingPanel.classList.add('hidden');
+        } else {
+            brandingBtn.classList.remove('hidden');
+            brandingPanel.classList.remove('hidden');
+        }
     }
 }
 
@@ -109,33 +119,27 @@ async function initializeComponents(eventData) {
     setupTabs();
     const preview = document.getElementById('video-preview');
     const program = document.getElementById('video-program');
-    function loadIframe(target, preview){
+    function loadIframe(target, isPreview){
         const iframe = document.createElement('iframe');
-        const mode = preview ? '&mode=preview' : '';
+        const mode = isPreview ? '&mode=preview' : '';
         iframe.src = `overlay.html?event_id=${eventId}${mode}`;
         iframe.style.width = '1920px';
         iframe.style.height = '1080px';
-        iframe.className = 'rounded';
+        iframe.className = 'rounded pointer-events-none';
         target.innerHTML = '';
         target.appendChild(iframe);
-        const scale = target.clientWidth / 1920;
-        iframe.style.transform = `scale(${scale})`;
-        iframe.style.transformOrigin = 'top left';
+        const updateScale = () => {
+            const scale = Math.min(target.clientWidth / 1920, target.clientHeight / 1080);
+            iframe.style.transform = `scale(${scale})`;
+            iframe.style.transformOrigin = 'top left';
+        };
+        updateScale();
+        window.addEventListener('resize', updateScale);
     }
     if (preview) loadIframe(preview, true);
     if (program) loadIframe(program, false);
     const cutBtn = document.getElementById('cut-button');
     if (cutBtn) cutBtn.onclick = () => { cutToProgram(); };
-    window.addEventListener('resize',()=>{
-        if (preview && preview.firstChild) {
-            const scale = preview.clientWidth/1920;
-            preview.firstChild.style.transform = `scale(${scale})`;
-        }
-        if (program && program.firstChild) {
-            const scale = program.clientWidth/1920;
-            program.firstChild.style.transform = `scale(${scale})`;
-        }
-    });
     const topBar = document.createElement('top-bar');
     topBar.setAttribute('event-type', eventData.eventType || 'corporate');
     topBar.setAttribute('mode', 'live');

@@ -50,7 +50,12 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
     }
     // Listen for graphics changes from Firebase
     listenGraphicsData(eventId, (data) => {
-        graphicsData = data || { lowerThirds: [], titleSlides: [], teams: {} };
+        if (!data && eventData.graphics) {
+            graphicsData = { ...eventData.graphics };
+            setGraphicsData(eventId, graphicsData, mode);
+        } else {
+            graphicsData = data || { lowerThirds: [], titleSlides: [], teams: {} };
+        }
         liveLowerThirdId = graphicsData.liveLowerThirdId || null;
         previewLowerThirdId = graphicsData.previewLowerThirdId || null;
         liveTitleSlideId = graphicsData.liveTitleSlideId || null;

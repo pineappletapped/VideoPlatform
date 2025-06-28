@@ -38,7 +38,7 @@ export function renderBrandingModal(container, opts) {
     getBranding(targetId, isUser, (branding) => {
         container.innerHTML = `
             <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-                <div class="bg-white p-6 rounded shadow-lg min-w-[340px] max-w-[95vw]">
+                <div class="bg-white text-black p-6 rounded shadow-lg min-w-[340px] max-w-[95vw]">
                     <h2 class="font-bold text-xl mb-4">${isUser ? 'Account Branding' : 'Event Branding'}</h2>
                     <form id="branding-form">
                         <div class="mb-3">
