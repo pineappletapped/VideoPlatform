@@ -188,6 +188,8 @@ async function initializeComponents(eventData) {
         window.loadedVT = vt;
     });
     renderMusicPanel(document.getElementById('music-panel'), eventId);
+
+    setupAudioControls();
     
     // Initialize other panels
     await renderInputSourcesBar(document.getElementById('input-sources'), eventData);
@@ -230,6 +232,44 @@ async function initializeComponents(eventData) {
 // Called by programPreview/holdslatePanel when overlay state changes
 function onOverlayStateChange(state) {
     updateOverlayState(eventId, state);
+}
+
+let masterVolume = 1;
+let vtVolume = 1;
+let musicVolume = 1;
+window.masterVolume = masterVolume;
+window.vtVolume = vtVolume;
+window.musicVolume = musicVolume;
+
+function setupAudioControls() {
+    const master = document.getElementById('audio-master');
+    const vt = document.getElementById('audio-vt');
+    const music = document.getElementById('audio-music');
+    const update = () => {
+        updateOverlayState(eventId, { masterVolume, vtVolume, musicVolume });
+        window.masterVolume = masterVolume;
+        window.vtVolume = vtVolume;
+        window.musicVolume = musicVolume;
+        if (window.musicPlayer && window.musicPlayer.setVolume) {
+            window.musicPlayer.setVolume(masterVolume * musicVolume);
+        }
+        if (window.vtPlayer && window.vtPlayer.setVolume) {
+            window.vtPlayer.setVolume(masterVolume * vtVolume);
+        }
+    };
+    if (master) {
+        master.value = masterVolume;
+        master.oninput = () => { masterVolume = parseFloat(master.value); update(); };
+    }
+    if (vt) {
+        vt.value = vtVolume;
+        vt.oninput = () => { vtVolume = parseFloat(vt.value); update(); };
+    }
+    if (music) {
+        music.value = musicVolume;
+        music.oninput = () => { musicVolume = parseFloat(music.value); update(); };
+    }
+    update();
 }
 
 // Initialize the app

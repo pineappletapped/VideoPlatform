@@ -1,9 +1,15 @@
 import { listenOverlayState, listenGraphicsData, listenBranding } from './firebase.js';
+import { getDatabaseInstance } from './firebaseApp.js';
+import { ref, onValue } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
 
 const params = new URLSearchParams(window.location.search);
 const eventId = params.get('event_id') || 'demo';
 
 let countdownInterval = null;
+let vtVideo = null;
+let masterVolume = 1;
+let vtVolume = 1;
+let musicVolume = 1;
 
 // Overlay heartbeat for status bar feedback
 setInterval(() => {
@@ -40,6 +46,27 @@ function renderHoldslateCountdown(holdslateData, branding) {
         countdownHtml = `<div style="background:rgba(0,0,0,0.7);color:#fff;padding:1.5rem 2.5rem;border-radius:0.5rem;font-size:2.5rem;max-width:80vw;text-align:center;margin-top:1.5rem;">${countdownDisplay}</div>`;
     }
     holdslateOverlay.innerHTML = `<div style="width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;">${messageHtml}${countdownHtml}</div>`;
+}
+
+function playVT(vt) {
+    const container = document.getElementById('vt-overlay');
+    if (!container) return;
+    if (vtVideo) {
+        vtVideo.pause();
+        container.innerHTML = '';
+    }
+    vtVideo = document.createElement('video');
+    vtVideo.src = vt.videoUrl;
+    vtVideo.style.position = 'absolute';
+    vtVideo.style.top = '0';
+    vtVideo.style.left = '0';
+    vtVideo.style.width = '100%';
+    vtVideo.style.height = '100%';
+    vtVideo.style.objectFit = 'cover';
+    vtVideo.autoplay = true;
+    vtVideo.onended = () => { container.innerHTML = ''; vtVideo = null; };
+    vtVideo.volume = masterVolume * vtVolume;
+    container.appendChild(vtVideo);
 }
 
 function renderOverlayFromFirebase(state, graphics, branding) {
@@ -79,8 +106,10 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         if (!window.musicAudio || window.musicAudio.src !== state.nowPlaying.audioUrl) {
             if (window.musicAudio) window.musicAudio.pause();
             window.musicAudio = new Audio(state.nowPlaying.audioUrl);
+            window.musicAudio.volume = masterVolume * musicVolume;
             window.musicAudio.play();
         }
+        if (window.musicAudio) window.musicAudio.volume = masterVolume * musicVolume;
     } else {
         document.getElementById('now-playing').innerHTML = '';
         if (window.musicAudio) {
@@ -160,6 +189,11 @@ let lastBranding = null;
 
 function updateOverlay() {
     renderOverlayFromFirebase(lastState, lastGraphics, lastBranding);
+    masterVolume = lastState && lastState.masterVolume !== undefined ? lastState.masterVolume : 1;
+    vtVolume = lastState && lastState.vtVolume !== undefined ? lastState.vtVolume : 1;
+    musicVolume = lastState && lastState.musicVolume !== undefined ? lastState.musicVolume : 1;
+    if (vtVideo) vtVideo.volume = masterVolume * vtVolume;
+    if (window.musicAudio) window.musicAudio.volume = masterVolume * musicVolume;
 }
 
 listenOverlayState(eventId, (state) => {
@@ -180,4 +214,11 @@ listenBranding(eventId, (branding) => {
         font: 'Arial'
     };
     updateOverlay();
+});
+
+const db = getDatabaseInstance();
+onValue(ref(db, `status/${eventId}/vtCommand`), snap => {
+    const cmd = snap.val();
+    if (!cmd || cmd.action !== 'play' || !cmd.vt) return;
+    playVT(cmd.vt);
 });

@@ -12,8 +12,18 @@ export function renderMusicPanel(container, eventId) {
     let currentAudio = null;
     let currentIdx = null;
     let loop = false;
+    let loopPlaylist = false;
+    let playlist = [];
+    let playlistPos = 0;
     let timeInterval = null;
     let monitor = false;
+
+    window.musicPlayer = {
+        setVolume(v) { if (currentAudio) currentAudio.volume = v; },
+        pause() { if (currentAudio) currentAudio.pause(); },
+        resume() { if (currentAudio) currentAudio.play(); },
+        isPlaying() { return currentAudio && !currentAudio.paused; }
+    };
 
     onValue(getMusicRef(eventId), (snapshot) => {
         const tracks = snapshot.val() || [];
@@ -23,12 +33,17 @@ export function renderMusicPanel(container, eventId) {
     function renderPanel(tracks) {
         container.innerHTML = `
             <div class="mb-4" id="music-player-section">
-                <div id="music-player-info" class="mb-2 text-sm text-gray-700"></div>
-                <div class="flex gap-2 items-center">
+                <div id="music-player-info" class="mb-1 text-sm text-gray-700"></div>
+                <input type="range" id="music-progress" class="w-full mb-2" min="0" max="0" step="0.01" value="0" />
+                <div class="flex gap-2 items-center flex-wrap">
                     <button class="control-button btn-sm" id="music-play">Play</button>
                     <button class="control-button btn-sm" id="music-pause">Pause</button>
+                    <button class="control-button btn-sm" id="playlist-start">Play Playlist</button>
                     <label class="flex items-center gap-1 ml-2 text-xs">
-                        <input type="checkbox" id="music-loop" /> Loop
+                        <input type="checkbox" id="music-loop" /> Loop Track
+                    </label>
+                    <label class="flex items-center gap-1 ml-2 text-xs">
+                        <input type="checkbox" id="playlist-loop" /> Loop Playlist
                     </label>
                     <span id="music-time" class="ml-4 text-xs text-gray-500"></span>
                 </div>
@@ -48,6 +63,7 @@ export function renderMusicPanel(container, eventId) {
                         <button class="control-button btn-sm" data-action="edit" data-idx="${idx}">Edit</button>
                         <button class="control-button btn-sm" data-action="remove" data-idx="${idx}">Remove</button>
                         <button class="control-button btn-sm" data-action="play" data-idx="${idx}">Play</button>
+                        <button class="control-button btn-sm" data-action="queue" data-idx="${idx}">Add</button>
                     </li>
                 `).join('')}
             </ul>
@@ -102,6 +118,12 @@ export function renderMusicPanel(container, eventId) {
         });
         container.querySelectorAll('button[data-action="play"]').forEach(btn => {
             btn.onclick = () => playTrack(tracks[btn.getAttribute('data-idx')], btn.getAttribute('data-idx'));
+        });
+        container.querySelectorAll('button[data-action="queue"]').forEach(btn => {
+            btn.onclick = () => {
+                const idx = parseInt(btn.getAttribute('data-idx'), 10);
+                if (!playlist.includes(idx)) playlist.push(idx);
+            };
         });
         // Modal logic
         const modal = container.querySelector('#music-modal');
@@ -183,23 +205,42 @@ export function renderMusicPanel(container, eventId) {
         // Player controls
         const playBtn = container.querySelector('#music-play');
         const pauseBtn = container.querySelector('#music-pause');
+        const playlistBtn = container.querySelector('#playlist-start');
         const loopBox = container.querySelector('#music-loop');
+        const playlistLoopBox = container.querySelector('#playlist-loop');
+        const progress = container.querySelector('#music-progress');
         const timeSpan = container.querySelector('#music-time');
         if (playBtn && pauseBtn) {
             playBtn.onclick = () => {
                 if (currentIdx !== null && tracks[currentIdx]) {
+                    if (currentAudio && !currentAudio.paused && playlist.length===0) {
+                        // already playing
+                        return;
+                    }
                     playTrack(tracks[currentIdx], currentIdx);
                 }
             };
             pauseBtn.onclick = () => {
                 if (currentAudio) currentAudio.pause();
-                updateOverlayState(eventId, { nowPlaying: null, musicVisible: false });
             };
         }
         if (loopBox) {
             loopBox.onchange = () => {
                 loop = loopBox.checked;
                 if (currentAudio) currentAudio.loop = loop;
+            };
+        }
+        if (playlistLoopBox) {
+            playlistLoopBox.onchange = () => {
+                loopPlaylist = playlistLoopBox.checked;
+            };
+        }
+        if (playlistBtn) {
+            playlistBtn.onclick = () => {
+                if (tracks.length === 0) return;
+                playlist = tracks.map((_, i) => i);
+                playlistPos = 0;
+                playTrack(tracks[playlist[0]], playlist[0]);
             };
         }
         const monitorBtn = document.getElementById('music-monitor');
@@ -209,24 +250,49 @@ export function renderMusicPanel(container, eventId) {
                 monitorBtn.textContent = monitor ? 'Monitor On' : 'Monitor';
             };
         }
+        if (progress) {
+            progress.oninput = () => {
+                if (currentAudio) {
+                    currentAudio.currentTime = parseFloat(progress.value);
+                }
+            };
+        }
         function playTrack(track, idx) {
-            if (currentAudio) {
-                currentAudio.pause();
-                currentAudio = null;
-            }
-            if (!track.audioUrl) return;
-            if (monitor) {
-                currentAudio = new Audio(track.audioUrl);
-                currentAudio.loop = loop;
+            if (currentIdx === idx && currentAudio) {
                 currentAudio.play();
+            } else {
+                if (currentAudio) {
+                    currentAudio.pause();
+                    currentAudio = null;
+                }
+                if (!track.audioUrl) return;
+                if (monitor) {
+                    currentAudio = new Audio(track.audioUrl);
+                    currentAudio.loop = loop;
+                    currentAudio.volume = (window.masterVolume || 1) * (window.musicVolume || 1);
+                    currentAudio.play();
+                }
+                updateOverlayState(eventId, { nowPlaying: track, musicVisible: true });
+                currentIdx = idx;
+                updatePlayerInfo(track);
+                if (progress) {
+                    progress.max = currentAudio ? currentAudio.duration : 0;
+                }
             }
-            updateOverlayState(eventId, { nowPlaying: track, musicVisible: true });
-            currentIdx = idx;
-            updatePlayerInfo(track);
             if (timeInterval) clearInterval(timeInterval);
             timeInterval = setInterval(() => updateTime(track), 500);
             currentAudio.onended = () => {
-                if (!loop) {
+                if (playlist.length && playlistPos < playlist.length - 1) {
+                    playlistPos++;
+                    currentIdx = playlist[playlistPos];
+                    playTrack(tracks[currentIdx], currentIdx);
+                } else if (playlist.length && loopPlaylist) {
+                    playlistPos = 0;
+                    currentIdx = playlist[0];
+                    playTrack(tracks[currentIdx], currentIdx);
+                } else if (loop) {
+                    playTrack(track, idx);
+                } else {
                     updatePlayerInfo(null);
                     if (timeInterval) clearInterval(timeInterval);
                     updateOverlayState(eventId, { nowPlaying: null, musicVisible: false });
@@ -247,6 +313,7 @@ export function renderMusicPanel(container, eventId) {
                 timeSpan.textContent = '';
                 return;
             }
+            if (progress) progress.value = currentAudio.currentTime;
             const remaining = Math.max(0, (currentAudio.duration || 0) - (currentAudio.currentTime || 0));
             const mins = Math.floor(remaining / 60);
             const secs = Math.floor(remaining % 60);

@@ -80,16 +80,16 @@
                         <div class="text-sm font-semibold mb-2">Audio Levels</div>
                         <div class="space-y-2">
                             <div>
-                                <label class="text-xs">Master</label>
-                                <input type="range" class="w-full" />
+                                <label class="text-xs" for="audio-master">Master</label>
+                                <input type="range" id="audio-master" class="w-full" min="0" max="1" step="0.01" value="1" />
                             </div>
                             <div>
-                                <label class="text-xs">VT</label>
-                                <input type="range" class="w-full" />
+                                <label class="text-xs" for="audio-vt">VT</label>
+                                <input type="range" id="audio-vt" class="w-full" min="0" max="1" step="0.01" value="1" />
                             </div>
                             <div>
-                                <label class="text-xs">Music</label>
-                                <input type="range" class="w-full" />
+                                <label class="text-xs" for="audio-music">Music</label>
+                                <input type="range" id="audio-music" class="w-full" min="0" max="1" step="0.01" value="1" />
                                 <button class="control-button btn-xs mt-1 w-full" id="music-monitor">Monitor</button>
                             </div>
                         </div>
