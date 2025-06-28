@@ -156,12 +156,12 @@ async function initializeComponents(eventData) {
             renderSportPanel(document.getElementById('sport-panel'), eventData, async (id,sport)=>{
                 await updateEventMetadata(eventId,{...eventData,sport});
                 eventData.sport = sport;
-                renderScoreboardPanel(document.getElementById('scoreboard-panel'), sport);
+                renderScoreboardPanel(document.getElementById('scoreboard-panel'), sport, eventId);
             });
-            renderScoreboardPanel(document.getElementById('scoreboard-panel'), eventData.sport);
+            renderScoreboardPanel(document.getElementById('scoreboard-panel'), eventData.sport, eventId);
             renderLineupPanel(document.getElementById('lineups-panel'));
             renderStatsPanel(document.getElementById('stats-panel'));
-            renderTeamsPanel(document.getElementById('teams-panel'), eventId);
+        renderTeamsPanel(document.getElementById('teams-panel'), eventId, sport);
         } else {
             renderProgramPreview(document.getElementById('schedule-panel'), eventData, onOverlayStateChange);
         }
@@ -173,12 +173,12 @@ async function initializeComponents(eventData) {
         renderSportPanel(document.getElementById('sport-panel'), eventData, async (id,sport)=>{
             await updateEventMetadata(eventId,{...eventData,sport});
             eventData.sport = sport;
-            renderScoreboardPanel(document.getElementById('scoreboard-panel'), sport);
+            renderScoreboardPanel(document.getElementById('scoreboard-panel'), sport, eventId);
         });
-        renderScoreboardPanel(document.getElementById('scoreboard-panel'), eventData.sport);
+        renderScoreboardPanel(document.getElementById('scoreboard-panel'), eventData.sport, eventId);
         renderLineupPanel(document.getElementById('lineups-panel'));
         renderStatsPanel(document.getElementById('stats-panel'));
-        renderTeamsPanel(document.getElementById('teams-panel'), eventId);
+        renderTeamsPanel(document.getElementById('teams-panel'), eventId, eventData.sport);
     } else {
         renderProgramPreview(document.getElementById('schedule-panel'), eventData, onOverlayStateChange);
     }
