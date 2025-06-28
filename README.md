@@ -1,15 +1,15 @@
 # VideoPlatform
 
-This project is a static web app for managing live graphics, video and music playback. All files live under `wwwroot` and can be served by any simple web host.
+This project is a web app for managing live graphics, video and music playback. Everything lives under `wwwroot` so it can run from nearly any host that can execute PHP.
 
-Media uploaded from the control panel is stored in Firebase Storage and metadata is saved in Firebase Realtime Database.
+Uploaded media is stored on the server under `wwwroot/uploads` while metadata lives in Firebase Realtime Database.
 
 ## Running locally
 
-Use any static HTTP server, e.g. Python's `http.server`:
+Use PHP's built‑in server:
 
 ```bash
-python3 -m http.server -d wwwroot 8080
+php -S localhost:8080 -t wwwroot
 ```
 
-Then open `http://localhost:8080/control.html?event_id=demo` in your browser.
+Make sure the `wwwroot/uploads` directory exists and is writable (e.g. `chmod 777 wwwroot/uploads`). Then open `http://localhost:8080/control.html?event_id=demo` in your browser.

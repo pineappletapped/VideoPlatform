@@ -1,6 +1,5 @@
 import { ref, set, get, onValue, update } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
-import { getDatabaseInstance, getStorageInstance } from "../firebaseApp.js";
-import { ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-storage.js";
+import { getDatabaseInstance } from "../firebaseApp.js";
 
 const db = getDatabaseInstance();
 
@@ -104,7 +103,7 @@ export function renderVtsPanel(container, eventId, onLoadVT) {
                 if (form['vt-video-file'].files[0]) {
                     const path = `uploads/${eventId}/vts/${form['vt-video-file'].files[0].name}`;
                     setStatus('Uploading video...');
-                    const url = await uploadToFirebase(form['vt-video-file'].files[0], path);
+                    const url = await uploadToServer(form['vt-video-file'].files[0], path);
                     setStatus('');
                     if (url) videoUrl = url;
                 }
@@ -112,7 +111,7 @@ export function renderVtsPanel(container, eventId, onLoadVT) {
                 if (form['vt-thumb-file'].files[0]) {
                     const path = `uploads/${eventId}/vts/thumbnails/${form['vt-thumb-file'].files[0].name}`;
                     setStatus('Uploading thumb...');
-                    const url = await uploadToFirebase(form['vt-thumb-file'].files[0], path);
+                    const url = await uploadToServer(form['vt-thumb-file'].files[0], path);
                     setStatus('');
                     if (url) thumbnail = url;
                 }
@@ -120,7 +119,7 @@ export function renderVtsPanel(container, eventId, onLoadVT) {
                 if (form['vt-license-file'].files[0]) {
                     const path = `uploads/${eventId}/vts/licenses/${form['vt-license-file'].files[0].name}`;
                     setStatus('Uploading license...');
-                    const url = await uploadToFirebase(form['vt-license-file'].files[0], path);
+                    const url = await uploadToServer(form['vt-license-file'].files[0], path);
                     setStatus('');
                     if (url) license = url;
                 }
@@ -177,12 +176,15 @@ function setStatus(text) {
     if (statusEl) statusEl.textContent = text;
 }
 
-async function uploadToFirebase(file, path) {
+async function uploadToServer(file, path) {
     try {
-        const storage = getStorageInstance();
-        const storageRef = sRef(storage, path.replace(/^\/+/, ''));
-        await uploadBytes(storageRef, file);
-        return await getDownloadURL(storageRef);
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('path', path.replace(/^\/+/, ''));
+        const resp = await fetch('upload.php', { method: 'POST', body: formData });
+        if (!resp.ok) throw new Error('upload failed');
+        const data = await resp.json();
+        return data.url;
     } catch (err) {
         console.error('Upload failed', err);
         return null;

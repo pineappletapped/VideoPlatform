@@ -1,6 +1,5 @@
 import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
-import { getDatabaseInstance, getStorageInstance } from "../firebaseApp.js";
-import { ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-storage.js";
+import { getDatabaseInstance } from "../firebaseApp.js";
 import { updateOverlayState } from "../firebase.js";
 
 const db = getDatabaseInstance();
@@ -116,7 +115,7 @@ export function renderMusicPanel(container, eventId) {
                 if (form['music-audio-file'].files[0]) {
                     const path = `uploads/${eventId}/music/${form['music-audio-file'].files[0].name}`;
                     setStatus('Uploading audio...');
-                    const url = await uploadToFirebase(form['music-audio-file'].files[0], path);
+                    const url = await uploadToServer(form['music-audio-file'].files[0], path);
                     setStatus('');
                     if (url) audioUrl = url;
                 }
@@ -124,7 +123,7 @@ export function renderMusicPanel(container, eventId) {
                 if (form['music-thumb-file'].files[0]) {
                     const path = `uploads/${eventId}/music/thumbnails/${form['music-thumb-file'].files[0].name}`;
                     setStatus('Uploading thumb...');
-                    const url = await uploadToFirebase(form['music-thumb-file'].files[0], path);
+                    const url = await uploadToServer(form['music-thumb-file'].files[0], path);
                     setStatus('');
                     if (url) thumbnail = url;
                 }
@@ -132,7 +131,7 @@ export function renderMusicPanel(container, eventId) {
                 if (form['music-license-file'].files[0]) {
                     const path = `uploads/${eventId}/music/licenses/${form['music-license-file'].files[0].name}`;
                     setStatus('Uploading license...');
-                    const url = await uploadToFirebase(form['music-license-file'].files[0], path);
+                    const url = await uploadToServer(form['music-license-file'].files[0], path);
                     setStatus('');
                     if (url) license = url;
                 }
@@ -261,12 +260,15 @@ function setStatus(text) {
     if (el) el.textContent = text;
 }
 
-async function uploadToFirebase(file, path) {
+async function uploadToServer(file, path) {
     try {
-        const storage = getStorageInstance();
-        const storageRef = sRef(storage, path.replace(/^\/+/, ''));
-        await uploadBytes(storageRef, file);
-        return await getDownloadURL(storageRef);
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('path', path.replace(/^\/+/, ''));
+        const resp = await fetch('upload.php', { method: 'POST', body: formData });
+        if (!resp.ok) throw new Error('upload failed');
+        const data = await resp.json();
+        return data.url;
     } catch (err) {
         console.error('Upload failed', err);
         return null;
