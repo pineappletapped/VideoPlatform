@@ -2,7 +2,6 @@ import { eventStorage } from './storage.js';
 import './components/topBar.js';
 import { renderStatusBar } from './components/statusBar.js';
 import { renderProgramPreview } from './components/programPreview.js';
-import { renderInputSourcesBar } from './components/inputSourcesBar.js';
 import { renderGraphicsPanel } from './components/graphicsPanel.js';
 import { renderScoreboardPanel } from './components/scoreboardPanel.js';
 import { renderLineupPanel } from './components/lineupPanel.js';
@@ -130,7 +129,7 @@ async function initializeComponents(eventData) {
     if (preview) {
         const iframe = document.createElement('iframe');
         iframe.src = `overlay.html?event_id=${eventId}`;
-        iframe.className = 'w-full h-[200px] rounded';
+        iframe.className = 'w-full h-full rounded';
         preview.innerHTML = '';
         preview.appendChild(iframe);
     }
@@ -138,7 +137,7 @@ async function initializeComponents(eventData) {
     topBar.addEventListener('logout', logout);
     topBar.addEventListener('edit-account', () => alert('Edit account not implemented'));
     document.getElementById('top-bar').appendChild(topBar);
-    renderStatusBar(document.getElementById('status-bar'), eventData);
+    renderStatusBar(document.getElementById('status-bar'), eventData, {listener:false, atem:false, obs:false, sport:true, clock:true});
     setupEventTypeSelector(eventData);
     updateGraphicsTabs(eventData.eventType || 'corporate');
     if ((eventData.eventType || 'corporate') === 'sports') {
@@ -163,7 +162,6 @@ async function initializeComponents(eventData) {
 
     setupAudioControls();
 
-    await renderInputSourcesBar(document.getElementById('input-sources'), eventData);
 
     const brandingModal = document.getElementById('branding-modal');
     renderBrandingModal(brandingModal, eventData);

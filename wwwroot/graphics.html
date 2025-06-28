@@ -22,13 +22,12 @@
     <div class="flex-1 flex flex-col md:flex-row container mx-auto p-4 gap-4">
         <!-- Left Column -->
         <div class="flex-1 flex flex-col gap-4 min-w-[320px]">
-            <div id="video-preview" class="bg-black rounded-lg shadow-md flex items-center justify-center min-h-[200px] text-white text-lg font-bold">Preview</div>
-            <div id="input-sources"></div>
+            <div id="video-preview" class="bg-black rounded-lg shadow-md flex items-center justify-center aspect-video text-white text-lg font-bold">Preview</div>
         </div>
         <!-- Right Column -->
         <div class="flex-1 flex flex-col gap-4 min-w-[320px]">
             <!-- Event Type Selector -->
-            <div class="bg-white rounded-lg shadow p-4">
+            <div class="bg-gray-800 text-gray-100 rounded-lg shadow p-4">
                 <select id="event-type" class="w-full p-2 border rounded">
                     <option value="corporate">Corporate Event</option>
                     <option value="sports">Sports Event</option>
@@ -36,7 +35,7 @@
             </div>
 
             <!-- Graphics Control Panel (Tabbed) -->
-            <div class="bg-white rounded-lg shadow flex-1 graphics-panel">
+            <div class="bg-gray-800 text-gray-100 rounded-lg shadow flex-1 graphics-panel">
                 <div class="flex border-b" id="graphics-tabs">
                     <button class="px-4 py-2 border-b-2 border-brand text-brand font-semibold" data-tab="holdslate">Holdslate</button>
                     <button class="px-4 py-2" data-tab="lower-thirds">Lower Thirds</button>
@@ -60,7 +59,7 @@
             </div>
 
             <!-- AV Control Panel -->
-            <div class="bg-white rounded-lg shadow av-panel">
+            <div class="bg-gray-800 text-gray-100 rounded-lg shadow av-panel">
                 <div class="flex border-b">
                     <button class="px-4 py-2 border-b-2 border-brand text-brand font-semibold" data-tab="vts">VTs</button>
                     <button class="px-4 py-2" data-tab="music">Music</button>
@@ -95,7 +94,7 @@
     <div id="branding-modal" class="hidden"></div>
     <div id="profile-wizard" class="hidden"></div>
     <div id="calendar-drawer" class="hidden"></div>
-    <footer class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-300 flex items-center justify-between px-6 py-2 z-50 shadow">
+    <footer class="fixed bottom-0 left-0 w-full bg-gray-800 border-t border-gray-700 flex items-center justify-between px-6 py-2 z-50 shadow">
         <button id="footer-branding" class="control-button">Event Branding</button>
     </footer>
     <script type="module" src="js/main-graphics.js?v=20240610"></script>
