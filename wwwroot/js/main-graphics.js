@@ -127,20 +127,30 @@ async function initializeComponents(eventData) {
     setupTabs();
     const preview = document.getElementById('video-preview');
     const program = document.getElementById('video-program');
-    if (preview) {
+    function loadIframe(target){
         const iframe = document.createElement('iframe');
         iframe.src = `overlay.html?event_id=${eventId}`;
-        iframe.className = 'w-full h-full rounded';
-        preview.innerHTML = '';
-        preview.appendChild(iframe);
+        iframe.style.width = '1920px';
+        iframe.style.height = '1080px';
+        iframe.className = 'rounded';
+        target.innerHTML = '';
+        target.appendChild(iframe);
+        const scale = target.clientWidth / 1920;
+        iframe.style.transform = `scale(${scale})`;
+        iframe.style.transformOrigin = 'top left';
     }
-    if (program) {
-        const iframe = document.createElement('iframe');
-        iframe.src = `overlay.html?event_id=${eventId}`;
-        iframe.className = 'w-full h-full rounded';
-        program.innerHTML = '';
-        program.appendChild(iframe);
-    }
+    if (preview) loadIframe(preview);
+    if (program) loadIframe(program);
+    window.addEventListener('resize',()=>{
+        if (preview && preview.firstChild) {
+            const scale = preview.clientWidth/1920;
+            preview.firstChild.style.transform = `scale(${scale})`;
+        }
+        if (program && program.firstChild) {
+            const scale = program.clientWidth/1920;
+            program.firstChild.style.transform = `scale(${scale})`;
+        }
+    });
     const topBar = document.createElement('top-bar');
     topBar.addEventListener('logout', logout);
     topBar.addEventListener('edit-account', () => alert('Edit account not implemented'));

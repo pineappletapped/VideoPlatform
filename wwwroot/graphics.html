@@ -22,9 +22,9 @@
     <div class="flex-1 flex flex-col md:flex-row container mx-auto p-4 gap-4">
         <!-- Left Column -->
         <div class="flex-1 flex flex-col gap-4 min-w-[320px]">
-            <div class="flex gap-4">
-                <div id="video-preview" class="bg-black rounded-lg shadow-md flex items-center justify-center aspect-video text-white text-lg font-bold flex-1">Preview</div>
-                <div id="video-program" class="bg-black rounded-lg shadow-md flex items-center justify-center aspect-video text-white text-lg font-bold flex-1">Program</div>
+            <div>
+                <div class="text-center text-sm mb-1">Preview</div>
+                <div id="video-preview" class="bg-black rounded-lg shadow-md flex items-center justify-center overflow-hidden aspect-video"></div>
             </div>
             <!-- Graphics Control Panel (Tabbed) -->
             <div class="bg-gray-800 text-gray-100 rounded-lg shadow graphics-panel flex-1">
@@ -52,9 +52,13 @@
         </div>
         <!-- Right Column -->
         <div class="flex-1 flex flex-col gap-4 min-w-[320px]">
+            <div>
+                <div class="text-center text-sm mb-1">Program</div>
+                <div id="video-program" class="bg-black rounded-lg shadow-md flex items-center justify-center overflow-hidden aspect-video"></div>
+            </div>
             <!-- Event Type Selector -->
             <div class="bg-gray-800 text-gray-100 rounded-lg shadow p-4">
-                <select id="event-type" class="w-full p-2 border rounded">
+                <select id="event-type" class="w-full p-2 border rounded text-black bg-white">
                     <option value="corporate">Corporate Event</option>
                     <option value="sports">Sports Event</option>
                 </select>

@@ -108,10 +108,16 @@
 }
 
 .modal-window {
-  background: #2d2d2d;
-  color: #f3f4f6;
+  background: #ffffff;
+  color: #000000;
   padding: 2rem;
   border-radius: 0.5rem;
   min-width: 320px;
   max-width: 95vw;
+}
+
+.modal-window input,
+.modal-window select,
+.modal-window textarea {
+  color: #000;
 }
