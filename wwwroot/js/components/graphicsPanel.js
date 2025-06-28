@@ -1,10 +1,11 @@
-import { setGraphicsData, getGraphicsData, listenGraphicsData } from '../firebase.js';
+import { setGraphicsData, getGraphicsData, listenGraphicsData, listenFavorites, updateFavorites } from '../firebase.js';
 
 let liveLowerThirdId = null;
 let previewLowerThirdId = null;
 let liveTitleSlideId = null;
 let previewTitleSlideId = null;
 let graphicsData = null;
+let favorites = { lowerThirds: [], titleSlides: [] };
 
 function saveLiveState(eventId) {
     setGraphicsData(eventId, {
@@ -56,6 +57,7 @@ export function renderGraphicsPanel(container, eventData) {
         previewTitleSlideId = graphicsData.previewTitleSlideId || null;
         renderPanel();
     });
+    listenFavorites(eventId, (fav) => { favorites = fav || { lowerThirds: [], titleSlides: [] }; renderPanel(); });
 
     function renderPanel() {
         const lowerThirds = graphicsData.lowerThirds || [];
@@ -125,6 +127,7 @@ export function renderGraphicsPanel(container, eventData) {
                                     <td class="py-1"><button class="control-button btn-sm btn-live" data-action="take-lt" data-id="${lt.id}">Live</button></td>
                                     <td class="py-1"><button class="control-button btn-sm" data-action="hide-lt" data-id="${lt.id}">Hide</button></td>
                                     <td class="py-1"><button class="control-button btn-sm" data-action="edit-lt" data-id="${lt.id}">Edit</button></td>
+                                    <td class="py-1"><button class="control-button btn-sm" data-action="favorite-lt" data-id="${lt.id}">${favorites.lowerThirds.includes(lt.id) ? '★' : '☆'}</button></td>
                                     <td class="py-1"><button class="control-button btn-sm" data-action="remove-lt" data-id="${lt.id}">Remove</button></td>
                                 </tr>
                             `).join('')}
@@ -145,6 +148,7 @@ export function renderGraphicsPanel(container, eventData) {
                                     <td class="py-1"><button class="control-button btn-sm btn-live" data-action="take-ts" data-id="${ts.id}">Live</button></td>
                                     <td class="py-1"><button class="control-button btn-sm" data-action="hide-ts" data-id="${ts.id}">Hide</button></td>
                                     <td class="py-1"><button class="control-button btn-sm" data-action="edit-ts" data-id="${ts.id}">Edit</button></td>
+                                    <td class="py-1"><button class="control-button btn-sm" data-action="favorite-ts" data-id="${ts.id}">${favorites.titleSlides.includes(ts.id) ? '★' : '☆'}</button></td>
                                     <td class="py-1"><button class="control-button btn-sm" data-action="remove-ts" data-id="${ts.id}">Remove</button></td>
                                 </tr>
                             `).join('')}
@@ -268,6 +272,14 @@ export function renderGraphicsPanel(container, eventData) {
                 }
                 idInput.value = id;
                 modal.style.display = 'flex';
+                } else if (action === 'favorite-lt') {
+                    const idx = favorites.lowerThirds.indexOf(id);
+                    if (idx >= 0) favorites.lowerThirds.splice(idx,1); else favorites.lowerThirds.push(id);
+                    updateFavorites(eventId, favorites);
+                } else if (action === 'favorite-ts') {
+                    const idx = favorites.titleSlides.indexOf(id);
+                    if (idx >= 0) favorites.titleSlides.splice(idx,1); else favorites.titleSlides.push(id);
+                    updateFavorites(eventId, favorites);
                 } else if (action === 'remove-lt') {
                     const idx = lowerThirds.findIndex(x => x.id === id);
                     if (idx >= 0) lowerThirds.splice(idx, 1);

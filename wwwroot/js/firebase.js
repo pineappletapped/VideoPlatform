@@ -69,6 +69,22 @@ export function getGraphicsData(eventId) {
   return get(ref(db, `graphics/${eventId}`)).then(snap => snap.val());
 }
 
+// Favorites helpers (eventId-scoped)
+export function setFavorites(eventId, data) {
+  return set(ref(db, `favorites/${eventId}`), data);
+}
+export function updateFavorites(eventId, data) {
+  return update(ref(db, `favorites/${eventId}`), data);
+}
+export function listenFavorites(eventId, callback) {
+  return onValue(ref(db, `favorites/${eventId}`), (snapshot) => {
+    callback(snapshot.val());
+  });
+}
+export function getFavorites(eventId) {
+  return get(ref(db, `favorites/${eventId}`)).then(snap => snap.val());
+}
+
 // Branding helpers (eventId-scoped)
 export function setBranding(eventId, branding) {
   return set(ref(db, `branding/${eventId}`), branding);

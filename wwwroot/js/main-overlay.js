@@ -24,7 +24,9 @@ const DEFAULT_BRANDING = {
     secondaryColor2: '#e0f7ff',
     logoPrimary: '',
     logoSecondary: '',
-    font: 'Arial'
+    font: 'Arial',
+    logos: { tl:'', tr:'', bl:'', br:'' },
+    sponsors: []
 };
 
 function applyBranding(branding = DEFAULT_BRANDING) {
@@ -32,6 +34,10 @@ function applyBranding(branding = DEFAULT_BRANDING) {
     document.documentElement.style.setProperty('--brand-primary', branding.primaryColor);
     document.documentElement.style.setProperty('--brand-secondary1', branding.secondaryColor1);
     document.documentElement.style.setProperty('--brand-secondary2', branding.secondaryColor2);
+    ['tl','tr','bl','br'].forEach(pos=>{
+        const img=document.getElementById(`logo-${pos}`);
+        if(img) img.src = (branding.logos && branding.logos[pos]) ? branding.logos[pos] : '';
+    });
 }
 
 function renderHoldslateCountdown(holdslateData, branding) {

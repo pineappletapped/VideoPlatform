@@ -15,6 +15,8 @@ import { renderHoldslatePanel } from './components/holdslatePanel.js';
 import { updateOverlayState, getOverlayState, getEventMetadata, updateEventMetadata, getGraphicsData, updateGraphicsData } from './firebase.js';
 import { renderVtsPanel } from './components/vtsPanel.js';
 import { renderMusicPanel } from './components/musicPanel.js';
+import { renderActiveGraphicsPanel } from './components/activeGraphicsPanel.js';
+import { renderBrandingPanel } from './components/brandingPanel.js';
 import { requireAuth, logout } from './auth.js';
 
 const params = new URLSearchParams(window.location.search);
@@ -87,13 +89,15 @@ function updateGraphicsTabs(type) {
     });
     const scheduleBtn = tabBar.querySelector('[data-tab="schedule"]');
     const schedulePanel = document.getElementById('schedule-panel');
+    const brandingBtn = tabBar.querySelector('[data-tab="branding"]');
+    const brandingPanel = document.getElementById('branding-panel');
     if (scheduleBtn && schedulePanel) {
-        if (type === 'sports') {
-            scheduleBtn.classList.add('hidden');
-            schedulePanel.classList.add('hidden');
-        } else {
-            scheduleBtn.classList.remove('hidden');
-        }
+        if (type === 'sports') { scheduleBtn.classList.add('hidden'); schedulePanel.classList.add('hidden'); }
+        else scheduleBtn.classList.remove('hidden');
+    }
+    if (brandingBtn && brandingPanel) {
+        if (type === 'sports') { brandingBtn.classList.add('hidden'); brandingPanel.classList.add('hidden'); }
+        else brandingBtn.classList.remove('hidden');
     }
 }
 
@@ -180,6 +184,8 @@ async function initializeComponents(eventData) {
 
     renderVtsPanel(document.getElementById('vts-panel'), eventId, vt => { loadedVT = vt; window.loadedVT = vt; });
     renderMusicPanel(document.getElementById('music-panel'), eventId);
+    renderActiveGraphicsPanel(document.getElementById('active-graphics'), eventId);
+    renderBrandingPanel(document.getElementById('branding-panel'), eventId);
 
     setupAudioControls();
 

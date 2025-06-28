@@ -14,7 +14,9 @@ function getBranding(eventId, callback) {
                 secondaryColor2: '#e0f7ff',
                 logoPrimary: '',
                 logoSecondary: '',
-                font: 'Arial'
+                font: 'Arial',
+                logos: { tl:'', tr:'', bl:'', br:'' },
+                sponsors: []
             });
         } else {
             callback(branding);
@@ -88,7 +90,9 @@ export function renderBrandingModal(container, eventData) {
                 secondaryColor2: data.secondaryColor2,
                 logoPrimary,
                 logoSecondary,
-                font: data.font
+                font: data.font,
+                logos: branding.logos || {tl:'',tr:'',bl:'',br:''},
+                sponsors: branding.sponsors || []
             };
             saveBranding(eventId, newBranding);
             container.classList.add('hidden');
