@@ -1,12 +1,13 @@
 import { listenOverlayState, listenGraphicsData, listenBranding } from './firebase.js';
 import { getDatabaseInstance } from './firebaseApp.js';
-import { ref, onValue } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
+import { ref, onValue, set } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
 
 const params = new URLSearchParams(window.location.search);
 const eventId = params.get('event_id') || 'demo';
 
 let countdownInterval = null;
 let vtVideo = null;
+let preloadedVT = null;
 let masterVolume = 1;
 let vtVolume = 1;
 let musicVolume = 1;
@@ -64,8 +65,13 @@ function playVT(vt) {
         vtVideo.pause();
         container.innerHTML = '';
     }
-    vtVideo = document.createElement('video');
-    vtVideo.src = vt.videoUrl;
+    if (preloadedVT && preloadedVT.src === vt.videoUrl) {
+        vtVideo = preloadedVT;
+        preloadedVT = null;
+    } else {
+        vtVideo = document.createElement('video');
+        vtVideo.src = vt.videoUrl;
+    }
     vtVideo.style.position = 'absolute';
     vtVideo.style.top = '0';
     vtVideo.style.left = '0';
@@ -74,9 +80,13 @@ function playVT(vt) {
     vtVideo.style.objectFit = 'cover';
     vtVideo.autoplay = true;
     vtVideo.onended = () => { container.innerHTML = ''; vtVideo = null; };
+    vtVideo.oncanplaythrough = () => {
+        set(ref(db, `status/${eventId}/vtReady`), true);
+    };
     vtVideo.volume = masterVolume * vtVolume;
     container.appendChild(vtVideo);
     vtVideo.play().catch(err => console.warn('VT autoplay failed', err));
+    set(ref(db, `status/${eventId}/vtReady`), false);
 }
 
 function renderOverlayFromFirebase(state, graphics, branding) {
@@ -224,4 +234,22 @@ onValue(ref(db, `status/${eventId}/vtCommand`), snap => {
     const cmd = snap.val();
     if (!cmd || cmd.action !== 'play' || !cmd.vt) return;
     playVT(cmd.vt);
+});
+
+// Preload VT when loaded in control panel
+onValue(ref(db, `status/${eventId}/vt`), snap => {
+    const vt = snap.val();
+    if (vt && vt.videoUrl) {
+        preloadedVT = document.createElement('video');
+        preloadedVT.src = vt.videoUrl;
+        preloadedVT.preload = 'auto';
+        preloadedVT.oncanplaythrough = () => {
+            set(ref(db, `status/${eventId}/vtReady`), true);
+        };
+        preloadedVT.onerror = () => set(ref(db, `status/${eventId}/vtReady`), false);
+        preloadedVT.load();
+    } else {
+        preloadedVT = null;
+        set(ref(db, `status/${eventId}/vtReady`), false);
+    }
 });

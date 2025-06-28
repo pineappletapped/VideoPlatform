@@ -77,3 +77,8 @@
   padding: 0.5rem 0;
   border-bottom: 4px solid var(--brand-primary);
 }
+
+/* Indicate when a VT clip is fully buffered */
+.vt-buffered {
+  box-shadow: 0 0 0 2px #38a169 inset;
+}

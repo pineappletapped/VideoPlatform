@@ -17,6 +17,11 @@ async function getLoadedVT(eventId) {
     return snap.val() || null;
 }
 
+async function getVTReady(eventId) {
+    const snap = await get(ref(db, `status/${eventId}/vtReady`));
+    return !!snap.val();
+}
+
 // Send ATEM program change command via bridge (status/{eventId}/atemCommand)
 async function sendAtemProgramChange(eventId, atemInput) {
     await set(ref(db, `status/${eventId}/atemCommand`), { action: 'program', input: atemInput, timestamp: Date.now() });
@@ -32,6 +37,7 @@ export async function renderInputSourcesBar(container, eventData) {
 
     let cameras = await getListenerCameras(eventId);
     let vt = await getLoadedVT(eventId);
+    let vtReady = await getVTReady(eventId);
 
     function render() {
         container.innerHTML = `
@@ -48,7 +54,7 @@ export async function renderInputSourcesBar(container, eventData) {
             <div id="input-vt" class="mt-4">
                 <div class="font-semibold text-sm mb-1">VT</div>
                 ${vt ? `
-                    <button class="control-button btn-sm vt-source flex items-center gap-2" data-vt-name="${vt.name}">
+                    <button class="control-button btn-sm vt-source flex items-center gap-2 ${vtReady ? 'vt-buffered' : ''}" data-vt-name="${vt.name}">
                         <img src="${vt.thumbnail || 'https://via.placeholder.com/48x27?text=No+Thumb'}" class="w-8 h-5 object-cover rounded border" alt="thumb" />
                         <span>${vt.name}</span>
                     </button>
@@ -85,6 +91,10 @@ export async function renderInputSourcesBar(container, eventData) {
     });
     onValue(ref(db, `status/${eventId}/vt`), snap => {
         vt = snap.val() || null;
+        render();
+    });
+    onValue(ref(db, `status/${eventId}/vtReady`), snap => {
+        vtReady = !!snap.val();
         render();
     });
 }

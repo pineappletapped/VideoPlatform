@@ -23,3 +23,10 @@ messages from the app to the ATEM using [PyATEMMax]. Run it with Python 3:
 ```bash
 python3 wwwroot/atem_websocket_bridge.py
 ```
+
+### VT preloading
+
+When you load a VT clip in the control panel, the overlay automatically
+preloads the video. Once the clip can play all the way through, the overlay
+sets `status/<event>/vtReady` to `true`. The input sources bar highlights the
+VT button with a green outline when the clip is buffered and ready to play.
