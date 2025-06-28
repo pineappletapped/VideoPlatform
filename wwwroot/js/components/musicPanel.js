@@ -78,11 +78,13 @@ export function renderMusicPanel(container, eventId) {
                         <div class="mb-2">
                             <label class="block text-sm">Audio File</label>
                             <input type="file" id="music-audio-file" accept="audio/*" />
+                            <button type="button" id="music-upload-audio" class="control-button btn-sm mt-1">Upload</button>
                             <input class="border p-1 w-full mt-1" name="audioUrl" placeholder="Uploaded audio URL" />
                         </div>
                         <div class="mb-2">
                             <label class="block text-sm">Thumbnail</label>
                             <input type="file" id="music-thumb-file" accept="image/*" />
+                            <button type="button" id="music-upload-thumb" class="control-button btn-sm mt-1">Upload</button>
                             <input class="border p-1 w-full mt-1" name="thumbnail" placeholder="Thumbnail URL" />
                         </div>
                         <div class="mb-2">
@@ -92,6 +94,7 @@ export function renderMusicPanel(container, eventId) {
                         <div class="mb-2">
                             <label class="block text-sm">Music License (optional)</label>
                             <input type="file" id="music-license-file" />
+                            <button type="button" id="music-upload-license" class="control-button btn-sm mt-1">Upload</button>
                             <input class="border p-1 w-full mt-1" name="license" placeholder="License file URL" />
                         </div>
                         <input type="hidden" name="idx" />
@@ -171,6 +174,33 @@ export function renderMusicPanel(container, eventId) {
                 }
                 await set(getMusicRef(eventId), tracks);
                 modal.style.display = 'none';
+            };
+            container.querySelector('#music-upload-audio').onclick = async () => {
+                if (form['music-audio-file'].files[0]) {
+                    const path = `uploads/${eventId}/music/${form['music-audio-file'].files[0].name}`;
+                    setStatus('Uploading audio...');
+                    const url = await uploadToServer(form['music-audio-file'].files[0], path);
+                    setStatus('');
+                    if (url) form.audioUrl.value = url;
+                }
+            };
+            container.querySelector('#music-upload-thumb').onclick = async () => {
+                if (form['music-thumb-file'].files[0]) {
+                    const path = `uploads/${eventId}/music/thumbnails/${form['music-thumb-file'].files[0].name}`;
+                    setStatus('Uploading thumb...');
+                    const url = await uploadToServer(form['music-thumb-file'].files[0], path);
+                    setStatus('');
+                    if (url) form.thumbnail.value = url;
+                }
+            };
+            container.querySelector('#music-upload-license').onclick = async () => {
+                if (form['music-license-file'].files[0]) {
+                    const path = `uploads/${eventId}/music/licenses/${form['music-license-file'].files[0].name}`;
+                    setStatus('Uploading license...');
+                    const url = await uploadToServer(form['music-license-file'].files[0], path);
+                    setStatus('');
+                    if (url) form.license.value = url;
+                }
             };
         }
         function showMusicModal(track = {}, idx = '') {

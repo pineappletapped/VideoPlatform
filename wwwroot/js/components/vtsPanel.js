@@ -45,11 +45,13 @@ export function renderVtsPanel(container, eventId, onLoadVT) {
                         <div class="mb-2">
                             <label class="block text-sm">Video File</label>
                             <input type="file" id="vt-video-file" accept="video/*" />
+                            <button type="button" id="vt-upload-video" class="control-button btn-sm mt-1">Upload</button>
                             <input class="border p-1 w-full mt-1" name="videoUrl" placeholder="Uploaded video URL" />
                         </div>
                         <div class="mb-2">
                             <label class="block text-sm">Thumbnail</label>
                             <input type="file" id="vt-thumb-file" accept="image/*" />
+                            <button type="button" id="vt-upload-thumb" class="control-button btn-sm mt-1">Upload</button>
                             <input class="border p-1 w-full mt-1" name="thumbnail" placeholder="Thumbnail URL" />
                         </div>
                         <div class="mb-2">
@@ -59,6 +61,7 @@ export function renderVtsPanel(container, eventId, onLoadVT) {
                         <div class="mb-2">
                             <label class="block text-sm">Music License (optional)</label>
                             <input type="file" id="vt-license-file" />
+                            <button type="button" id="vt-upload-license" class="control-button btn-sm mt-1">Upload</button>
                             <input class="border p-1 w-full mt-1" name="license" placeholder="License file URL" />
                         </div>
                         <input type="hidden" name="idx" />
@@ -137,6 +140,33 @@ export function renderVtsPanel(container, eventId, onLoadVT) {
                 }
                 await set(getVtsRef(eventId), vts);
                 modal.style.display = 'none';
+            };
+            container.querySelector('#vt-upload-video').onclick = async () => {
+                if (form['vt-video-file'].files[0]) {
+                    const path = `uploads/${eventId}/vts/${form['vt-video-file'].files[0].name}`;
+                    setStatus('Uploading video...');
+                    const url = await uploadToServer(form['vt-video-file'].files[0], path);
+                    setStatus('');
+                    if (url) form.videoUrl.value = url;
+                }
+            };
+            container.querySelector('#vt-upload-thumb').onclick = async () => {
+                if (form['vt-thumb-file'].files[0]) {
+                    const path = `uploads/${eventId}/vts/thumbnails/${form['vt-thumb-file'].files[0].name}`;
+                    setStatus('Uploading thumb...');
+                    const url = await uploadToServer(form['vt-thumb-file'].files[0], path);
+                    setStatus('');
+                    if (url) form.thumbnail.value = url;
+                }
+            };
+            container.querySelector('#vt-upload-license').onclick = async () => {
+                if (form['vt-license-file'].files[0]) {
+                    const path = `uploads/${eventId}/vts/licenses/${form['vt-license-file'].files[0].name}`;
+                    setStatus('Uploading license...');
+                    const url = await uploadToServer(form['vt-license-file'].files[0], path);
+                    setStatus('');
+                    if (url) form.license.value = url;
+                }
             };
         }
         function showVtModal(vt = {}, idx = '') {

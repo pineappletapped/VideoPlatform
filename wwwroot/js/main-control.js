@@ -8,6 +8,7 @@ import { renderScoreboardPanel } from './components/scoreboardPanel.js';
 import { renderLineupPanel } from './components/lineupPanel.js';
 import { renderStatsPanel } from './components/statsPanel.js';
 import { renderTeamsPanel } from './components/teamsPanel.js';
+import { renderSportPanel } from './components/sportPanel.js';
 import { renderObsControls } from './components/obsControls.js';
 import { renderAtemControls } from './components/atemControls.js';
 import { renderPtzControls } from './components/ptzControls.js';
@@ -97,7 +98,7 @@ function setupTabs() {
 function updateGraphicsTabs(type) {
     const tabBar = document.getElementById('graphics-tabs');
     if (!tabBar) return;
-    const sports = ['scoreboard','lineups','stats','teams'];
+    const sports = ['scoreboard','lineups','stats','teams','sport'];
     sports.forEach(t => {
         const btn = tabBar.querySelector(`[data-tab="${t}"]`);
         const panel = document.getElementById(`${t}-panel`);
@@ -144,7 +145,12 @@ function setupEventTypeSelector(eventData) {
         });
         updateGraphicsTabs(newType);
         if (newType === 'sports') {
-            renderScoreboardPanel(document.getElementById('scoreboard-panel'));
+            renderSportPanel(document.getElementById('sport-panel'), eventData, async (id, sport) => {
+                await updateEventMetadata(eventId, { ...eventData, sport });
+                eventData.sport = sport;
+                renderScoreboardPanel(document.getElementById('scoreboard-panel'), sport);
+            });
+            renderScoreboardPanel(document.getElementById('scoreboard-panel'), eventData.sport);
             renderLineupPanel(document.getElementById('lineups-panel'));
             renderStatsPanel(document.getElementById('stats-panel'));
             renderTeamsPanel(document.getElementById('teams-panel'), eventId);
@@ -170,7 +176,12 @@ async function initializeComponents(eventData) {
     setupEventTypeSelector(eventData);
     updateGraphicsTabs(eventData.eventType || 'corporate');
     if ((eventData.eventType || 'corporate') === 'sports') {
-        renderScoreboardPanel(document.getElementById('scoreboard-panel'));
+        renderSportPanel(document.getElementById('sport-panel'), eventData, async (id, sport) => {
+            await updateEventMetadata(eventId, { ...eventData, sport });
+            eventData.sport = sport;
+            renderScoreboardPanel(document.getElementById('scoreboard-panel'), sport);
+        });
+        renderScoreboardPanel(document.getElementById('scoreboard-panel'), eventData.sport);
         renderLineupPanel(document.getElementById('lineups-panel'));
         renderStatsPanel(document.getElementById('stats-panel'));
         renderTeamsPanel(document.getElementById('teams-panel'), eventId);
