@@ -1,7 +1,8 @@
 import { onAuth, login, register, logout } from './auth.js';
-import { getAllEventsMetadata, setEventMetadata } from './firebase.js';
+import { getAllEventsMetadata, setEventMetadata, getUser } from './firebase.js';
 import './components/topBar.js';
 import { renderBrandingModal } from './components/brandingModal.js';
+import { SQUARE_APP_ID, SQUARE_LOCATION_ID, SQUARE_PLANS } from '../squareConfig.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const topBar = document.createElement('top-bar');
@@ -18,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const eventsList = document.getElementById('events-list');
   const signoutBtn = document.getElementById('signout-btn');
   const adminBtn = document.getElementById('admin-btn');
+  let card, payments;
   let currentUserId = '';
   function showBrandModal(uid) {
     const modal = document.getElementById('branding-modal');
@@ -39,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }).join('');
   }
 
-  onAuth(user => {
+  onAuth(async user => {
     const loginTime = parseInt(localStorage.getItem('loginTime') || '0', 10);
     if (user && Date.now() - loginTime < 8 * 60 * 60 * 1000) {
       authSection.classList.add('hidden');
@@ -48,6 +50,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const isAdmin = user.email === 'ryanadmin';
       topBar.setAttribute('is-admin', isAdmin);
       if (isAdmin) adminBtn.classList.remove('hidden'); else adminBtn.classList.add('hidden');
+      const uData = await getUser(currentUserId) || {};
+      if (!uData.subscription_id) {
+        alert('No active subscription found for this account.');
+        await logout();
+        return;
+      }
       loadEvents();
     } else {
       authSection.classList.remove('hidden');
@@ -66,13 +74,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  async function initPayments() {
+    if (!SQUARE_APP_ID || !SQUARE_LOCATION_ID) return;
+    const mod = await window.Square.payments(SQUARE_APP_ID, SQUARE_LOCATION_ID);
+    payments = mod;
+    card = await payments.card();
+    await card.attach('#card-container');
+  }
+
+  initPayments();
+
   regForm.onsubmit = async e => {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(regForm));
     try {
-      await register(data.email, data.password);
+      const result = await card.tokenize();
+      if (result.status !== 'OK') throw new Error('Card error');
+      const res = await fetch('create-subscription.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nonce: result.token,
+          tier: data.tier,
+          email: data.email
+        })
+      });
+      const sub = await res.json();
+      if (!res.ok) throw new Error(sub.error || 'Subscription failed');
+      await register(data.email, data.password, data.tier, sub.subscription_id);
     } catch (err) {
-      alert('Registration failed');
+      alert('Registration failed: ' + err.message);
     }
   };
 

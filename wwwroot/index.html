@@ -21,11 +21,17 @@
                 <input name="password" type="password" placeholder="Password" class="border p-1 w-full mb-2" required>
                 <button class="control-button">Login</button>
             </form>
-            <form id="register-form" class="bg-white p-4 rounded shadow">
-                <h2 class="font-semibold mb-2">Register</h2>
-                <input name="email" type="text" placeholder="Email or username" class="border p-1 w-full mb-2" required>
-                <input name="password" type="password" placeholder="Password" class="border p-1 w-full mb-2" required>
-                <button class="control-button">Register</button>
+            <form id="register-form" class="bg-white p-4 rounded shadow space-y-2">
+                <h2 class="font-semibold">Register</h2>
+                <input name="email" type="text" placeholder="Email or username" class="border p-1 w-full" required>
+                <input name="password" type="password" placeholder="Password" class="border p-1 w-full" required>
+                <select name="tier" class="border p-1 w-full">
+                    <option value="single">Single Event £3.75/month</option>
+                    <option value="three">3 Events £6/month</option>
+                    <option value="eight">8 Events £15/month</option>
+                </select>
+                <div id="card-container" class="border p-2"></div>
+                <button class="control-button w-full">Register &amp; Subscribe</button>
             </form>
         </div>
         <div id="dashboard" class="hidden">
@@ -43,6 +49,7 @@
         </div>
     </div>
     <div id="branding-modal" class="hidden"></div>
+    <script src="https://sandbox.web.squarecdn.com/v1/square.js"></script>
     <script type="module" src="js/main-index.js?v=20240610"></script>
 </body>
 </html>

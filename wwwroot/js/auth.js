@@ -1,6 +1,6 @@
 import { getAuth, setPersistence, browserLocalPersistence, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
 import { getOrInitApp } from "./firebaseApp.js";
-import { setUser } from './firebase.js';
+import { setUser, getUser } from './firebase.js';
 
 const DEFAULT_ADMIN = { email: 'ryanadmin', password: 'password' };
 const LOCAL_USERS_KEY = 'localUsers';
@@ -55,15 +55,15 @@ export function login(email, password) {
   });
 }
 
-export function register(email, password) {
+export function register(email, password, tier, subId) {
   return createUserWithEmailAndPassword(auth, email, password).then(async res => {
     localStorage.setItem('loginTime', Date.now().toString());
-    await setUser(res.user.uid, { email, tier: 'single' });
+    await setUser(res.user.uid, { email, tier, subscription_id: subId });
     return res;
   }).catch(err => {
     const users = getLocalUsers();
     if (!users[email]) {
-      users[email] = { password, tier: 'single' };
+      users[email] = { password, tier, subscription_id: subId };
       saveLocalUsers(users);
       setLocalLoggedIn(email);
       return { user: { uid: 'local-' + email, email } };
@@ -81,6 +81,14 @@ export async function requireAuth(redirectUrl = '') {
   const loginTime = parseInt(localStorage.getItem('loginTime') || '0', 10);
   const localEmail = localStorage.getItem('localUser');
   if (localEmail && loginTime && Date.now() - loginTime < 8 * 60 * 60 * 1000) {
+    const localUsers = getLocalUsers();
+    const info = localUsers[localEmail] || {};
+    if (!info.subscription_id && localEmail !== DEFAULT_ADMIN.email) {
+      alert('Subscription required.');
+      clearLocalLogin();
+      window.location.href = 'index.html';
+      return null;
+    }
     return { uid: 'local-' + localEmail, email: localEmail };
   }
   if (localEmail) {
@@ -92,7 +100,15 @@ export async function requireAuth(redirectUrl = '') {
   return new Promise(resolve => {
     onAuthStateChanged(auth, user => {
       if (user) {
-        resolve(user);
+        getUser(user.uid).then(u => {
+          if (!u?.subscription_id && user.email !== DEFAULT_ADMIN.email) {
+            alert('Subscription required.');
+            logout();
+            window.location.href = 'index.html';
+          } else {
+            resolve(user);
+          }
+        });
       } else {
         const url = redirectUrl ? `index.html?redirect=${encodeURIComponent(redirectUrl)}` : 'index.html';
         window.location.href = url;

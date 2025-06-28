@@ -25,6 +25,21 @@ can be embedded in OBS without timing out.
 If Firebase registration isn't available you can log in using the built‑in admin
 account `ryanadmin` with password `password`.
 
+### Subscriptions with Square
+
+When new users register they must pick one of the available billing tiers and
+enter their card details. The form uses Square's Web Payments SDK and sends a
+nonce to `create-subscription.php` which creates a customer, stores the card on
+file and starts a subscription for the chosen plan. The script requires a
+`square-config.php` file with your access token, location ID and plan IDs. A
+sample is provided as `square-config.sample.php`.
+
+Only accounts with an active subscription can access the dashboard or control
+panels. The default `ryanadmin` account bypasses this check for local testing.
+Create a `squareConfig.js` file next to `index.html` with your Square
+Application ID, location ID and plan IDs based on the `squareConfig.sample.js`
+template.
+
 ### Optional ATEM bridge
 
 If you need to control a Blackmagic ATEM switcher, generate and run the Python
