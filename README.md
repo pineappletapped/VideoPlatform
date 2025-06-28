@@ -54,3 +54,15 @@ graphic only to the left monitor, allowing you to check positioning. Taking it
 live removes it from preview and displays it in the right monitor as well as on
 `overlay.html`. The **Cut** button above the preview monitor promotes anything in
 preview to live in one click.
+
+### Admin panel & billing
+
+Logging in as `ryanadmin` reveals an **Admin** button on the dashboard. This
+opens a simple admin panel showing all users and their billing tier. Plans are:
+
+- **single** – Single Event £3.75/month
+- **three** – 3 Events £6/month
+- **eight** – 8 Events £15/month
+
+Regular users can manage their default branding from **Brand Settings** in the
+account menu. Uploaded logos are stored under `uploads/user_<id>/branding/`.

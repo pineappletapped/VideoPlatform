@@ -1,5 +1,6 @@
 import { getAuth, setPersistence, browserLocalPersistence, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
 import { getOrInitApp } from "./firebaseApp.js";
+import { setUser } from './firebase.js';
 
 const DEFAULT_ADMIN = { email: 'ryanadmin', password: 'password' };
 const LOCAL_USERS_KEY = 'localUsers';
@@ -11,11 +12,11 @@ function getLocalUsers() {
   try {
     const users = JSON.parse(localStorage.getItem(LOCAL_USERS_KEY) || '{}');
     if (!users[DEFAULT_ADMIN.email]) {
-      users[DEFAULT_ADMIN.email] = { password: DEFAULT_ADMIN.password };
+      users[DEFAULT_ADMIN.email] = { password: DEFAULT_ADMIN.password, tier: 'eight' };
     }
     return users;
   } catch {
-    return { [DEFAULT_ADMIN.email]: { password: DEFAULT_ADMIN.password } };
+    return { [DEFAULT_ADMIN.email]: { password: DEFAULT_ADMIN.password, tier: 'eight' } };
   }
 }
 
@@ -55,13 +56,14 @@ export function login(email, password) {
 }
 
 export function register(email, password) {
-  return createUserWithEmailAndPassword(auth, email, password).then(res => {
+  return createUserWithEmailAndPassword(auth, email, password).then(async res => {
     localStorage.setItem('loginTime', Date.now().toString());
+    await setUser(res.user.uid, { email, tier: 'single' });
     return res;
   }).catch(err => {
     const users = getLocalUsers();
     if (!users[email]) {
-      users[email] = { password };
+      users[email] = { password, tier: 'single' };
       saveLocalUsers(users);
       setLocalLoggedIn(email);
       return { user: { uid: 'local-' + email, email } };

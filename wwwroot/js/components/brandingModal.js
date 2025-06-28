@@ -1,12 +1,13 @@
-import { setBranding, getBranding as getBrandingFromFirebase, listenBranding } from '../firebase.js';
+import { setBranding, listenBranding, setUserBranding, listenUserBranding } from '../firebase.js';
 
 const FONT_OPTIONS = [
     'Arial', 'Helvetica', 'Georgia', 'Times New Roman', 'Courier New', 'Verdana',
     'Roboto', 'Open Sans', 'Lato', 'Montserrat', 'Oswald', 'Raleway'
 ];
 
-function getBranding(eventId, callback) {
-    listenBranding(eventId, (branding) => {
+function getBranding(targetId, isUser, callback) {
+    const listener = isUser ? listenUserBranding : listenBranding;
+    listener(targetId, (branding) => {
         if (!branding) {
             callback({
                 primaryColor: '#e16316',
@@ -24,17 +25,21 @@ function getBranding(eventId, callback) {
     });
 }
 
-function saveBranding(eventId, branding) {
-    setBranding(eventId, branding);
+function saveBranding(targetId, branding, isUser) {
+    if (isUser) return setUserBranding(targetId, branding);
+    return setBranding(targetId, branding);
 }
 
-export function renderBrandingModal(container, eventData) {
-    const eventId = eventData.id || 'demo';
-    getBranding(eventId, (branding) => {
+export function renderBrandingModal(container, opts) {
+    const eventId = opts.eventId || opts.id;
+    const userId = opts.userId;
+    const targetId = userId || eventId || 'demo';
+    const isUser = !!userId;
+    getBranding(targetId, isUser, (branding) => {
         container.innerHTML = `
             <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
                 <div class="bg-white p-6 rounded shadow-lg min-w-[340px] max-w-[95vw]">
-                    <h2 class="font-bold text-xl mb-4">Event Branding</h2>
+                    <h2 class="font-bold text-xl mb-4">${isUser ? 'Account Branding' : 'Event Branding'}</h2>
                     <form id="branding-form">
                         <div class="mb-3">
                             <label class="block text-sm font-semibold mb-1">Primary Color</label>
@@ -77,13 +82,20 @@ export function renderBrandingModal(container, eventData) {
         form.onsubmit = async e => {
             e.preventDefault();
             const data = Object.fromEntries(new FormData(form));
-            // Handle logo uploads (convert to base64)
             const logoPrimaryFile = form.logoPrimary.files[0];
             const logoSecondaryFile = form.logoSecondary.files[0];
             let logoPrimary = branding.logoPrimary;
             let logoSecondary = branding.logoSecondary;
-            if (logoPrimaryFile) logoPrimary = await fileToBase64(logoPrimaryFile);
-            if (logoSecondaryFile) logoSecondary = await fileToBase64(logoSecondaryFile);
+            if (logoPrimaryFile) {
+                const path = `uploads/${isUser ? 'user_'+targetId : targetId}/branding/primary_${logoPrimaryFile.name}`;
+                const url = await upload(logoPrimaryFile, path);
+                if (url) logoPrimary = url;
+            }
+            if (logoSecondaryFile) {
+                const path = `uploads/${isUser ? 'user_'+targetId : targetId}/branding/secondary_${logoSecondaryFile.name}`;
+                const url = await upload(logoSecondaryFile, path);
+                if (url) logoSecondary = url;
+            }
             const newBranding = {
                 primaryColor: data.primaryColor,
                 secondaryColor1: data.secondaryColor1,
@@ -94,18 +106,19 @@ export function renderBrandingModal(container, eventData) {
                 logos: branding.logos || {tl:'',tr:'',bl:'',br:''},
                 sponsors: branding.sponsors || []
             };
-            saveBranding(eventId, newBranding);
+            saveBranding(targetId, newBranding, isUser);
             container.classList.add('hidden');
         };
         container.querySelector('#branding-cancel').onclick = () => container.classList.add('hidden');
     });
 }
 
-function fileToBase64(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-    });
+async function upload(file, path) {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('path', path);
+    const resp = await fetch('upload.php', { method: 'POST', body: fd });
+    if (!resp.ok) return null;
+    const d = await resp.json();
+    return d.url;
 }

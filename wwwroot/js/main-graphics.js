@@ -22,10 +22,13 @@ import { requireAuth, logout } from './auth.js';
 const params = new URLSearchParams(window.location.search);
 const eventId = params.get('event_id') || 'demo';
 
+let currentUserId = '';
+
 let loadedVT = null;
 let graphicsMode = 'live';
 
-async function initializeApp() {
+async function initializeApp(user) {
+    currentUserId = user ? user.uid.replace('local-','') : '';
     let firebaseStatus = 'Connecting to Firebase...';
     try {
         await getOverlayState(eventId);
@@ -136,8 +139,10 @@ async function initializeComponents(eventData) {
     const topBar = document.createElement('top-bar');
     topBar.setAttribute('event-type', eventData.eventType || 'corporate');
     topBar.setAttribute('mode', 'live');
+    if (currentUserId === 'ryanadmin') topBar.setAttribute('is-admin','true');
     topBar.addEventListener('logout', logout);
     topBar.addEventListener('edit-account', () => alert('Edit account not implemented'));
+    topBar.addEventListener('brand-settings', () => { const modal=document.getElementById('branding-modal'); renderBrandingModal(modal,{ userId: currentUserId }); modal.classList.remove('hidden'); });
     topBar.addEventListener('event-type-change', async e => {
         const newType = e.detail;
         await updateEventMetadata(eventId,{...eventData,eventType:newType});
@@ -196,13 +201,13 @@ async function initializeComponents(eventData) {
 
 
     const brandingModal = document.getElementById('branding-modal');
-    renderBrandingModal(brandingModal, eventData);
+    renderBrandingModal(brandingModal, { eventId });
     brandingModal.classList.add('hidden');
     renderProfileWizard(document.getElementById('profile-wizard'), eventData);
     renderCalendarDrawer(document.getElementById('calendar-drawer'), eventData);
 
     const brandingBtn = document.getElementById('footer-branding');
-    if (brandingBtn) brandingBtn.onclick = ()=>{ renderBrandingModal(brandingModal,eventData); brandingModal.classList.remove('hidden'); };
+    if (brandingBtn) brandingBtn.onclick = ()=>{ renderBrandingModal(brandingModal,{ eventId }); brandingModal.classList.remove('hidden'); };
 }
 
 function onOverlayStateChange(state) {
@@ -263,4 +268,4 @@ async function cutToProgram() {
     }
 }
 
-requireAuth(`graphics.html?event_id=${eventId}`).then(initializeApp);
+requireAuth(`graphics.html?event_id=${eventId}`).then(u => initializeApp(u));

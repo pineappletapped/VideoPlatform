@@ -123,3 +123,17 @@ export function listenUser(userId, callback) {
 export function getAllUsers() {
   return get(ref(db, 'users')).then(snap => snap.val());
 }
+
+// User branding helpers
+export function setUserBranding(userId, branding) {
+  return set(ref(db, `userBranding/${userId}`), branding);
+}
+export function updateUserBranding(userId, branding) {
+  return update(ref(db, `userBranding/${userId}`), branding);
+}
+export function getUserBranding(userId) {
+  return get(ref(db, `userBranding/${userId}`)).then(snap => snap.val());
+}
+export function listenUserBranding(userId, cb) {
+  return onValue(ref(db, `userBranding/${userId}`), snap => cb(snap.val()));
+}

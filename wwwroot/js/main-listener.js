@@ -5,11 +5,14 @@ import OBSWebSocket from 'https://cdn.jsdelivr.net/npm/obs-websocket-js@5.0.3/+e
 import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 import { getDatabaseInstance } from "./firebaseApp.js";
 import { requireAuth, logout } from './auth.js';
+import { renderBrandingModal } from './components/brandingModal.js';
 
 const db = getDatabaseInstance();
 
 const params = new URLSearchParams(window.location.search);
 const eventId = params.get('event_id') || 'demo';
+
+let currentUserId = '';
 
 // Camera state (localStorage for demo)
 let cameras = JSON.parse(localStorage.getItem('listenerCameras') || '[]');
@@ -504,12 +507,15 @@ function connectAtemWs() {
     }
 }
 
-async function initializeListener() {
+async function initializeListener(user) {
+    currentUserId = user ? user.uid.replace('local-','') : '';
     // Status bar
     const eventData = await eventStorage.loadEvent(eventId);
     const topBar = document.createElement('top-bar');
+    if (currentUserId === 'ryanadmin') topBar.setAttribute('is-admin','true');
     topBar.addEventListener('logout', logout);
     topBar.addEventListener('edit-account', () => alert('Edit account not implemented'));
+    topBar.addEventListener('brand-settings', () => { const modal=document.getElementById('branding-modal'); renderBrandingModal(modal,{ userId: currentUserId }); modal.classList.remove('hidden'); });
     document.getElementById('top-bar').appendChild(topBar);
     renderStatusBar(document.getElementById('status-bar'), eventData);
     // Columns
@@ -526,4 +532,4 @@ function heartbeat() {
 setInterval(heartbeat, 3000);
 heartbeat();
 
-requireAuth(`listener.html?event_id=${eventId}`).then(initializeListener);
+requireAuth(`listener.html?event_id=${eventId}`).then(u => initializeListener(u));

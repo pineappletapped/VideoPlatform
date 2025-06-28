@@ -1,11 +1,14 @@
 import { onAuth, login, register, logout } from './auth.js';
 import { getAllEventsMetadata, setEventMetadata } from './firebase.js';
 import './components/topBar.js';
+import { renderBrandingModal } from './components/brandingModal.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const topBar = document.createElement('top-bar');
   topBar.addEventListener('logout', logout);
   topBar.addEventListener('edit-account', () => alert('Edit account not implemented'));
+  topBar.addEventListener('brand-settings', () => showBrandModal(currentUserId));
+  topBar.addEventListener('admin-panel', () => { window.location.href = 'admin.html'; });
   document.getElementById('top-bar').appendChild(topBar);
   const authSection = document.getElementById('auth');
   const dashSection = document.getElementById('dashboard');
@@ -14,6 +17,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const createForm = document.getElementById('create-form');
   const eventsList = document.getElementById('events-list');
   const signoutBtn = document.getElementById('signout-btn');
+  const adminBtn = document.getElementById('admin-btn');
+  let currentUserId = '';
+  function showBrandModal(uid) {
+    const modal = document.getElementById('branding-modal');
+    renderBrandingModal(modal, { userId: uid });
+    modal.classList.remove('hidden');
+  }
 
   async function loadEvents() {
     const events = await getAllEventsMetadata() || {};
@@ -34,10 +44,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (user && Date.now() - loginTime < 8 * 60 * 60 * 1000) {
       authSection.classList.add('hidden');
       dashSection.classList.remove('hidden');
+      currentUserId = user.uid.replace('local-','');
+      const isAdmin = user.email === 'ryanadmin';
+      topBar.setAttribute('is-admin', isAdmin);
+      if (isAdmin) adminBtn.classList.remove('hidden'); else adminBtn.classList.add('hidden');
       loadEvents();
     } else {
       authSection.classList.remove('hidden');
       dashSection.classList.add('hidden');
+      adminBtn.classList.add('hidden');
     }
   });
 
@@ -62,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   signoutBtn.onclick = () => logout();
+  adminBtn.onclick = () => { window.location.href = 'admin.html'; };
 
   createForm.onsubmit = async e => {
     e.preventDefault();

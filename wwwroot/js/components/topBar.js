@@ -7,6 +7,7 @@ export class TopBar extends HTMLElement {
     connectedCallback() {
         this.mode = this.getAttribute('mode') || 'live';
         this.eventType = this.getAttribute('event-type') || 'corporate';
+        this.isAdmin = this.getAttribute('is-admin') === 'true';
         this.render();
     }
 
@@ -88,6 +89,8 @@ export class TopBar extends HTMLElement {
                         <button id="account-btn">Account ▾</button>
                         <div class="menu-items" id="account-menu">
                             <button id="edit-account">Edit Account</button>
+                            <button id="brand-settings">Brand Settings</button>
+                            ${this.isAdmin ? '<button id="admin-panel">Admin Panel</button>' : ''}
                             <button id="logout">Logout</button>
                         </div>
                     </div>
@@ -103,6 +106,13 @@ export class TopBar extends HTMLElement {
         };
         this.shadowRoot.getElementById('edit-account').onclick = () =>
             this.dispatchEvent(new CustomEvent('edit-account'));
+        this.shadowRoot.getElementById('brand-settings').onclick = () =>
+            this.dispatchEvent(new CustomEvent('brand-settings'));
+        if (this.isAdmin) {
+            const adm = this.shadowRoot.getElementById('admin-panel');
+            if (adm) adm.onclick = () =>
+                this.dispatchEvent(new CustomEvent('admin-panel'));
+        }
         this.shadowRoot.getElementById('logout').onclick = () =>
             this.dispatchEvent(new CustomEvent('logout'));
 
