@@ -5,7 +5,7 @@
     "status": "active",
     "branding": {
         "logo": "assets/logo-demo.svg",
-        "primaryColor": "#00ADF1",
+        "primaryColor": "#e16316",
         "secondaryColor": "#004a77"
     },
     "program": [

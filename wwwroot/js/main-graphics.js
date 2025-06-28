@@ -16,7 +16,7 @@ import { renderHoldslatePanel } from './components/holdslatePanel.js';
 import { updateOverlayState, getOverlayState, getEventMetadata, updateEventMetadata } from './firebase.js';
 import { renderVtsPanel } from './components/vtsPanel.js';
 import { renderMusicPanel } from './components/musicPanel.js';
-import { requireAuth } from './auth.js';
+import { requireAuth, logout } from './auth.js';
 
 const params = new URLSearchParams(window.location.search);
 const eventId = params.get('event_id') || 'demo';
@@ -135,6 +135,8 @@ async function initializeComponents(eventData) {
         preview.appendChild(iframe);
     }
     const topBar = document.createElement('top-bar');
+    topBar.addEventListener('logout', logout);
+    topBar.addEventListener('edit-account', () => alert('Edit account not implemented'));
     document.getElementById('top-bar').appendChild(topBar);
     renderStatusBar(document.getElementById('status-bar'), eventData);
     setupEventTypeSelector(eventData);

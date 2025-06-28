@@ -9,7 +9,7 @@ function getBranding(eventId, callback) {
     listenBranding(eventId, (branding) => {
         if (!branding) {
             callback({
-                primaryColor: '#00ADF1',
+                primaryColor: '#e16316',
                 secondaryColor1: '#004a77',
                 secondaryColor2: '#e0f7ff',
                 logoPrimary: '',

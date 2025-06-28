@@ -1,7 +1,12 @@
 import { onAuth, login, register, logout } from './auth.js';
 import { getAllEventsMetadata, setEventMetadata } from './firebase.js';
+import './components/topBar.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+  const topBar = document.createElement('top-bar');
+  topBar.addEventListener('logout', logout);
+  topBar.addEventListener('edit-account', () => alert('Edit account not implemented'));
+  document.getElementById('top-bar').appendChild(topBar);
   const authSection = document.getElementById('auth');
   const dashSection = document.getElementById('dashboard');
   const loginForm = document.getElementById('login-form');

@@ -1,9 +1,10 @@
 import { eventStorage } from './storage.js';
 import { renderStatusBar } from './components/statusBar.js';
+import './components/topBar.js';
 import OBSWebSocket from 'https://cdn.jsdelivr.net/npm/obs-websocket-js@5.0.3/+esm';
 import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 import { getDatabaseInstance } from "./firebaseApp.js";
-import { requireAuth } from './auth.js';
+import { requireAuth, logout } from './auth.js';
 
 const db = getDatabaseInstance();
 
@@ -506,6 +507,10 @@ function connectAtemWs() {
 async function initializeListener() {
     // Status bar
     const eventData = await eventStorage.loadEvent(eventId);
+    const topBar = document.createElement('top-bar');
+    topBar.addEventListener('logout', logout);
+    topBar.addEventListener('edit-account', () => alert('Edit account not implemented'));
+    document.getElementById('top-bar').appendChild(topBar);
     renderStatusBar(document.getElementById('status-bar'), eventData);
     // Columns
     renderCameras(document.getElementById('col-cameras'));

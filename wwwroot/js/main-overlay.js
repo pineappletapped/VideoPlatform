@@ -18,7 +18,7 @@ setInterval(() => {
 }, 2000);
 
 const DEFAULT_BRANDING = {
-    primaryColor: '#00ADF1',
+    primaryColor: '#e16316',
     secondaryColor1: '#004a77',
     secondaryColor2: '#e0f7ff',
     logoPrimary: '',

@@ -1,7 +1,10 @@
+:root {
+  --brand-color: #e16316;
+}
 .status-bar, .input-sources-bar, .graphics-panel, .obs-controls, .atem-controls, .ptz-controls, .branding-modal, .profile-wizard, .calendar-drawer {
-  border: 2px dashed #00ADF1;
-  background: #e0f7ff;
-  color: #004a77;
+  border: 2px dashed #e16316;
+  background: #1f2937;
+  color: #f3f4f6;
   padding: 1rem;
   margin-bottom: 1rem;
   border-radius: 0.5rem;
@@ -9,8 +12,8 @@
 }
 
 .branding-modal, .profile-wizard, .calendar-drawer {
-  background: #fffbe6;
-  color: #b58900;
+  background: #2d2d2d;
+  color: #f3f4f6;
 }
 
 #top-bar {
@@ -18,7 +21,7 @@
 }
 
 .control-button {
-  background: #00ADF1;
+  background: #e16316;
   color: #fff;
   font-weight: bold;
   padding: 0.18rem 0.5rem;
@@ -32,7 +35,7 @@
 }
 
 .control-button:hover {
-  background: #007fa3;
+  background: #c45012;
 }
 
 .btn-sm {
@@ -45,7 +48,7 @@
 
 /* Additional styles for column layouts */
 .col-cameras, .col-atem, .col-obs {
-  background: #fff;
+  background: #2a2a2a;
   padding: 1rem;
   border-radius: 0.5rem;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
