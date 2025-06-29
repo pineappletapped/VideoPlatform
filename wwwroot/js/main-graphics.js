@@ -119,9 +119,9 @@ async function initializeComponents(eventData) {
     setupTabs();
     const preview = document.getElementById('video-preview');
     const program = document.getElementById('video-program');
-    function loadIframe(target, isPreview){
+    function loadIframe(target, previewMode){
         const iframe = document.createElement('iframe');
-        const mode = isPreview ? '&mode=preview' : '';
+        const mode = previewMode ? '&mode=preview' : '';
         iframe.src = `overlay.html?event_id=${eventId}${mode}`;
         iframe.style.width = '1920px';
         iframe.style.height = '1080px';
