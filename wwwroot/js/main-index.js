@@ -16,6 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const dashSection = document.getElementById('dashboard');
   const loginForm = document.getElementById('login-form');
   const regForm = document.getElementById('register-form');
+  const showRegBtn = document.getElementById('show-register');
+  const hideRegBtn = document.getElementById('hide-register');
   const openCreateBtn = document.getElementById('open-create');
   const createModal = document.getElementById('create-modal');
   const eventsList = document.getElementById('events-list');
@@ -71,10 +73,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const data = Object.fromEntries(new FormData(loginForm));
     try {
       await login(data.email.trim(), data.password);
-      window.location.reload();
+      const params = new URLSearchParams(window.location.search);
+      const target = params.get('redirect') || 'index.html';
+      window.location.href = target;
     } catch (err) {
       alert('Login failed');
     }
+  };
+
+  showRegBtn.onclick = () => {
+    regForm.classList.remove('hidden');
+    showRegBtn.classList.add('hidden');
+  };
+
+  hideRegBtn.onclick = () => {
+    regForm.classList.add('hidden');
+    showRegBtn.classList.remove('hidden');
   };
 
   async function initPayments() {
