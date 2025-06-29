@@ -130,7 +130,9 @@ async function initializeComponents(eventData) {
         target.appendChild(iframe);
         const updateScale = () => {
             const scale = Math.min(target.clientWidth / 1920, target.clientHeight / 1080);
-            iframe.style.transform = `scale(${scale})`;
+            const offsetX = (target.clientWidth - 1920 * scale) / 2;
+            const offsetY = (target.clientHeight - 1080 * scale) / 2;
+            iframe.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
             iframe.style.transformOrigin = 'top left';
         };
         requestAnimationFrame(updateScale);
