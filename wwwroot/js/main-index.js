@@ -36,12 +36,18 @@ document.addEventListener('DOMContentLoaded', () => {
     eventsList.innerHTML = Object.keys(events).map(id => {
       const ev = events[id];
       const name = ev.title || id;
-      const ctl = `control.html?event_id=${id}`;
       const gfx = `graphics.html?event_id=${id}`;
       const ovl = `overlay.html?event_id=${id}`;
-      const lst = `listener.html?event_id=${id}`;
-      const sport = `sports.html?event_id=${id}`;
-      return `<li class="bg-white p-3 rounded shadow"><div class="font-semibold">${name}</div><div class="text-xs text-gray-500 mb-2">${id}</div><a class="control-button btn-sm" href="${ctl}">Control</a> <a class="control-button btn-sm" href="${gfx}">Graphics</a> <a class="control-button btn-sm" href="${ovl}" target="_blank">Overlay</a> <a class="control-button btn-sm" href="${sport}">Sports</a> <a class="control-button btn-sm" href="${lst}">Listener</a></li>`;
+      const sportsLink = ev.eventType === 'sports'
+        ? `<a class="control-button btn-sm" href="sports.html?event_id=${id}">Sports Admin</a>`
+        : '';
+      return `<li class="bg-white p-3 rounded shadow">
+        <div class="font-semibold">${name}</div>
+        <div class="text-xs text-gray-500 mb-2">${id}</div>
+        <a class="control-button btn-sm" href="${gfx}">Graphics</a>
+        <a class="control-button btn-sm" href="${ovl}" target="_blank">Overlay</a>
+        ${sportsLink}
+      </li>`;
     }).join('');
   }
 
