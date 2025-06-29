@@ -70,7 +70,8 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(loginForm));
     try {
-      await login(data.email, data.password);
+      await login(data.email.trim(), data.password);
+      window.location.reload();
     } catch (err) {
       alert('Login failed');
     }
