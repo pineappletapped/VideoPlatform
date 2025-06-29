@@ -17,9 +17,10 @@
         <div id="auth" class="w-full max-w-sm text-gray-900">
             <div class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-center text-xl font-bold mb-4">Welcome</h2>
-                <form id="login-form" class="space-y-3" method="post">
+                <form id="login-form" class="space-y-3" method="post" autocomplete="off">
                     <input name="email" type="text" placeholder="Email or username" class="border p-2 w-full" required>
                     <input name="password" type="password" placeholder="Password" class="border p-2 w-full" required>
+                    <div id="login-error" class="text-red-600 text-center hidden"></div>
                     <button class="control-button w-full">Login</button>
                 </form>
                 <button id="show-register" class="w-full text-center text-brand mt-4">Create account</button>

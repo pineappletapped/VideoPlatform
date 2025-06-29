@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const regForm = document.getElementById('register-form');
   const showRegBtn = document.getElementById('show-register');
   const hideRegBtn = document.getElementById('hide-register');
+  const loginError = document.getElementById('login-error');
   const openCreateBtn = document.getElementById('open-create');
   const createModal = document.getElementById('create-modal');
   const eventsList = document.getElementById('events-list');
@@ -76,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loginForm.onsubmit = async e => {
     e.preventDefault();
+    loginError.classList.add('hidden');
     const data = Object.fromEntries(new FormData(loginForm));
     try {
       await login(data.email.trim(), data.password);
@@ -87,18 +89,21 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.reload();
       }
     } catch (err) {
-      alert('Login failed');
+      loginError.textContent = 'Invalid email or password';
+      loginError.classList.remove('hidden');
     }
   };
 
   showRegBtn.onclick = () => {
     regForm.classList.remove('hidden');
     showRegBtn.classList.add('hidden');
+    loginError.classList.add('hidden');
   };
 
   hideRegBtn.onclick = () => {
     regForm.classList.add('hidden');
     showRegBtn.classList.remove('hidden');
+    loginError.classList.add('hidden');
   };
 
   async function initPayments() {
