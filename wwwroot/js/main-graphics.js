@@ -126,7 +126,11 @@ async function initializeComponents(eventData) {
         iframe.style.width = '1920px';
         iframe.style.height = '1080px';
         iframe.className = 'rounded pointer-events-none';
+        iframe.style.position = 'absolute';
+        iframe.style.top = '0';
+        iframe.style.left = '0';
         target.innerHTML = '';
+        target.style.position = 'relative';
         target.appendChild(iframe);
         const updateScale = () => {
             const scale = Math.min(target.clientWidth / 1920, target.clientHeight / 1080);
