@@ -8,13 +8,27 @@ export class EventStorage {
     async loadEvent(eventId) {
         try {
             const response = await fetch(`assets/${eventId}-event.json`);
-            if (!response.ok) throw new Error('Event not found');
-            this.eventData = await response.json();
+            if (response.ok) {
+                this.eventData = await response.json();
+            } else {
+                // Initialize a blank event when no JSON exists
+                this.eventData = {
+                    id: eventId,
+                    title: eventId,
+                    graphics: { lowerThirds: [], titleSlides: [] }
+                };
+            }
             this.notifyListeners();
             return this.eventData;
         } catch (error) {
-            console.error('Failed to load event:', error);
-            throw error;
+            console.warn('Event file missing, starting blank', error);
+            this.eventData = {
+                id: eventId,
+                title: eventId,
+                graphics: { lowerThirds: [], titleSlides: [] }
+            };
+            this.notifyListeners();
+            return this.eventData;
         }
     }
 

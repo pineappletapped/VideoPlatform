@@ -163,7 +163,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <div class="modal-window">
           <h2 class="font-bold mb-2">Create Event</h2>
           <form id="create-form">
-            <input name="id" class="border p-1 w-full mb-2" readonly value="${genId}" />
+            <input type="hidden" name="id" value="${genId}" />
             <input name="title" placeholder="Event Title" class="border p-1 w-full mb-2" required />
             <select name="eventType" id="create-type" class="border p-1 w-full mb-2">
               <option value="corporate">Corporate Event</option>
