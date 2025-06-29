@@ -153,31 +153,10 @@ async function initializeComponents(eventData) {
     
     // Top bar
     const topBar = document.createElement('top-bar');
-    topBar.setAttribute('event-type', eventData.eventType || 'corporate');
     if (currentUserId === 'ryanadmin') topBar.setAttribute('is-admin','true');
     topBar.addEventListener('logout', logout);
     topBar.addEventListener('edit-account', () => alert('Edit account not implemented'));
     topBar.addEventListener('brand-settings', () => { const modal=document.getElementById('branding-modal'); renderBrandingModal(modal,{ userId: currentUserId }); modal.classList.remove('hidden'); });
-    topBar.addEventListener('event-type-change', async e => {
-        const newType = e.detail;
-        await updateEventMetadata(eventId, { ...eventData, eventType: newType });
-        eventData.eventType = newType;
-        renderGraphicsPanel(document.getElementById('lower-thirds-panel'), { ...eventData }, graphicsMode);
-        updateGraphicsTabs(newType);
-        if (newType === 'sports') {
-            renderSportPanel(document.getElementById('sport-panel'), eventData, async (id, sport) => {
-                await updateEventMetadata(eventId, { ...eventData, sport });
-                eventData.sport = sport;
-                renderScoreboardPanel(document.getElementById('scoreboard-panel'), sport, eventId);
-            });
-            renderScoreboardPanel(document.getElementById('scoreboard-panel'), eventData.sport, eventId);
-            renderLineupPanel(document.getElementById('lineups-panel'));
-            renderStatsPanel(document.getElementById('stats-panel'));
-            renderTeamsPanel(document.getElementById('teams-panel'), eventId, sport);
-        } else {
-            renderProgramPreview(document.getElementById('schedule-panel'), eventData, onOverlayStateChange);
-        }
-    });
     document.getElementById('top-bar').appendChild(topBar);
 
     // Status bar

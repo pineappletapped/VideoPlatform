@@ -17,7 +17,6 @@ async function init() {
   if (!meta.sport) meta.sport = 'Football';
 
   const topBar = document.createElement('top-bar');
-  topBar.setAttribute('event-type', meta.eventType);
   if (user && user.email === 'ryanadmin') topBar.setAttribute('is-admin','true');
   topBar.addEventListener('logout', logout);
   topBar.addEventListener('brand-settings', () => { const modal=document.getElementById('branding-modal'); renderBrandingModal(modal,{ eventId }); modal.classList.remove('hidden'); });

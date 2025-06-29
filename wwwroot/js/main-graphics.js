@@ -13,8 +13,6 @@ import { renderProfileWizard } from './components/profileWizard.js';
 import { renderCalendarDrawer } from './components/calendarDrawer.js';
 import { renderHoldslatePanel } from './components/holdslatePanel.js';
 import { updateOverlayState, getOverlayState, getEventMetadata, updateEventMetadata, getGraphicsData, updateGraphicsData } from './firebase.js';
-import { renderVtsPanel } from './components/vtsPanel.js';
-import { renderMusicPanel } from './components/musicPanel.js';
 import { renderActiveGraphicsPanel } from './components/activeGraphicsPanel.js';
 import { renderBrandingPanel } from './components/brandingPanel.js';
 import { requireAuth, logout } from './auth.js';
@@ -24,7 +22,6 @@ const eventId = params.get('event_id') || 'demo';
 
 let currentUserId = '';
 
-let loadedVT = null;
 let graphicsMode = 'live';
 
 async function initializeApp(user) {
@@ -147,31 +144,11 @@ async function initializeComponents(eventData) {
     const cutBtn = document.getElementById('cut-button');
     if (cutBtn) cutBtn.onclick = () => { cutToProgram(); };
     const topBar = document.createElement('top-bar');
-    topBar.setAttribute('event-type', eventData.eventType || 'corporate');
     if (currentUserId === 'ryanadmin') topBar.setAttribute('is-admin','true');
     topBar.addEventListener('logout', logout);
     topBar.addEventListener('edit-account', () => alert('Edit account not implemented'));
     topBar.addEventListener('brand-settings', () => { const modal=document.getElementById('branding-modal'); renderBrandingModal(modal,{ userId: currentUserId }); modal.classList.remove('hidden'); });
-    topBar.addEventListener('event-type-change', async e => {
-        const newType = e.detail;
-        await updateEventMetadata(eventId,{...eventData,eventType:newType});
-        eventData.eventType = newType;
-        renderGraphicsPanel(document.getElementById('lower-thirds-panel'), {...eventData}, graphicsMode);
-        updateGraphicsTabs(newType);
-        if (newType === 'sports') {
-            renderSportPanel(document.getElementById('sport-panel'), eventData, async (id,sport)=>{
-                await updateEventMetadata(eventId,{...eventData,sport});
-                eventData.sport = sport;
-                renderScoreboardPanel(document.getElementById('scoreboard-panel'), sport, eventId);
-            });
-            renderScoreboardPanel(document.getElementById('scoreboard-panel'), eventData.sport, eventId);
-            renderLineupPanel(document.getElementById('lineups-panel'));
-            renderStatsPanel(document.getElementById('stats-panel'));
-        renderTeamsPanel(document.getElementById('teams-panel'), eventId, sport);
-        } else {
-            renderProgramPreview(document.getElementById('schedule-panel'), eventData, onOverlayStateChange);
-        }
-    });
+
     document.getElementById('top-bar').appendChild(topBar);
     renderStatusBar(document.getElementById('status-bar'), eventData, {listener:false, atem:false, obs:false, sport:true, clock:true});
     updateGraphicsTabs(eventData.eventType || 'corporate');
@@ -192,12 +169,8 @@ async function initializeComponents(eventData) {
     renderHoldslatePanel(document.getElementById('holdslate-panel'), onOverlayStateChange);
     renderGraphicsPanel(document.getElementById('lower-thirds-panel'), eventData, graphicsMode);
 
-    renderVtsPanel(document.getElementById('vts-panel'), eventId, vt => { loadedVT = vt; window.loadedVT = vt; });
-    renderMusicPanel(document.getElementById('music-panel'), eventId);
     renderActiveGraphicsPanel(document.getElementById('active-graphics'), eventId, graphicsMode);
     renderBrandingPanel(document.getElementById('branding-panel'), eventId);
-
-    setupAudioControls();
 
 
     const brandingModal = document.getElementById('branding-modal');
@@ -216,24 +189,6 @@ function onOverlayStateChange(state) {
     updateOverlayState(eventId, state);
 }
 
-let masterVolume=1, vtVolume=1, musicVolume=1;
-window.masterVolume=masterVolume; window.vtVolume=vtVolume; window.musicVolume=musicVolume;
-
-function setupAudioControls() {
-    const master=document.getElementById('audio-master');
-    const vt=document.getElementById('audio-vt');
-    const music=document.getElementById('audio-music');
-    const update=()=>{
-        updateOverlayState(eventId,{masterVolume,vtVolume,musicVolume});
-        window.masterVolume=masterVolume; window.vtVolume=vtVolume; window.musicVolume=musicVolume;
-        if(window.musicPlayer&&window.musicPlayer.setVolume){ window.musicPlayer.setVolume(masterVolume*musicVolume); }
-        if(window.vtPlayer&&window.vtPlayer.setVolume){ window.vtPlayer.setVolume(masterVolume*vtVolume); }
-    };
-    if(master){ master.value=masterVolume; master.oninput=()=>{ masterVolume=parseFloat(master.value); update(); }; }
-    if(vt){ vt.value=vtVolume; vt.oninput=()=>{ vtVolume=parseFloat(vt.value); update(); }; }
-    if(music){ music.value=musicVolume; music.oninput=()=>{ musicVolume=parseFloat(music.value); update(); }; }
-    update();
-}
 
 async function cutToProgram() {
     const [state, graphics] = await Promise.all([
