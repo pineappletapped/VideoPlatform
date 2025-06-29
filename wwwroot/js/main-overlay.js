@@ -296,13 +296,14 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         scoreboardOverlay.style.bottom = '2rem';
         scoreboardOverlay.style.left = '50%';
         scoreboardOverlay.style.transform = 'translateX(-50%)';
-        scoreboardOverlay.style.background = 'rgba(0,0,0,0.6)';
+        scoreboardOverlay.style.background = 'var(--brand-secondary1, rgba(0,0,0,0.6))';
         scoreboardOverlay.style.color = '#fff';
         scoreboardOverlay.style.padding = '0.5rem 1rem';
         scoreboardOverlay.style.borderRadius = '0.5rem';
         scoreboardOverlay.style.fontFamily = branding.font;
         scoreboardOverlay.style.fontSize = '1.5rem';
-        const teamParts = scoreboardData.teams.map(t => `${t.name} ${t.score}`).join(' : ');
+        const names = teamsData ? [teamsData.teamA?.name, teamsData.teamB?.name] : [];
+        const teamParts = (scoreboardData.scores || []).map((s,i)=>`${names[i] || 'Team '+(i+1)} ${s}`).join(' : ');
         const info = [];
         if (scoreboardData.time) info.push(scoreboardData.time);
         if (scoreboardData.period) info.push('P' + scoreboardData.period);
@@ -322,6 +323,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
 let lastState = null;
 let lastGraphics = null;
 let lastBranding = DEFAULT_BRANDING;
+let teamsData = null;
 
 function updateOverlay() {
     renderOverlayFromFirebase(lastState, lastGraphics, lastBranding);
@@ -342,6 +344,10 @@ listenGraphicsData(eventId, (graphics) => {
 });
 listenBranding(eventId, (branding) => {
     lastBranding = branding || DEFAULT_BRANDING;
+    updateOverlay();
+});
+onValue(ref(getDatabaseInstance(), `teams/${eventId}`), snap => {
+    teamsData = snap.val() || null;
     updateOverlay();
 });
 

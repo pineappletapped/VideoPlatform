@@ -146,5 +146,18 @@ body { margin: 0; }
   color: #000;
 }
 
+/* Ensure form field text is readable inside panels */
+.graphics-panel input,
+.graphics-panel select,
+.graphics-panel textarea,
+.scoreboard-panel input,
+.scoreboard-panel select,
+.scoreboard-panel textarea,
+.teams-panel input,
+.teams-panel select,
+.teams-panel textarea {
+  color: #000;
+}
+
 #overlay-container { position: relative; width: 1920px; height: 1080px; }
 

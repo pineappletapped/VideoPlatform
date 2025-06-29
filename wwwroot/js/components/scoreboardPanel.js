@@ -12,6 +12,12 @@ function getScoreboardRef(eventId) {
 export function renderScoreboardPanel(container, sport = 'Football', eventId = 'demo') {
     const cfg = sportsData[sport] || sportsData['Football'];
 
+    let teamsData = null;
+    let currentData = null;
+
+    const teamsRef = ref(db, `teams/${eventId}`);
+    onValue(teamsRef, snap => { teamsData = snap.val(); if(currentData) render(currentData); });
+
     let sbVisible = false;
     let sbPreview = false;
 
@@ -21,21 +27,21 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
     });
 
     onValue(getScoreboardRef(eventId), snap => {
-        const data = snap.val() || defaultData();
-        render(data);
+        currentData = snap.val() || defaultData();
+        render(currentData);
     });
 
     function defaultData() {
-        const teams = Array.from({ length: cfg.teamCount }).map((_, i) => ({ name: `Team ${i + 1}`, score: 0 }));
-        const base = { teams };
+        const scores = Array.from({ length: cfg.teamCount }).map(() => 0);
+        const base = { scores };
         if (cfg.scoreboard.periods) base.period = 1;
         if (cfg.scoreboard.time) base.time = '00:00';
         if (cfg.scoreboard.round) base.round = 1;
-        if (cfg.scoreboard.sets) base.sets = teams.map(() => 0);
-        if (cfg.scoreboard.games) base.games = teams.map(() => 0);
-        if (cfg.scoreboard.frames) base.frames = teams.map(() => 0);
-        if (cfg.scoreboard.legs) base.legs = teams.map(() => 0);
-        if (cfg.scoreboard.points) base.points = teams.map(() => 0);
+        if (cfg.scoreboard.sets) base.sets = scores.map(() => 0);
+        if (cfg.scoreboard.games) base.games = scores.map(() => 0);
+        if (cfg.scoreboard.frames) base.frames = scores.map(() => 0);
+        if (cfg.scoreboard.legs) base.legs = scores.map(() => 0);
+        if (cfg.scoreboard.points) base.points = scores.map(() => 0);
         return base;
     }
 
@@ -53,8 +59,9 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             </div>`;
         const fieldsDiv = container.querySelector('#sb-fields');
         const htmlParts = [];
-        data.teams.forEach((t, i) => {
-            htmlParts.push(`<div><input class="border p-1 w-24 mr-2" id="team-name-${i}" value="${t.name}"><input type="number" class="border p-1 w-16" id="team-score-${i}" value="${t.score}"></div>`);
+        (data.scores || []).forEach((sc, i) => {
+            const name = teamsData ? (i === 0 ? teamsData.teamA?.name : teamsData.teamB?.name) : `Team ${i + 1}`;
+            htmlParts.push(`<div><span class="mr-2">${name}</span><input type="number" class="border p-1 w-16" id="team-score-${i}" value="${sc}"></div>`);
         });
         if (cfg.scoreboard.periods) {
             htmlParts.push(`<div><label class="mr-2">${cfg.scoreboard.periodLabel || 'Period'}:</label><input type="number" class="border p-1 w-16" id="sb-period" value="${data.period || 1}"></div>`);
@@ -65,33 +72,34 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         if (cfg.scoreboard.round) {
             htmlParts.push(`<div><label class="mr-2">Round:</label><input type="number" class="border p-1 w-16" id="sb-round" value="${data.round || 1}"></div>`);
         }
+        const count = (data.scores || []).length;
         if (cfg.scoreboard.sets) {
-            htmlParts.push(`<div><label>Sets:</label>${data.teams.map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-set-${i}" value="${(data.sets && data.sets[i]) || 0}">`).join('')}</div>`);
+            htmlParts.push(`<div><label>Sets:</label>${Array.from({length:count}).map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-set-${i}" value="${(data.sets && data.sets[i]) || 0}">`).join('')}</div>`);
         }
         if (cfg.scoreboard.games) {
-            htmlParts.push(`<div><label>Games:</label>${data.teams.map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-game-${i}" value="${(data.games && data.games[i]) || 0}">`).join('')}</div>`);
+            htmlParts.push(`<div><label>Games:</label>${Array.from({length:count}).map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-game-${i}" value="${(data.games && data.games[i]) || 0}">`).join('')}</div>`);
         }
         if (cfg.scoreboard.frames) {
-            htmlParts.push(`<div><label>Frames:</label>${data.teams.map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-frame-${i}" value="${(data.frames && data.frames[i]) || 0}">`).join('')}</div>`);
+            htmlParts.push(`<div><label>Frames:</label>${Array.from({length:count}).map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-frame-${i}" value="${(data.frames && data.frames[i]) || 0}">`).join('')}</div>`);
         }
         if (cfg.scoreboard.legs) {
-            htmlParts.push(`<div><label>Legs:</label>${data.teams.map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-leg-${i}" value="${(data.legs && data.legs[i]) || 0}">`).join('')}</div>`);
+            htmlParts.push(`<div><label>Legs:</label>${Array.from({length:count}).map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-leg-${i}" value="${(data.legs && data.legs[i]) || 0}">`).join('')}</div>`);
         }
         if (cfg.scoreboard.points) {
-            htmlParts.push(`<div><label>Points:</label>${data.teams.map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-point-${i}" value="${(data.points && data.points[i]) || 0}">`).join('')}</div>`);
+            htmlParts.push(`<div><label>Points:</label>${Array.from({length:count}).map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-point-${i}" value="${(data.points && data.points[i]) || 0}">`).join('')}</div>`);
         }
         fieldsDiv.innerHTML = htmlParts.join('');
 
         function getFormData() {
-            const obj = { teams: data.teams.map((_,i)=>({ name: container.querySelector(`#team-name-${i}`).value, score: parseInt(container.querySelector(`#team-score-${i}`).value) || 0 })) };
+            const obj = { scores: (data.scores || []).map((_,i)=> parseInt(container.querySelector(`#team-score-${i}`).value) || 0) };
             if (cfg.scoreboard.periods) obj.period = parseInt(container.querySelector('#sb-period').value) || 1;
             if (cfg.scoreboard.time) obj.time = container.querySelector('#sb-time').value;
             if (cfg.scoreboard.round) obj.round = parseInt(container.querySelector('#sb-round').value) || 1;
-            if (cfg.scoreboard.sets) obj.sets = data.teams.map((_,i)=>parseInt(container.querySelector(`#sb-set-${i}`).value) || 0);
-            if (cfg.scoreboard.games) obj.games = data.teams.map((_,i)=>parseInt(container.querySelector(`#sb-game-${i}`).value) || 0);
-            if (cfg.scoreboard.frames) obj.frames = data.teams.map((_,i)=>parseInt(container.querySelector(`#sb-frame-${i}`).value) || 0);
-            if (cfg.scoreboard.legs) obj.legs = data.teams.map((_,i)=>parseInt(container.querySelector(`#sb-leg-${i}`).value) || 0);
-            if (cfg.scoreboard.points) obj.points = data.teams.map((_,i)=>parseInt(container.querySelector(`#sb-point-${i}`).value) || 0);
+            if (cfg.scoreboard.sets) obj.sets = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-set-${i}`).value) || 0);
+            if (cfg.scoreboard.games) obj.games = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-game-${i}`).value) || 0);
+            if (cfg.scoreboard.frames) obj.frames = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-frame-${i}`).value) || 0);
+            if (cfg.scoreboard.legs) obj.legs = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-leg-${i}`).value) || 0);
+            if (cfg.scoreboard.points) obj.points = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-point-${i}`).value) || 0);
             return obj;
         }
 
