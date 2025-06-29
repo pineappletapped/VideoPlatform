@@ -80,8 +80,12 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       await login(data.email.trim(), data.password);
       const params = new URLSearchParams(window.location.search);
-      const target = params.get('redirect') || 'index.html';
-      window.location.href = target;
+      const target = params.get('redirect');
+      if (target) {
+        window.location.href = target;
+      } else {
+        window.location.reload();
+      }
     } catch (err) {
       alert('Login failed');
     }
