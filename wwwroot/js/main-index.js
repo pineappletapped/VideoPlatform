@@ -2,10 +2,20 @@ import { onAuth, login, register, logout } from './auth.js';
 import { getAllEventsMetadata, setEventMetadata, getUser } from './firebase.js';
 import './components/topBar.js';
 import { renderBrandingModal } from './components/brandingModal.js';
-import { SQUARE_APP_ID, SQUARE_LOCATION_ID, SQUARE_PLANS } from '../squareConfig.js';
+let SQUARE_APP_ID = '';
+let SQUARE_LOCATION_ID = '';
+let SQUARE_PLANS = {};
 import { sportsData } from './sportsConfig.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const cfg = await import('../squareConfig.js');
+    SQUARE_APP_ID = cfg.SQUARE_APP_ID;
+    SQUARE_LOCATION_ID = cfg.SQUARE_LOCATION_ID;
+    SQUARE_PLANS = cfg.SQUARE_PLANS;
+  } catch (e) {
+    console.warn('Square config missing', e);
+  }
   const topBar = document.createElement('top-bar');
   topBar.addEventListener('logout', logout);
   topBar.addEventListener('edit-account', () => alert('Edit account not implemented'));
@@ -62,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
       topBar.setAttribute('is-admin', isAdmin);
       if (isAdmin) adminBtn.classList.remove('hidden'); else adminBtn.classList.add('hidden');
       const uData = await getUser(currentUserId) || {};
-      if (!uData.subscription_id) {
+      if (!uData.subscription_id && user.email !== 'ryanadmin') {
         alert('No active subscription found for this account.');
         await logout();
         return;
@@ -120,20 +130,24 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(regForm));
     try {
-      const result = await card.tokenize();
-      if (result.status !== 'OK') throw new Error('Card error');
-      const res = await fetch('create-subscription.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nonce: result.token,
-          tier: data.tier,
-          email: data.email
-        })
-      });
-      const sub = await res.json();
-      if (!res.ok) throw new Error(sub.error || 'Subscription failed');
-      await register(data.email, data.password, data.tier, sub.subscription_id);
+      let subId = '';
+      if (card) {
+        const result = await card.tokenize();
+        if (result.status !== 'OK') throw new Error('Card error');
+        const res = await fetch('create-subscription.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nonce: result.token,
+            tier: data.tier,
+            email: data.email
+          })
+        });
+        const sub = await res.json();
+        if (!res.ok) throw new Error(sub.error || 'Subscription failed');
+        subId = sub.subscription_id;
+      }
+      await register(data.email, data.password, data.tier, subId);
     } catch (err) {
       alert('Registration failed: ' + err.message);
     }
