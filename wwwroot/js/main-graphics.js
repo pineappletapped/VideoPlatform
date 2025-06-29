@@ -199,7 +199,9 @@ async function initializeComponents(eventData) {
     const brandingModal = document.getElementById('branding-modal');
     renderBrandingModal(brandingModal, { eventId });
     brandingModal.classList.add('hidden');
-    renderProfileWizard(document.getElementById('profile-wizard'), eventData);
+    if (params.get('setup') === '1') {
+        renderProfileWizard(document.getElementById('profile-wizard'), eventData);
+    }
     renderCalendarDrawer(document.getElementById('calendar-drawer'), eventData);
 
     const brandingBtn = document.getElementById('footer-branding');

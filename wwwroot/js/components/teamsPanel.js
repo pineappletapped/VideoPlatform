@@ -34,7 +34,7 @@ export function renderTeamsPanel(container, eventId, sport = 'Football') {
     function defaultData() {
         const playerSlots = cfg.playersPerTeam + (cfg.subs || 0);
         const players = Array.from({ length: playerSlots }).map(() => ({ name: '', pos: '' }));
-        return { teamA: { name: 'Team A', logo: '', players: players.slice() }, teamB: { name: 'Team B', logo: '', players: players.slice() } };
+        return { teamA: { name: 'Team A', logo: '', color: '#ffffff', players: players.slice() }, teamB: { name: 'Team B', logo: '', color: '#ffffff', players: players.slice() } };
     }
 
     function render(data) {
@@ -48,12 +48,14 @@ export function renderTeamsPanel(container, eventId, sport = 'Football') {
                         <input class="border p-1 w-full mb-2" id="team-a-name" value="${data.teamA.name}" />
                         <div class="flex items-center gap-2 mb-1"><input type="file" id="team-a-logo-file" accept="image/*" /><button type="button" id="team-a-upload" class="control-button btn-xs">Upload</button></div>
                         <input class="border p-1 w-full mb-2" id="team-a-logo" placeholder="Logo URL" value="${data.teamA.logo || ''}" />
+                        <div class="mb-2"><label class="text-xs">Colour</label><input type="color" id="team-a-color" class="border p-1 w-full" value="${data.teamA.color || '#ffffff'}"></div>
                         <table class="w-full"><tbody>${playerRows('a', data.teamA)}</tbody></table>
                     </div>
                     <div class="flex-1">
                         <input class="border p-1 w-full mb-2" id="team-b-name" value="${data.teamB.name}" />
                         <div class="flex items-center gap-2 mb-1"><input type="file" id="team-b-logo-file" accept="image/*" /><button type="button" id="team-b-upload" class="control-button btn-xs">Upload</button></div>
                         <input class="border p-1 w-full mb-2" id="team-b-logo" placeholder="Logo URL" value="${data.teamB.logo || ''}" />
+                        <div class="mb-2"><label class="text-xs">Colour</label><input type="color" id="team-b-color" class="border p-1 w-full" value="${data.teamB.color || '#ffffff'}"></div>
                         <table class="w-full"><tbody>${playerRows('b', data.teamB)}</tbody></table>
                     </div>
                 </div>
@@ -89,11 +91,13 @@ export function renderTeamsPanel(container, eventId, sport = 'Football') {
                 teamA: {
                     name: container.querySelector('#team-a-name').value,
                     logo: container.querySelector('#team-a-logo').value,
+                    color: container.querySelector('#team-a-color').value,
                     players: getPlayers('a')
                 },
                 teamB: {
                     name: container.querySelector('#team-b-name').value,
                     logo: container.querySelector('#team-b-logo').value,
+                    color: container.querySelector('#team-b-color').value,
                     players: getPlayers('b')
                 }
             };

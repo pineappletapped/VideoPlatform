@@ -39,12 +39,8 @@
                 <button id="signout-btn" class="control-button">Sign Out</button>
                 <button id="admin-btn" class="control-button hidden">Admin</button>
             </div>
-            <form id="create-form" class="bg-white p-4 rounded shadow mb-4">
-                <h2 class="font-semibold mb-2">Create Event</h2>
-                <input name="id" placeholder="Event ID" class="border p-1 w-full mb-2" required>
-                <input name="title" placeholder="Event Title" class="border p-1 w-full mb-2" required>
-                <button class="control-button">Save</button>
-            </form>
+            <button id="open-create" class="control-button mb-4">Create Event</button>
+            <div id="create-modal" class="hidden"></div>
             <ul id="events-list" class="space-y-4"></ul>
         </div>
     </div>

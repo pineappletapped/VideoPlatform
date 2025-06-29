@@ -3,6 +3,7 @@ import { getAllEventsMetadata, setEventMetadata, getUser } from './firebase.js';
 import './components/topBar.js';
 import { renderBrandingModal } from './components/brandingModal.js';
 import { SQUARE_APP_ID, SQUARE_LOCATION_ID, SQUARE_PLANS } from '../squareConfig.js';
+import { sportsData } from './sportsConfig.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const topBar = document.createElement('top-bar');
@@ -15,7 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const dashSection = document.getElementById('dashboard');
   const loginForm = document.getElementById('login-form');
   const regForm = document.getElementById('register-form');
-  const createForm = document.getElementById('create-form');
+  const openCreateBtn = document.getElementById('open-create');
+  const createModal = document.getElementById('create-modal');
   const eventsList = document.getElementById('events-list');
   const signoutBtn = document.getElementById('signout-btn');
   const adminBtn = document.getElementById('admin-btn');
@@ -110,11 +112,51 @@ document.addEventListener('DOMContentLoaded', () => {
   signoutBtn.onclick = () => logout();
   adminBtn.onclick = () => { window.location.href = 'admin.html'; };
 
-  createForm.onsubmit = async e => {
-    e.preventDefault();
-    const data = Object.fromEntries(new FormData(createForm));
-    await setEventMetadata(data.id, { title: data.title });
-    createForm.reset();
-    loadEvents();
-  };
+  function showCreateModal() {
+    const genId = 'ev' + Date.now().toString(36);
+    createModal.innerHTML = `
+      <div class="modal-overlay">
+        <div class="modal-window">
+          <h2 class="font-bold mb-2">Create Event</h2>
+          <form id="create-form">
+            <input name="id" class="border p-1 w-full mb-2" readonly value="${genId}" />
+            <input name="title" placeholder="Event Title" class="border p-1 w-full mb-2" required />
+            <select name="eventType" id="create-type" class="border p-1 w-full mb-2">
+              <option value="corporate">Corporate Event</option>
+              <option value="sports">Sports Event</option>
+            </select>
+            <div id="sport-wrap" class="mb-2 hidden">
+              <select name="sport" class="border p-1 w-full">
+                ${Object.keys(sportsData).map(s=>`<option value="${s}">${s}</option>`).join('')}
+              </select>
+            </div>
+            <div class="flex gap-2 mt-2">
+              <button type="submit" class="control-button btn-sm">Create</button>
+              <button type="button" id="create-cancel" class="control-button btn-sm bg-gray-400 hover:bg-gray-600">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>`;
+    createModal.classList.remove('hidden');
+    const form = createModal.querySelector('#create-form');
+    const typeSel = createModal.querySelector('#create-type');
+    const sportWrap = createModal.querySelector('#sport-wrap');
+    typeSel.onchange = () => {
+      sportWrap.style.display = typeSel.value === 'sports' ? 'block' : 'none';
+    };
+    createModal.querySelector('#create-cancel').onclick = () => {
+      createModal.classList.add('hidden');
+      createModal.innerHTML = '';
+    };
+    form.onsubmit = async ev => {
+      ev.preventDefault();
+      const data = Object.fromEntries(new FormData(form));
+      const meta = { title: data.title, eventType: data.eventType };
+      if (data.eventType === 'sports') meta.sport = data.sport;
+      await setEventMetadata(data.id, meta);
+      window.location.href = `graphics.html?event_id=${data.id}&setup=1`;
+    };
+  }
+
+  openCreateBtn.onclick = showCreateModal;
 });
