@@ -281,6 +281,42 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         holdslateOverlay.remove();
         if (countdownInterval) clearInterval(countdownInterval);
     }
+
+    // Scoreboard Overlay
+    let scoreboardOverlay = overlayContainer.querySelector('#scoreboard-overlay');
+    const scoreboardData = state && state.scoreboard;
+    const scoreboardShow = previewMode ? state && state.scoreboardPreviewVisible : state && state.scoreboardVisible;
+    if (scoreboardShow && scoreboardData) {
+        if (!scoreboardOverlay) {
+            scoreboardOverlay = document.createElement('div');
+            scoreboardOverlay.id = 'scoreboard-overlay';
+            overlayContainer.appendChild(scoreboardOverlay);
+        }
+        scoreboardOverlay.style.position = 'absolute';
+        scoreboardOverlay.style.bottom = '2rem';
+        scoreboardOverlay.style.left = '50%';
+        scoreboardOverlay.style.transform = 'translateX(-50%)';
+        scoreboardOverlay.style.background = 'rgba(0,0,0,0.6)';
+        scoreboardOverlay.style.color = '#fff';
+        scoreboardOverlay.style.padding = '0.5rem 1rem';
+        scoreboardOverlay.style.borderRadius = '0.5rem';
+        scoreboardOverlay.style.fontFamily = branding.font;
+        scoreboardOverlay.style.fontSize = '1.5rem';
+        const teamParts = scoreboardData.teams.map(t => `${t.name} ${t.score}`).join(' : ');
+        const info = [];
+        if (scoreboardData.time) info.push(scoreboardData.time);
+        if (scoreboardData.period) info.push('P' + scoreboardData.period);
+        if (scoreboardData.round) info.push('R' + scoreboardData.round);
+        if (scoreboardData.sets) info.push('Sets ' + scoreboardData.sets.join('-'));
+        if (scoreboardData.games) info.push('Games ' + scoreboardData.games.join('-'));
+        if (scoreboardData.frames) info.push('Frames ' + scoreboardData.frames.join('-'));
+        if (scoreboardData.legs) info.push('Legs ' + scoreboardData.legs.join('-'));
+        if (scoreboardData.points) info.push('Pts ' + scoreboardData.points.join('-'));
+        const infoHtml = info.length ? `<div class='text-sm text-center'>${info.join(' | ')}</div>` : '';
+        scoreboardOverlay.innerHTML = `<div class='text-center'>${teamParts}${infoHtml}</div>`;
+    } else if (scoreboardOverlay) {
+        scoreboardOverlay.remove();
+    }
 }
 
 let lastState = null;

@@ -1,6 +1,7 @@
 import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 import { getDatabaseInstance } from "../firebaseApp.js";
 import { sportsData } from "../sportsConfig.js";
+import { updateOverlayState, listenOverlayState } from "../firebase.js";
 
 const db = getDatabaseInstance();
 
@@ -10,6 +11,14 @@ function getScoreboardRef(eventId) {
 
 export function renderScoreboardPanel(container, sport = 'Football', eventId = 'demo') {
     const cfg = sportsData[sport] || sportsData['Football'];
+
+    let sbVisible = false;
+    let sbPreview = false;
+
+    listenOverlayState(eventId, state => {
+        sbVisible = (state && state.scoreboardVisible) || false;
+        sbPreview = (state && state.scoreboardPreviewVisible) || false;
+    });
 
     onValue(getScoreboardRef(eventId), snap => {
         const data = snap.val() || defaultData();
@@ -34,8 +43,13 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         container.innerHTML = `
             <div class='scoreboard-panel'>
                 <h2 class="font-bold text-lg mb-2">${sport} Scoreboard</h2>
+                <div class="mb-2 flex gap-2">
+                    <button id="sb-preview" class="control-button btn-sm btn-preview${sbPreview ? ' ring-2 ring-brand' : ''}">Preview</button>
+                    <button id="sb-live" class="control-button btn-sm btn-live${sbVisible ? ' ring-2 ring-green-400' : ''}">Live</button>
+                    <button id="sb-hide" class="control-button btn-sm${!sbVisible && !sbPreview ? ' ring-2 ring-red-400' : ''}">Hide</button>
+                    <button id="sb-save" class="control-button btn-sm ml-auto">Save</button>
+                </div>
                 <div id="sb-fields" class="space-y-2"></div>
-                <button id="sb-save" class="control-button btn-sm mt-2">Save</button>
             </div>`;
         const fieldsDiv = container.querySelector('#sb-fields');
         const htmlParts = [];
@@ -67,17 +81,41 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             htmlParts.push(`<div><label>Points:</label>${data.teams.map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-point-${i}" value="${(data.points && data.points[i]) || 0}">`).join('')}</div>`);
         }
         fieldsDiv.innerHTML = htmlParts.join('');
+
+        function getFormData() {
+            const obj = { teams: data.teams.map((_,i)=>({ name: container.querySelector(`#team-name-${i}`).value, score: parseInt(container.querySelector(`#team-score-${i}`).value) || 0 })) };
+            if (cfg.scoreboard.periods) obj.period = parseInt(container.querySelector('#sb-period').value) || 1;
+            if (cfg.scoreboard.time) obj.time = container.querySelector('#sb-time').value;
+            if (cfg.scoreboard.round) obj.round = parseInt(container.querySelector('#sb-round').value) || 1;
+            if (cfg.scoreboard.sets) obj.sets = data.teams.map((_,i)=>parseInt(container.querySelector(`#sb-set-${i}`).value) || 0);
+            if (cfg.scoreboard.games) obj.games = data.teams.map((_,i)=>parseInt(container.querySelector(`#sb-game-${i}`).value) || 0);
+            if (cfg.scoreboard.frames) obj.frames = data.teams.map((_,i)=>parseInt(container.querySelector(`#sb-frame-${i}`).value) || 0);
+            if (cfg.scoreboard.legs) obj.legs = data.teams.map((_,i)=>parseInt(container.querySelector(`#sb-leg-${i}`).value) || 0);
+            if (cfg.scoreboard.points) obj.points = data.teams.map((_,i)=>parseInt(container.querySelector(`#sb-point-${i}`).value) || 0);
+            return obj;
+        }
+
+        async function saveData(obj){
+            await set(getScoreboardRef(eventId), obj);
+            await updateOverlayState(eventId, { scoreboard: obj });
+        }
+
         container.querySelector('#sb-save').onclick = async () => {
-            const newData = { teams: data.teams.map((_,i)=>({ name: container.querySelector(`#team-name-${i}`).value, score: parseInt(container.querySelector(`#team-score-${i}`).value) || 0 })) };
-            if (cfg.scoreboard.periods) newData.period = parseInt(container.querySelector('#sb-period').value) || 1;
-            if (cfg.scoreboard.time) newData.time = container.querySelector('#sb-time').value;
-            if (cfg.scoreboard.round) newData.round = parseInt(container.querySelector('#sb-round').value) || 1;
-            if (cfg.scoreboard.sets) newData.sets = data.teams.map((_,i)=>parseInt(container.querySelector(`#sb-set-${i}`).value) || 0);
-            if (cfg.scoreboard.games) newData.games = data.teams.map((_,i)=>parseInt(container.querySelector(`#sb-game-${i}`).value) || 0);
-            if (cfg.scoreboard.frames) newData.frames = data.teams.map((_,i)=>parseInt(container.querySelector(`#sb-frame-${i}`).value) || 0);
-            if (cfg.scoreboard.legs) newData.legs = data.teams.map((_,i)=>parseInt(container.querySelector(`#sb-leg-${i}`).value) || 0);
-            if (cfg.scoreboard.points) newData.points = data.teams.map((_,i)=>parseInt(container.querySelector(`#sb-point-${i}`).value) || 0);
-            await set(getScoreboardRef(eventId), newData);
+            const newData = getFormData();
+            await saveData(newData);
+        };
+        container.querySelector('#sb-preview').onclick = async () => {
+            const newData = getFormData();
+            await saveData(newData);
+            await updateOverlayState(eventId, { scoreboardPreviewVisible: true });
+        };
+        container.querySelector('#sb-live').onclick = async () => {
+            const newData = getFormData();
+            await saveData(newData);
+            await updateOverlayState(eventId, { scoreboardVisible: true, scoreboardPreviewVisible: false });
+        };
+        container.querySelector('#sb-hide').onclick = async () => {
+            await updateOverlayState(eventId, { scoreboardVisible: false, scoreboardPreviewVisible: false });
         };
         if (!container.dataset.heartbeat) {
             setInterval(() => localStorage.setItem('sportsHeartbeat', Date.now().toString()), 5000);
