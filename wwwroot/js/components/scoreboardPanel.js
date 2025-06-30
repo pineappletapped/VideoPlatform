@@ -9,8 +9,8 @@ const scoreboardStyles = [
     { id: 'style3', label: 'Outline' },
     { id: 'style4', label: 'Light' },
     { id: 'style5', label: 'Solid' },
-    { id: 'h1', label: 'Horizon 1' },
-    { id: 'h2', label: 'Horizon 2' }
+    { id: 'h1', label: 'Horizontal 1' },
+    { id: 'h2', label: 'Horizontal 2' }
 ];
 const scoreboardPositions = [
     { value: 'top-left', label: 'Top Left' },
