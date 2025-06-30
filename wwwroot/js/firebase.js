@@ -1,6 +1,6 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-import { getDatabase, ref, set, get, onValue, update } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+import { getDatabase, ref, set, get, onValue, update, remove } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCXUd4iKZWHeiWe_2gblxWE9uFEXS4pHAI",
@@ -32,6 +32,17 @@ export function listenEventMetadata(eventId, callback) {
 }
 export function getAllEventsMetadata() {
   return get(ref(db, 'events')).then(snap => snap.val());
+}
+
+export function deleteEvent(eventId) {
+  return Promise.all([
+    remove(ref(db, `events/${eventId}`)),
+    remove(ref(db, `overlays/${eventId}`)),
+    remove(ref(db, `graphics/${eventId}`)),
+    remove(ref(db, `graphicsDev/${eventId}`)),
+    remove(ref(db, `favorites/${eventId}`)),
+    remove(ref(db, `branding/${eventId}`))
+  ]);
 }
 
 // Overlay state helpers (eventId-scoped)

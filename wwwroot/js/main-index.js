@@ -1,10 +1,11 @@
 import { onAuth, login, register, logout } from './auth.js';
-import { getAllEventsMetadata, setEventMetadata, getUser, getAllUsers } from './firebase.js';
+import { getAllEventsMetadata, setEventMetadata, getUser, getAllUsers, getOverlayState, deleteEvent } from './firebase.js';
 import './components/topBar.js';
 import { renderBrandingModal } from './components/brandingModal.js';
 let SQUARE_APP_ID = '';
 let SQUARE_LOCATION_ID = '';
 let SQUARE_PLANS = {};
+const PLAN_LIMITS = { single: 1, three: 3, eight: 8 };
 import { sportsData } from './sportsConfig.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -36,8 +37,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const eventsList = document.getElementById('events-list');
   const signoutBtn = document.getElementById('signout-btn');
   const adminBtn = document.getElementById('admin-btn');
+  const allowanceDiv = document.getElementById('event-allowance');
   let card, payments;
   let currentUserId = '';
+  let currentUserTier = 'single';
   function showBrandModal(uid) {
     const modal = document.getElementById('branding-modal');
     renderBrandingModal(modal, { userId: uid });
@@ -45,23 +48,56 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   async function loadEvents() {
-    const events = await getAllEventsMetadata() || {};
-    eventsList.innerHTML = Object.keys(events).map(id => {
-      const ev = events[id];
+    const all = await getAllEventsMetadata() || {};
+    const isAdmin = topBar.getAttribute('is-admin') === 'true';
+    const entries = Object.keys(all).filter(id => {
+      const ev = all[id];
+      return isAdmin || ev.owner === currentUserId;
+    }).map(id => ({ id, data: all[id] }));
+    const states = await Promise.all(entries.map(e => getOverlayState(e.id).catch(()=>null)));
+    const html = entries.map((entry, idx) => {
+      const ev = entry.data;
+      const id = entry.id;
       const name = ev.title || id;
+      const typeInfo = ev.eventType === 'sports' ? `Sports Event > ${ev.sport}` : 'Corporate Event';
       const gfx = `graphics.html?event_id=${id}`;
       const ovl = `overlay.html?event_id=${id}`;
       const sportsLink = ev.eventType === 'sports'
         ? `<a class="control-button btn-sm" href="sports.html?event_id=${id}">Sports Admin</a>`
         : '';
-      return `<li class="bg-white p-3 rounded shadow">
-        <div class="font-semibold">${name}</div>
-        <div class="text-xs text-gray-500 mb-2">${id}</div>
-        <a class="control-button btn-sm" href="${gfx}">Graphics</a>
-        <a class="control-button btn-sm" href="${ovl}" target="_blank">Overlay</a>
-        ${sportsLink}
+      const imgSrc = states[idx]?.holdslate?.image;
+      const img = imgSrc ?
+        `<img src="${imgSrc}" alt="thumb" class="w-24 h-16 object-cover rounded" />` :
+        `<div class="w-24 h-16 bg-gray-300 flex items-center justify-center rounded text-xs text-gray-500">No image</div>`;
+      return `<li class="bg-white text-black p-3 rounded shadow flex items-center gap-3">
+        ${img}
+        <div class="flex-1">
+          <div class="font-semibold">${name}</div>
+          <div class="text-xs text-gray-600">${typeInfo}</div>
+          <div class="text-xs text-gray-500 mb-1">${id}</div>
+          <div>
+            <a class="control-button btn-sm" href="${gfx}">Graphics</a>
+            <a class="control-button btn-sm" href="${ovl}" target="_blank">Overlay</a>
+            ${sportsLink}
+            <button class="control-button btn-sm bg-red-600 hover:bg-red-700" data-del="${id}">Delete</button>
+          </div>
+        </div>
       </li>`;
     }).join('');
+    eventsList.innerHTML = html;
+    eventsList.querySelectorAll('[data-del]').forEach(btn => {
+      btn.onclick = async () => {
+        const id = btn.getAttribute('data-del');
+        if (confirm('Delete this event?')) {
+          await deleteEvent(id);
+          loadEvents();
+        }
+      };
+    });
+    const limit = PLAN_LIMITS[currentUserTier] || 1;
+    const count = entries.length;
+    allowanceDiv.innerHTML = `Events used: ${count}/${limit}` + (count >= limit ? ` <a href="account.html" class="underline text-brand">Upgrade</a>` : '');
+    openCreateBtn.disabled = count >= limit;
   }
 
   onAuth(async user => {
@@ -74,6 +110,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       topBar.setAttribute('is-admin', isAdmin);
       if (isAdmin) adminBtn.classList.remove('hidden'); else adminBtn.classList.add('hidden');
       const uData = await getUser(currentUserId) || {};
+      const locals = JSON.parse(localStorage.getItem('localUsers') || '{}');
+      const localInfo = locals[user.email] || {};
+      currentUserTier = uData.tier || localInfo.tier || 'single';
       if (!uData.subscription_id && user.email !== 'ryanadmin') {
         alert('No active subscription found for this account.');
         await logout();
@@ -229,7 +268,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     form.onsubmit = async ev => {
       ev.preventDefault();
       const data = Object.fromEntries(new FormData(form));
-      const meta = { title: data.title, eventType: data.eventType };
+      const meta = { title: data.title, eventType: data.eventType, owner: currentUserId };
       if (data.eventType === 'sports') meta.sport = data.sport;
       await setEventMetadata(data.id, meta);
       window.location.href = `graphics.html?event_id=${data.id}&setup=1`;
