@@ -116,7 +116,9 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         const htmlParts = [];
         (data.scores || []).forEach((sc, i) => {
             const name = teamsData ? (i === 0 ? teamsData.teamA?.name : teamsData.teamB?.name) : `Team ${i + 1}`;
-            htmlParts.push(`<tr><td class="pr-2 whitespace-nowrap">${name}</td><td><div class="flex items-center"><input type="number" class="border p-1 w-16" id="team-score-${i}" value="${sc}"><span id="score-btns-${i}" class="ml-1"></span></div></td></tr>`);
+            const color = teamsData ? (i === 0 ? teamsData.teamA?.color || '#ffffff' : teamsData.teamB?.color || '#ffffff') : '#ffffff';
+            const textCol = contrastColor(color);
+            htmlParts.push(`<tr><td class="pr-2 whitespace-nowrap" style="background:${color};color:${textCol};">${name}</td><td><div class="flex items-center"><input type="number" class="border p-1 w-16" id="team-score-${i}" value="${sc}"><span id="score-btns-${i}" class="ml-1"></span></div></td></tr>`);
         });
         if (cfg.scoreboard.periods) {
             htmlParts.push(`<tr><td class="pr-2">${cfg.scoreboard.periodLabel || 'Period'}:</td><td><input type="number" class="border p-1 w-16" id="sb-period" value="${data.period || 1}"></td></tr>`);
