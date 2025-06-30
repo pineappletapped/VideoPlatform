@@ -339,6 +339,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         const textB = contrastColor(colors[1]);
         const textBrand = contrastColor(brand);
         const breakHtml = scoreboardData.currentBreak !== undefined ? `<div class='sb-break'>Break: ${scoreboardData.currentBreak} | High: ${scoreboardData.highBreak || scoreboardData.currentBreak}</div>` : '';
+        const checkoutHtml = scoreboardData.checkoutText ? `<div class='sb-checkout'>${names[scoreboardData.checkoutPlayer || 0] || ''}: ${scoreboardData.checkoutText}</div>` : '';
         const aClassA = scoreboardData.turn === 0 ? ' active' : '';
         const aClassB = scoreboardData.turn === 1 ? ' active' : '';
         scoreboardOverlay.innerHTML = `
@@ -348,7 +349,8 @@ function renderOverlayFromFirebase(state, graphics, branding) {
                 <span class="sb-team${aClassB}" style="background:${colors[1]};color:${textB}">${names[1] || 'Team 2'}</span>
             </div>
             ${infoHtml}
-            ${breakHtml}`;
+            ${breakHtml}
+            ${checkoutHtml}`;
     } else if (scoreboardOverlay) {
         scoreboardOverlay.remove();
     }

@@ -31,6 +31,33 @@ function contrastColor(hex) {
     return lum > 0.6 ? '#000' : '#fff';
 }
 
+function getCheckout(score) {
+    if (score < 2 || score > 170) return null;
+    const singles = Array.from({length:20},(_,i)=>({label:(i+1).toString(),value:i+1}));
+    const doubles = singles.map(s=>({label:'D'+s.label,value:s.value*2}));
+    const trebles = singles.map(s=>({label:'T'+s.label,value:s.value*3}));
+    const singlesAll = [...singles.map(s=>({label:'S'+s.label,value:s.value})),{label:'SB',value:25}];
+    const all = [...trebles.sort((a,b)=>b.value-a.value),...doubles.sort((a,b)=>b.value-a.value),...singlesAll.sort((a,b)=>b.value-a.value)];
+    const lastSeg = [...doubles,{label:'DB',value:50}];
+    // 1 dart checkout
+    for (const l of lastSeg) if (l.value===score) return l.label;
+    // 2 dart checkout
+    for (const a of all){
+        for (const l of lastSeg){
+            if (a.value+l.value===score) return `${a.label} + ${l.label}`;
+        }
+    }
+    // 3 dart checkout
+    for (const a of all){
+        for (const b of all){
+            for (const l of lastSeg){
+                if (a.value+b.value+l.value===score) return `${a.label} + ${b.label} + ${l.label}`;
+            }
+        }
+    }
+    return null;
+}
+
 const db = getDatabaseInstance();
 
 function getScoreboardRef(eventId) {
@@ -63,7 +90,8 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
     });
 
     function defaultData() {
-        const scores = Array.from({ length: cfg.teamCount }).map(() => 0);
+        const startVal = cfg.scoreboard.start || 0;
+        const scores = Array.from({ length: cfg.teamCount }).map(() => startVal);
         const base = { scores, style: 'style1', position: 'bottom-center' };
         if (cfg.scoreboard.periods) base.period = 1;
         if (cfg.scoreboard.time) base.time = '00:00';
@@ -122,7 +150,9 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             const color = teamsData ? (i === 0 ? teamsData.teamA?.color || '#ffffff' : teamsData.teamB?.color || '#ffffff') : '#ffffff';
             const textCol = contrastColor(color);
             const activeClass = cfg.scoreboard.turn && data.turn === i ? ' class="active-player"' : '';
-            htmlParts.push(`<tr${activeClass}><td class="pr-2 whitespace-nowrap" style="background:${color};color:${textCol};">${name}</td><td><div class="flex items-center"><input type="number" class="border p-1 w-16" id="team-score-${i}" value="${sc}"><span id="score-btns-${i}" class="ml-1"></span></div></td></tr>`);
+            const checkout = sport === 'Darts' ? getCheckout(sc) : null;
+            const checkoutHtml = checkout ? `<span id="checkout-${i}" class="text-xs ml-2">${checkout}</span><button id="checkout-btn-${i}" class="control-button btn-xs ml-1">Show</button>` : '';
+            htmlParts.push(`<tr${activeClass}><td class="pr-2 whitespace-nowrap" style="background:${color};color:${textCol};">${name}</td><td><div class="flex items-center"><input type="number" class="border p-1 w-16" id="team-score-${i}" value="${sc}"><span id="score-btns-${i}" class="ml-1"></span>${checkoutHtml}</div></td></tr>`);
         });
         if (cfg.scoreboard.periods) {
             htmlParts.push(`<tr><td class="pr-2">${cfg.scoreboard.periodLabel || 'Period'}:</td><td><input type="number" class="border p-1 w-16" id="sb-period" value="${data.period || 1}"></td></tr>`);
@@ -184,6 +214,27 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                         }
                     });
                     holder.appendChild(btn);
+                });
+            }
+            const cBtn = container.querySelector(`#checkout-btn-${i}`);
+            if (cBtn) {
+                cBtn.addEventListener('click', async () => {
+                    const val = parseInt(container.querySelector(`#team-score-${i}`).value) || 0;
+                    const checkout = getCheckout(val);
+                    if (checkout) {
+                        data.checkoutPlayer = i;
+                        data.checkoutText = checkout;
+                        const obj = getFormData();
+                        await updateOverlayState(eventId, { scoreboard: obj, scoreboardVisible: true });
+                    }
+                });
+            }
+            const inp = container.querySelector(`#team-score-${i}`);
+            const cSpan = container.querySelector(`#checkout-${i}`);
+            if (inp && cSpan) {
+                inp.addEventListener('input', () => {
+                    const ch = getCheckout(parseInt(inp.value) || 0);
+                    cSpan.textContent = ch || '';
                 });
             }
         });
@@ -248,6 +299,10 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             if (cfg.scoreboard.breaks) obj.currentBreak = parseInt(container.querySelector('#sb-break').value) || 0;
             if (cfg.scoreboard.highBreak) obj.highBreak = parseInt(container.querySelector('#sb-highbreak').value) || 0;
             if (cfg.scoreboard.turn) obj.turn = parseInt(container.querySelector('#sb-turn').value) || 0;
+            if (sport === 'Darts' && data.checkoutText) {
+                obj.checkoutPlayer = data.checkoutPlayer;
+                obj.checkoutText = data.checkoutText;
+            }
             obj.style = data.style || 'style1';
             obj.position = data.position || 'bottom-center';
             return obj;

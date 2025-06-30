@@ -115,6 +115,7 @@ body { margin: 0; }
 .sb-h2 .sb-score { flex:0 0 auto; margin:0 1rem; }
 .sb-team.active { text-decoration: underline; }
 .sb-break { font-size: 0.875rem; text-align:center; margin-top:0.25rem; }
+.sb-checkout { font-size: 0.875rem; text-align:center; margin-top:0.25rem; }
 .active-player td:first-child { text-decoration: underline; }
 
 /* Additional styles for column layouts */
