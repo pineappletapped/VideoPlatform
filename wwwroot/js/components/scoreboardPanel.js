@@ -4,11 +4,13 @@ import { sportsData } from "../sportsConfig.js";
 import { updateOverlayState, listenOverlayState } from "../firebase.js";
 
 const scoreboardStyles = [
-    { id: 'style1', label: 'Style 1' },
-    { id: 'style2', label: 'Style 2' },
-    { id: 'style3', label: 'Style 3' },
-    { id: 'style4', label: 'Style 4' },
-    { id: 'style5', label: 'Style 5' }
+    { id: 'style1', label: 'Classic' },
+    { id: 'style2', label: 'Dark Box' },
+    { id: 'style3', label: 'Outline' },
+    { id: 'style4', label: 'Light' },
+    { id: 'style5', label: 'Solid' },
+    { id: 'h1', label: 'Horizon 1' },
+    { id: 'h2', label: 'Horizon 2' }
 ];
 const scoreboardPositions = [
     { value: 'top-left', label: 'Top Left' },

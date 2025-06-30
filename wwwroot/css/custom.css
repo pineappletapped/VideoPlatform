@@ -105,6 +105,14 @@ body { margin: 0; }
 .sb-style4 { background: #fff; color:#000; border-radius:0.25rem; padding:0.25rem 0.5rem; }
 .sb-style4 .sb-team { color:#000; }
 .sb-style5 { background: var(--brand-primary); padding:0.25rem 0.5rem; }
+.sb-h1 { display:flex; width:100%; }
+.sb-h1 .sb-row { width:100%; justify-content:space-between; }
+.sb-h1 .sb-team { flex:1; text-align:center; }
+.sb-h1 .sb-score { flex:0 0 auto; }
+.sb-h2 { display:flex; width:100%; }
+.sb-h2 .sb-row { width:100%; justify-content:center; }
+.sb-h2 .sb-team { flex:0 0 20%; text-align:center; }
+.sb-h2 .sb-score { flex:0 0 auto; margin:0 1rem; }
 
 /* Additional styles for column layouts */
 .col-cameras, .col-atem, .col-obs {
