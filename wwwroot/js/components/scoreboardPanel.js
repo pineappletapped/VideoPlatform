@@ -116,6 +116,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                     <button id="sb-preview" class="control-button btn-sm btn-preview${sbPreview ? ' ring-2 ring-brand' : ''}">Preview</button>
                     <button id="sb-live" class="control-button btn-sm btn-live${sbVisible ? ' ring-2 ring-green-400' : ''}">Live</button>
                     <button id="sb-hide" class="control-button btn-sm${!sbVisible && !sbPreview ? ' ring-2 ring-red-400' : ''}">Hide</button>
+                    ${cfg.scoreboard.breaks ? '<button id="sb-show-break" class="control-button btn-sm">Show Break</button>' : ''}
                     <button id="sb-save" class="control-button btn-sm ml-auto">Save</button>
                     <button id="sb-edit" class="control-button btn-sm">Edit</button>
                 </div>
@@ -152,7 +153,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             const activeClass = cfg.scoreboard.turn && data.turn === i ? ' class="active-player"' : '';
             const checkout = sport === 'Darts' ? getCheckout(sc) : null;
             const checkoutHtml = checkout ? `<span id="checkout-${i}" class="text-xs ml-2">${checkout}</span><button id="checkout-btn-${i}" class="control-button btn-xs ml-1">Show</button>` : '';
-            htmlParts.push(`<tr${activeClass}><td class="pr-2 whitespace-nowrap" style="background:${color};color:${textCol};">${name}</td><td><div class="flex items-center"><input type="number" class="border p-1 w-16" id="team-score-${i}" value="${sc}"><span id="score-btns-${i}" class="ml-1"></span>${checkoutHtml}</div></td></tr>`);
+            htmlParts.push(`<tr${activeClass}><td class="pr-2 whitespace-nowrap" style="background:${color};color:${textCol};min-width:6rem;text-align:center;">${name}</td><td><div class="flex items-center"><input type="number" class="border p-1 w-16" id="team-score-${i}" value="${sc}"><span id="score-btns-${i}" class="ml-1"></span>${checkoutHtml}</div></td></tr>`);
         });
         if (cfg.scoreboard.periods) {
             htmlParts.push(`<tr><td class="pr-2">${cfg.scoreboard.periodLabel || 'Period'}:</td><td><input type="number" class="border p-1 w-16" id="sb-period" value="${data.period || 1}"></td></tr>`);
@@ -280,10 +281,6 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         const turnSel = container.querySelector('#sb-turn');
         if (turnSel) {
             turnSel.value = data.turn || 0;
-            turnSel.onchange = () => {
-                const br = container.querySelector('#sb-break');
-                if (br) br.value = 0;
-            };
         }
 
         function getFormData() {
@@ -328,8 +325,17 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             await updateOverlayState(eventId, { scoreboardVisible: true, scoreboardPreviewVisible: false });
         };
         container.querySelector('#sb-hide').onclick = async () => {
-            await updateOverlayState(eventId, { scoreboardVisible: false, scoreboardPreviewVisible: false });
+            await updateOverlayState(eventId, { scoreboardVisible: false, scoreboardPreviewVisible: false, breakVisible: false });
         };
+
+        const breakBtn = container.querySelector('#sb-show-break');
+        if (breakBtn) {
+            breakBtn.onclick = async () => {
+                const newData = getFormData();
+                await saveData(newData);
+                await updateOverlayState(eventId, { scoreboardVisible: true, breakVisible: true, breakPlayer: newData.turn || 0, scoreboard: newData });
+            };
+        }
         const modal = container.querySelector('#sb-modal');
         const styleSel = container.querySelector('#sb-style');
         const posSel = container.querySelector('#sb-position');

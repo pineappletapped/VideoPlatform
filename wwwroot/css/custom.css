@@ -94,9 +94,10 @@ body { margin: 0; }
   align-items: center;
   font-weight: bold;
   color: #fff;
+  position: relative;
 }
 .sb-row { display:flex; align-items:center; }
-.sb-team { padding: 0.25rem 0.5rem; color:#fff; }
+.sb-team { padding: 0.25rem 0.5rem; color:#fff; min-width:6rem; text-align:center; }
 .sb-score { padding: 0.25rem 0.75rem; margin: 0 0.25rem; color:#fff; }
 .sb-info { font-size: 0.875rem; text-align:center; margin-top:0.25rem; }
 .sb-style1 { background: var(--brand-secondary1, rgba(0,0,0,0.6)); border-radius:0.5rem; padding:0.25rem 0.5rem; }
@@ -117,6 +118,18 @@ body { margin: 0; }
 .sb-break { font-size: 0.875rem; text-align:center; margin-top:0.25rem; }
 .sb-checkout { font-size: 0.875rem; text-align:center; margin-top:0.25rem; }
 .active-player td:first-child { text-decoration: underline; }
+
+.sb-current-break {
+  position: absolute;
+  top: -1.2rem;
+  padding: 0.1rem 0.4rem;
+  background: var(--brand-primary, #e16316);
+  color: #fff;
+  border-radius: 0.25rem;
+  font-size: 1rem;
+}
+.sb-current-break.left { left: 25%; transform: translateX(-50%); }
+.sb-current-break.right { left: 75%; transform: translateX(-50%); }
 
 /* Additional styles for column layouts */
 .col-cameras, .col-atem, .col-obs {

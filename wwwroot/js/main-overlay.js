@@ -296,6 +296,8 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     let scoreboardOverlay = overlayContainer.querySelector('#scoreboard-overlay');
     const scoreboardData = state && state.scoreboard;
     const scoreboardShow = previewMode ? state && state.scoreboardPreviewVisible : state && state.scoreboardVisible;
+    const breakVisible = state && state.breakVisible;
+    const breakPlayer = state && state.breakPlayer;
     if (scoreboardShow && scoreboardData) {
         if (!scoreboardOverlay) {
             scoreboardOverlay = document.createElement('div');
@@ -339,10 +341,12 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         const textB = contrastColor(colors[1]);
         const textBrand = contrastColor(brand);
         const breakHtml = scoreboardData.currentBreak !== undefined ? `<div class='sb-break'>Break: ${scoreboardData.currentBreak} | High: ${scoreboardData.highBreak || scoreboardData.currentBreak}</div>` : '';
+        const breakInd = breakVisible && scoreboardData.currentBreak !== undefined ? `<div class='sb-current-break ${breakPlayer === 1 ? 'right' : 'left'}'>${scoreboardData.currentBreak}</div>` : '';
         const checkoutHtml = scoreboardData.checkoutText ? `<div class='sb-checkout'>${names[scoreboardData.checkoutPlayer || 0] || ''}: ${scoreboardData.checkoutText}</div>` : '';
         const aClassA = scoreboardData.turn === 0 ? ' active' : '';
         const aClassB = scoreboardData.turn === 1 ? ' active' : '';
         scoreboardOverlay.innerHTML = `
+            ${breakInd}
             <div class="sb-row">
                 <span class="sb-team${aClassA}" style="background:${colors[0]};color:${textA}">${names[0] || 'Team 1'}</span>
                 <span class="sb-score" style="background:${brand};color:${textBrand}">${sA} | ${sB}</span>
