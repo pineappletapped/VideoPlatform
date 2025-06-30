@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   const topBar = document.createElement('top-bar');
   topBar.addEventListener('logout', logout);
-  topBar.addEventListener('edit-account', () => alert('Edit account not implemented'));
+  topBar.addEventListener('edit-account', () => { window.location.href = 'account.html'; });
   topBar.addEventListener('brand-settings', () => showBrandModal(currentUserId));
   topBar.addEventListener('admin-panel', () => { window.location.href = 'admin.html'; });
   document.getElementById('top-bar').appendChild(topBar);

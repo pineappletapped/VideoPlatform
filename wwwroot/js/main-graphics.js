@@ -146,7 +146,7 @@ async function initializeComponents(eventData) {
     const topBar = document.createElement('top-bar');
     if (currentUserId === 'ryanadmin') topBar.setAttribute('is-admin','true');
     topBar.addEventListener('logout', logout);
-    topBar.addEventListener('edit-account', () => alert('Edit account not implemented'));
+    topBar.addEventListener('edit-account', () => { window.location.href = 'account.html'; });
     topBar.addEventListener('brand-settings', () => { const modal=document.getElementById('branding-modal'); renderBrandingModal(modal,{ userId: currentUserId }); modal.classList.remove('hidden'); });
 
     document.getElementById('top-bar').appendChild(topBar);
