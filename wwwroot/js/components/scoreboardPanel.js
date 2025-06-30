@@ -61,7 +61,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         const htmlParts = [];
         (data.scores || []).forEach((sc, i) => {
             const name = teamsData ? (i === 0 ? teamsData.teamA?.name : teamsData.teamB?.name) : `Team ${i + 1}`;
-            htmlParts.push(`<div><span class="mr-2">${name}</span><input type="number" class="border p-1 w-16" id="team-score-${i}" value="${sc}"></div>`);
+            htmlParts.push(`<div class="flex items-center gap-1"><span class="mr-2">${name}</span><input type="number" class="border p-1 w-16" id="team-score-${i}" value="${sc}"><span id="score-btns-${i}" class="ml-1"></span></div>`);
         });
         if (cfg.scoreboard.periods) {
             htmlParts.push(`<div><label class="mr-2">${cfg.scoreboard.periodLabel || 'Period'}:</label><input type="number" class="border p-1 w-16" id="sb-period" value="${data.period || 1}"></div>`);
@@ -89,6 +89,24 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             htmlParts.push(`<div><label>Points:</label>${Array.from({length:count}).map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-point-${i}" value="${(data.points && data.points[i]) || 0}">`).join('')}</div>`);
         }
         fieldsDiv.innerHTML = htmlParts.join('');
+        (data.scores || []).forEach((_, i) => {
+            const holder = container.querySelector(`#score-btns-${i}`);
+            if (holder && cfg.scoringButtons) {
+                cfg.scoringButtons.forEach(btnCfg => {
+                    const btn = document.createElement('button');
+                    btn.textContent = btnCfg.label;
+                    btn.className = 'score-btn btn-xs';
+                    btn.style.background = btnCfg.color || '#666';
+                    if (btnCfg.textColor) btn.style.color = btnCfg.textColor;
+                    btn.addEventListener('click', () => {
+                        const inp = container.querySelector(`#team-score-${i}`);
+                        const val = parseInt(inp.value) || 0;
+                        inp.value = val + btnCfg.value;
+                    });
+                    holder.appendChild(btn);
+                });
+            }
+        });
 
         function getFormData() {
             const obj = { scores: (data.scores || []).map((_,i)=> parseInt(container.querySelector(`#team-score-${i}`).value) || 0) };
