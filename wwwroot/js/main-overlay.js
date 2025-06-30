@@ -13,6 +13,16 @@ let masterVolume = 1;
 let vtVolume = 1;
 let musicVolume = 1;
 
+function contrastColor(hex) {
+    let c = hex.replace('#', '');
+    if (c.length === 3) c = c.split('').map(x => x + x).join('');
+    const r = parseInt(c.substr(0,2),16);
+    const g = parseInt(c.substr(2,2),16);
+    const b = parseInt(c.substr(4,2),16);
+    const lum = (0.299*r + 0.587*g + 0.114*b)/255;
+    return lum > 0.6 ? '#000' : '#fff';
+}
+
 // Overlay heartbeat for status bar feedback
 setInterval(() => {
     localStorage.setItem('overlayHeartbeat', Date.now().toString());
@@ -325,11 +335,14 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         if (scoreboardData.points) info.push('Pts ' + scoreboardData.points.join('-'));
         const infoHtml = info.length ? `<div class='sb-info'>${info.join(' | ')}</div>` : '';
         const brand = branding.primaryColor || '#e16316';
+        const textA = contrastColor(colors[0]);
+        const textB = contrastColor(colors[1]);
+        const textBrand = contrastColor(brand);
         scoreboardOverlay.innerHTML = `
             <div class="sb-row">
-                <span class="sb-team" style="background:${colors[0]}">${names[0] || 'Team 1'}</span>
-                <span class="sb-score" style="background:${brand}">${sA} | ${sB}</span>
-                <span class="sb-team" style="background:${colors[1]}">${names[1] || 'Team 2'}</span>
+                <span class="sb-team" style="background:${colors[0]};color:${textA}">${names[0] || 'Team 1'}</span>
+                <span class="sb-score" style="background:${brand};color:${textBrand}">${sA} | ${sB}</span>
+                <span class="sb-team" style="background:${colors[1]};color:${textB}">${names[1] || 'Team 2'}</span>
             </div>
             ${infoHtml}`;
     } else if (scoreboardOverlay) {

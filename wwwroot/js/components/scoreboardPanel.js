@@ -21,6 +21,16 @@ const scoreboardPositions = [
     { value: 'bottom-center', label: 'Bottom Center' }
 ];
 
+function contrastColor(hex) {
+    let c = hex.replace('#', '');
+    if (c.length === 3) c = c.split('').map(x => x + x).join('');
+    const r = parseInt(c.substr(0, 2), 16);
+    const g = parseInt(c.substr(2, 2), 16);
+    const b = parseInt(c.substr(4, 2), 16);
+    const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return lum > 0.6 ? '#000' : '#fff';
+}
+
 const db = getDatabaseInstance();
 
 function getScoreboardRef(eventId) {
@@ -49,6 +59,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
     onValue(getScoreboardRef(eventId), snap => {
         currentData = snap.val() || defaultData();
         render(currentData);
+        updateOverlayState(eventId, { scoreboard: currentData });
     });
 
     function defaultData() {
@@ -238,12 +249,15 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             const nameA = teamsData?.teamA?.name || 'Team 1';
             const nameB = teamsData?.teamB?.name || 'Team 2';
             const brand = getComputedStyle(document.documentElement).getPropertyValue('--brand-primary') || '#e16316';
+            const textA = contrastColor(colA);
+            const textB = contrastColor(colB);
+            const textBrand = contrastColor(brand);
             prevDiv.innerHTML = `
                 <div class="sb-container sb-${styleSel.value}">
                     <div class="sb-row">
-                        <span class="sb-team" style="background:${colA}">${nameA}</span>
-                        <span class="sb-score" style="background:${brand}">0 | 0</span>
-                        <span class="sb-team" style="background:${colB}">${nameB}</span>
+                        <span class="sb-team" style="background:${colA};color:${textA}">${nameA}</span>
+                        <span class="sb-score" style="background:${brand};color:${textBrand}">0 | 0</span>
+                        <span class="sb-team" style="background:${colB};color:${textB}">${nameB}</span>
                     </div>
                 </div>`;
         }
