@@ -1,5 +1,5 @@
 import { onAuth, login, register, logout } from './auth.js';
-import { getAllEventsMetadata, setEventMetadata, getUser } from './firebase.js';
+import { getAllEventsMetadata, setEventMetadata, getUser, getAllUsers } from './firebase.js';
 import './components/topBar.js';
 import { renderBrandingModal } from './components/brandingModal.js';
 let SQUARE_APP_ID = '';
@@ -29,6 +29,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const showRegBtn = document.getElementById('show-register');
   const hideRegBtn = document.getElementById('hide-register');
   const loginError = document.getElementById('login-error');
+  const regError = document.getElementById('register-error');
+  const payMsg = document.getElementById('payment-msg');
   const openCreateBtn = document.getElementById('open-create');
   const createModal = document.getElementById('create-modal');
   const eventsList = document.getElementById('events-list');
@@ -108,20 +110,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     regForm.classList.remove('hidden');
     showRegBtn.classList.add('hidden');
     loginError.classList.add('hidden');
+    regError.classList.add('hidden');
   };
 
   hideRegBtn.onclick = () => {
     regForm.classList.add('hidden');
     showRegBtn.classList.remove('hidden');
     loginError.classList.add('hidden');
+    regError.classList.add('hidden');
   };
 
   async function initPayments() {
-    if (!SQUARE_APP_ID || !SQUARE_LOCATION_ID) return;
+    if (!SQUARE_APP_ID || !SQUARE_LOCATION_ID) {
+      payMsg.textContent = 'Payment gateway not configured - subscription will be skipped.';
+      return;
+    }
     const mod = await window.Square.payments(SQUARE_APP_ID, SQUARE_LOCATION_ID);
     payments = mod;
     card = await payments.card();
     await card.attach('#card-container');
+    payMsg.textContent = '';
   }
 
   initPayments();
@@ -129,6 +137,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   regForm.onsubmit = async e => {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(regForm));
+    regError.classList.add('hidden');
+    const passRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]).{8,}$/;
+    if (!passRegex.test(data.password)) {
+      regError.textContent = 'Password must be 8+ chars with upper, lower, number and symbol.';
+      regError.classList.remove('hidden');
+      return;
+    }
+    const users = await getAllUsers() || {};
+    const emailExistsRemote = Object.values(users).some(u => (u.email || '').toLowerCase() === data.email.toLowerCase());
+    const localUsers = JSON.parse(localStorage.getItem('localUsers') || '{}');
+    if (emailExistsRemote || localUsers[data.email]) {
+      regError.textContent = 'Email already registered';
+      regError.classList.remove('hidden');
+      return;
+    }
     try {
       let subId = '';
       if (card) {
@@ -148,8 +171,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         subId = sub.subscription_id;
       }
       await register(data.email, data.password, data.tier, subId);
+      try {
+        await fetch('send-confirmation.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: data.email })
+        });
+      } catch (e) {
+        console.warn('Failed to send confirmation', e);
+      }
+      window.location.reload();
     } catch (err) {
-      alert('Registration failed: ' + err.message);
+      regError.textContent = err.message;
+      regError.classList.remove('hidden');
     }
   };
 
