@@ -88,6 +88,24 @@ body { margin: 0; }
   padding-right: 0.5rem;
 }
 
+.sb-container {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  font-weight: bold;
+  color: #fff;
+}
+.sb-row { display:flex; align-items:center; }
+.sb-team { padding: 0.25rem 0.5rem; color:#fff; }
+.sb-score { padding: 0.25rem 0.75rem; margin: 0 0.25rem; color:#fff; }
+.sb-info { font-size: 0.875rem; text-align:center; margin-top:0.25rem; }
+.sb-style1 { background: var(--brand-secondary1, rgba(0,0,0,0.6)); border-radius:0.5rem; padding:0.25rem 0.5rem; }
+.sb-style2 { background: rgba(0,0,0,0.8); border-radius:0.25rem; padding:0.25rem 0.5rem; }
+.sb-style3 { background: transparent; border:2px solid var(--brand-primary); padding:0.25rem 0.5rem; }
+.sb-style4 { background: #fff; color:#000; border-radius:0.25rem; padding:0.25rem 0.5rem; }
+.sb-style4 .sb-team { color:#000; }
+.sb-style5 { background: var(--brand-primary); padding:0.25rem 0.5rem; }
+
 /* Additional styles for column layouts */
 .col-cameras, .col-atem, .col-obs {
   background: #2a2a2a;

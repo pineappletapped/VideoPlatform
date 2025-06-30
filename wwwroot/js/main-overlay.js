@@ -292,18 +292,28 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             scoreboardOverlay.id = 'scoreboard-overlay';
             overlayContainer.appendChild(scoreboardOverlay);
         }
+        const style = scoreboardData.style || 'style1';
+        const pos = scoreboardData.position || 'bottom-center';
+        scoreboardOverlay.className = `sb-container sb-${style}`;
         scoreboardOverlay.style.position = 'absolute';
-        scoreboardOverlay.style.bottom = '2rem';
-        scoreboardOverlay.style.left = '50%';
-        scoreboardOverlay.style.transform = 'translateX(-50%)';
-        scoreboardOverlay.style.background = 'var(--brand-secondary1, rgba(0,0,0,0.6))';
-        scoreboardOverlay.style.color = '#fff';
-        scoreboardOverlay.style.padding = '0.5rem 1rem';
-        scoreboardOverlay.style.borderRadius = '0.5rem';
         scoreboardOverlay.style.fontFamily = branding.font;
         scoreboardOverlay.style.fontSize = '1.5rem';
+        scoreboardOverlay.style.pointerEvents = 'none';
+        scoreboardOverlay.style.left = '';
+        scoreboardOverlay.style.right = '';
+        scoreboardOverlay.style.top = '';
+        scoreboardOverlay.style.bottom = '';
+        scoreboardOverlay.style.transform = '';
+        if (pos === 'top-left') { scoreboardOverlay.style.top = '2rem'; scoreboardOverlay.style.left = '2rem'; }
+        else if (pos === 'top-right') { scoreboardOverlay.style.top = '2rem'; scoreboardOverlay.style.right = '2rem'; }
+        else if (pos === 'bottom-left') { scoreboardOverlay.style.bottom = '2rem'; scoreboardOverlay.style.left = '2rem'; }
+        else if (pos === 'bottom-right') { scoreboardOverlay.style.bottom = '2rem'; scoreboardOverlay.style.right = '2rem'; }
+        else if (pos === 'top-center') { scoreboardOverlay.style.top = '2rem'; scoreboardOverlay.style.left = '50%'; scoreboardOverlay.style.transform = 'translateX(-50%)'; }
+        else { scoreboardOverlay.style.bottom = '2rem'; scoreboardOverlay.style.left = '50%'; scoreboardOverlay.style.transform = 'translateX(-50%)'; }
         const names = teamsData ? [teamsData.teamA?.name, teamsData.teamB?.name] : [];
-        const teamParts = (scoreboardData.scores || []).map((s,i)=>`${names[i] || 'Team '+(i+1)} ${s}`).join(' : ');
+        const colors = teamsData ? [teamsData.teamA?.color || '#333', teamsData.teamB?.color || '#333'] : ['#333','#333'];
+        const sA = scoreboardData.scores?.[0] ?? 0;
+        const sB = scoreboardData.scores?.[1] ?? 0;
         const info = [];
         if (scoreboardData.time) info.push(scoreboardData.time);
         if (scoreboardData.period) info.push('P' + scoreboardData.period);
@@ -313,8 +323,15 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         if (scoreboardData.frames) info.push('Frames ' + scoreboardData.frames.join('-'));
         if (scoreboardData.legs) info.push('Legs ' + scoreboardData.legs.join('-'));
         if (scoreboardData.points) info.push('Pts ' + scoreboardData.points.join('-'));
-        const infoHtml = info.length ? `<div class='text-sm text-center'>${info.join(' | ')}</div>` : '';
-        scoreboardOverlay.innerHTML = `<div class='text-center'>${teamParts}${infoHtml}</div>`;
+        const infoHtml = info.length ? `<div class='sb-info'>${info.join(' | ')}</div>` : '';
+        const brand = branding.primaryColor || '#e16316';
+        scoreboardOverlay.innerHTML = `
+            <div class="sb-row">
+                <span class="sb-team" style="background:${colors[0]}">${names[0] || 'Team 1'}</span>
+                <span class="sb-score" style="background:${brand}">${sA} | ${sB}</span>
+                <span class="sb-team" style="background:${colors[1]}">${names[1] || 'Team 2'}</span>
+            </div>
+            ${infoHtml}`;
     } else if (scoreboardOverlay) {
         scoreboardOverlay.remove();
     }

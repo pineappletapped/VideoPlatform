@@ -3,6 +3,22 @@ import { getDatabaseInstance } from "../firebaseApp.js";
 import { sportsData } from "../sportsConfig.js";
 import { updateOverlayState, listenOverlayState } from "../firebase.js";
 
+const scoreboardStyles = [
+    { id: 'style1', label: 'Style 1' },
+    { id: 'style2', label: 'Style 2' },
+    { id: 'style3', label: 'Style 3' },
+    { id: 'style4', label: 'Style 4' },
+    { id: 'style5', label: 'Style 5' }
+];
+const scoreboardPositions = [
+    { value: 'top-left', label: 'Top Left' },
+    { value: 'top-right', label: 'Top Right' },
+    { value: 'top-center', label: 'Top Center' },
+    { value: 'bottom-left', label: 'Bottom Left' },
+    { value: 'bottom-right', label: 'Bottom Right' },
+    { value: 'bottom-center', label: 'Bottom Center' }
+];
+
 const db = getDatabaseInstance();
 
 function getScoreboardRef(eventId) {
@@ -35,7 +51,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
 
     function defaultData() {
         const scores = Array.from({ length: cfg.teamCount }).map(() => 0);
-        const base = { scores };
+        const base = { scores, style: 'style1', position: 'bottom-center' };
         if (cfg.scoreboard.periods) base.period = 1;
         if (cfg.scoreboard.time) base.time = '00:00';
         if (cfg.scoreboard.round) base.round = 1;
@@ -57,8 +73,31 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                     <button id="sb-live" class="control-button btn-sm btn-live${sbVisible ? ' ring-2 ring-green-400' : ''}">Live</button>
                     <button id="sb-hide" class="control-button btn-sm${!sbVisible && !sbPreview ? ' ring-2 ring-red-400' : ''}">Hide</button>
                     <button id="sb-save" class="control-button btn-sm ml-auto">Save</button>
+                    <button id="sb-edit" class="control-button btn-sm">Edit</button>
                 </div>
                 <table id="sb-table" class="w-full text-sm"></table>
+                <div id="sb-modal" class="modal-overlay" style="display:none;">
+                    <div class="modal-window">
+                        <h3 class="font-bold text-lg mb-2">Scoreboard Options</h3>
+                        <div class="mb-2">
+                            <label class="block text-sm">Style</label>
+                            <select id="sb-style" class="border p-1 w-full">
+                                ${scoreboardStyles.map(s=>`<option value="${s.id}">${s.label}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label class="block text-sm">Position</label>
+                            <select id="sb-position" class="border p-1 w-full">
+                                ${scoreboardPositions.map(p=>`<option value="${p.value}">${p.label}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div id="sb-prev" class="mt-2 flex justify-center"></div>
+                        <div class="flex gap-2 mt-4">
+                            <button id="sb-modal-save" class="control-button btn-sm">Save</button>
+                            <button id="sb-modal-cancel" class="control-button btn-sm bg-gray-400 hover:bg-gray-600">Cancel</button>
+                        </div>
+                    </div>
+                </div>
             </div>`;
         const table = container.querySelector('#sb-table');
         const htmlParts = [];
@@ -159,6 +198,8 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             if (cfg.scoreboard.frames) obj.frames = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-frame-${i}`).value) || 0);
             if (cfg.scoreboard.legs) obj.legs = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-leg-${i}`).value) || 0);
             if (cfg.scoreboard.points) obj.points = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-point-${i}`).value) || 0);
+            obj.style = data.style || 'style1';
+            obj.position = data.position || 'bottom-center';
             return obj;
         }
 
@@ -184,6 +225,47 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         container.querySelector('#sb-hide').onclick = async () => {
             await updateOverlayState(eventId, { scoreboardVisible: false, scoreboardPreviewVisible: false });
         };
+        const modal = container.querySelector('#sb-modal');
+        const styleSel = container.querySelector('#sb-style');
+        const posSel = container.querySelector('#sb-position');
+        const prevDiv = container.querySelector('#sb-prev');
+        function updatePreview() {
+            if (!prevDiv) return;
+            const colA = teamsData?.teamA?.color || '#333';
+            const colB = teamsData?.teamB?.color || '#333';
+            const nameA = teamsData?.teamA?.name || 'Team 1';
+            const nameB = teamsData?.teamB?.name || 'Team 2';
+            const brand = getComputedStyle(document.documentElement).getPropertyValue('--brand-primary') || '#e16316';
+            prevDiv.innerHTML = `
+                <div class="sb-container sb-${styleSel.value}">
+                    <span class="sb-team" style="background:${colA}">${nameA}</span>
+                    <span class="sb-score" style="background:${brand}">0 | 0</span>
+                    <span class="sb-team" style="background:${colB}">${nameB}</span>
+                </div>`;
+        }
+        if (styleSel) styleSel.onchange = updatePreview;
+        if (posSel) posSel.onchange = updatePreview;
+        if (container.querySelector('#sb-edit')) {
+            container.querySelector('#sb-edit').onclick = () => {
+                if (styleSel) styleSel.value = data.style || 'style1';
+                if (posSel) posSel.value = data.position || 'bottom-center';
+                updatePreview();
+                modal.style.display = 'flex';
+            };
+        }
+        if (container.querySelector('#sb-modal-cancel')) {
+            container.querySelector('#sb-modal-cancel').onclick = () => { modal.style.display = 'none'; };
+        }
+        if (container.querySelector('#sb-modal-save')) {
+            container.querySelector('#sb-modal-save').onclick = async () => {
+                data.style = styleSel.value;
+                data.position = posSel.value;
+                modal.style.display = 'none';
+                const newData = getFormData();
+                await saveData(newData);
+                render(data);
+            };
+        }
         if (!container.dataset.heartbeat) {
             setInterval(() => localStorage.setItem('sportsHeartbeat', Date.now().toString()), 5000);
             container.dataset.heartbeat = 'true';
