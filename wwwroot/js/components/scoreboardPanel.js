@@ -73,6 +73,9 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         if (cfg.scoreboard.frames) base.frames = scores.map(() => 0);
         if (cfg.scoreboard.legs) base.legs = scores.map(() => 0);
         if (cfg.scoreboard.points) base.points = scores.map(() => 0);
+        if (cfg.scoreboard.breaks) base.currentBreak = 0;
+        if (cfg.scoreboard.highBreak) base.highBreak = 0;
+        if (cfg.scoreboard.turn) base.turn = 0;
         return base;
     }
 
@@ -118,7 +121,8 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             const name = teamsData ? (i === 0 ? teamsData.teamA?.name : teamsData.teamB?.name) : `Team ${i + 1}`;
             const color = teamsData ? (i === 0 ? teamsData.teamA?.color || '#ffffff' : teamsData.teamB?.color || '#ffffff') : '#ffffff';
             const textCol = contrastColor(color);
-            htmlParts.push(`<tr><td class="pr-2 whitespace-nowrap" style="background:${color};color:${textCol};">${name}</td><td><div class="flex items-center"><input type="number" class="border p-1 w-16" id="team-score-${i}" value="${sc}"><span id="score-btns-${i}" class="ml-1"></span></div></td></tr>`);
+            const activeClass = cfg.scoreboard.turn && data.turn === i ? ' class="active-player"' : '';
+            htmlParts.push(`<tr${activeClass}><td class="pr-2 whitespace-nowrap" style="background:${color};color:${textCol};">${name}</td><td><div class="flex items-center"><input type="number" class="border p-1 w-16" id="team-score-${i}" value="${sc}"><span id="score-btns-${i}" class="ml-1"></span></div></td></tr>`);
         });
         if (cfg.scoreboard.periods) {
             htmlParts.push(`<tr><td class="pr-2">${cfg.scoreboard.periodLabel || 'Period'}:</td><td><input type="number" class="border p-1 w-16" id="sb-period" value="${data.period || 1}"></td></tr>`);
@@ -145,6 +149,17 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         if (cfg.scoreboard.points) {
             htmlParts.push(`<tr><td class="pr-2">Points:</td><td>${Array.from({length:count}).map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-point-${i}" value="${(data.points && data.points[i]) || 0}">`).join('')}</td></tr>`);
         }
+        if (cfg.scoreboard.breaks) {
+            htmlParts.push(`<tr><td class="pr-2">Current Break:</td><td><input type="number" class="border p-1 w-16" id="sb-break" value="${data.currentBreak || 0}"></td></tr>`);
+        }
+        if (cfg.scoreboard.highBreak) {
+            htmlParts.push(`<tr><td class="pr-2">High Break:</td><td><input type="number" class="border p-1 w-16" id="sb-highbreak" value="${data.highBreak || 0}" disabled></td></tr>`);
+        }
+        if (cfg.scoreboard.turn) {
+            const optA = teamsData ? teamsData.teamA?.name || 'Team 1' : 'Team 1';
+            const optB = teamsData ? teamsData.teamB?.name || 'Team 2' : 'Team 2';
+            htmlParts.push(`<tr><td class="pr-2">In Play:</td><td><select id="sb-turn" class="border p-1"><option value="0">${optA}</option><option value="1">${optB}</option></select></td></tr>`);
+        }
         table.innerHTML = htmlParts.join('');
         (data.scores || []).forEach((_, i) => {
             const holder = container.querySelector(`#score-btns-${i}`);
@@ -159,6 +174,14 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                         const inp = container.querySelector(`#team-score-${i}`);
                         const val = parseInt(inp.value) || 0;
                         inp.value = val + btnCfg.value;
+                        if (cfg.scoreboard.breaks && data.turn === i) {
+                            const br = container.querySelector('#sb-break');
+                            const hb = container.querySelector('#sb-highbreak');
+                            if (br) {
+                                br.value = (parseInt(br.value) || 0) + btnCfg.value;
+                                if (hb && parseInt(br.value) > (parseInt(hb.value) || 0)) hb.value = br.value;
+                            }
+                        }
                     });
                     holder.appendChild(btn);
                 });
@@ -203,6 +226,15 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             };
         }
 
+        const turnSel = container.querySelector('#sb-turn');
+        if (turnSel) {
+            turnSel.value = data.turn || 0;
+            turnSel.onchange = () => {
+                const br = container.querySelector('#sb-break');
+                if (br) br.value = 0;
+            };
+        }
+
         function getFormData() {
             const obj = { scores: (data.scores || []).map((_,i)=> parseInt(container.querySelector(`#team-score-${i}`).value) || 0) };
             if (cfg.scoreboard.periods) obj.period = parseInt(container.querySelector('#sb-period').value) || 1;
@@ -213,6 +245,9 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             if (cfg.scoreboard.frames) obj.frames = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-frame-${i}`).value) || 0);
             if (cfg.scoreboard.legs) obj.legs = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-leg-${i}`).value) || 0);
             if (cfg.scoreboard.points) obj.points = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-point-${i}`).value) || 0);
+            if (cfg.scoreboard.breaks) obj.currentBreak = parseInt(container.querySelector('#sb-break').value) || 0;
+            if (cfg.scoreboard.highBreak) obj.highBreak = parseInt(container.querySelector('#sb-highbreak').value) || 0;
+            if (cfg.scoreboard.turn) obj.turn = parseInt(container.querySelector('#sb-turn').value) || 0;
             obj.style = data.style || 'style1';
             obj.position = data.position || 'bottom-center';
             return obj;

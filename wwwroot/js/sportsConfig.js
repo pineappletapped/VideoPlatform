@@ -53,7 +53,7 @@ export const sportsData = {
     playersPerTeam: 1,
     subs: 0,
     positions: ["Player"],
-    scoreboard: { sets: true, legs: true },
+    scoreboard: { sets: true, legs: true, turn: true },
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }]
   },
   "Snooker": {
@@ -61,7 +61,7 @@ export const sportsData = {
     playersPerTeam: 1,
     subs: 0,
     positions: ["Player"],
-    scoreboard: { frames: true },
+    scoreboard: { frames: true, breaks: true, highBreak: true, turn: true },
     scoringButtons: [
       { label: "Red", value: 1, color: "#b00000" },
       { label: "Yel", value: 2, color: "#ffd400", textColor: "#000" },

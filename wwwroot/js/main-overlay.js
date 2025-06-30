@@ -338,13 +338,17 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         const textA = contrastColor(colors[0]);
         const textB = contrastColor(colors[1]);
         const textBrand = contrastColor(brand);
+        const breakHtml = scoreboardData.currentBreak !== undefined ? `<div class='sb-break'>Break: ${scoreboardData.currentBreak} | High: ${scoreboardData.highBreak || scoreboardData.currentBreak}</div>` : '';
+        const aClassA = scoreboardData.turn === 0 ? ' active' : '';
+        const aClassB = scoreboardData.turn === 1 ? ' active' : '';
         scoreboardOverlay.innerHTML = `
             <div class="sb-row">
-                <span class="sb-team" style="background:${colors[0]};color:${textA}">${names[0] || 'Team 1'}</span>
+                <span class="sb-team${aClassA}" style="background:${colors[0]};color:${textA}">${names[0] || 'Team 1'}</span>
                 <span class="sb-score" style="background:${brand};color:${textBrand}">${sA} | ${sB}</span>
-                <span class="sb-team" style="background:${colors[1]};color:${textB}">${names[1] || 'Team 2'}</span>
+                <span class="sb-team${aClassB}" style="background:${colors[1]};color:${textB}">${names[1] || 'Team 2'}</span>
             </div>
-            ${infoHtml}`;
+            ${infoHtml}
+            ${breakHtml}`;
     } else if (scoreboardOverlay) {
         scoreboardOverlay.remove();
     }
