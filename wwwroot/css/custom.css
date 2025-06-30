@@ -195,5 +195,20 @@ body { margin: 0; }
   color: #000;
 }
 
+/* Limit widths so the tab doesn't scroll horizontally */
+.teams-panel table {
+  table-layout: fixed;
+  width: 100%;
+}
+.teams-panel table td:first-child input {
+  max-width: 10rem;
+}
+.teams-panel table td:last-child select {
+  max-width: 8rem;
+}
+.teams-panel input[type="color"] {
+  max-width: 4rem;
+}
+
 #overlay-container { position: relative; width: 1920px; height: 1080px; }
 

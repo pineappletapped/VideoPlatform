@@ -238,9 +238,11 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             const brand = getComputedStyle(document.documentElement).getPropertyValue('--brand-primary') || '#e16316';
             prevDiv.innerHTML = `
                 <div class="sb-container sb-${styleSel.value}">
-                    <span class="sb-team" style="background:${colA}">${nameA}</span>
-                    <span class="sb-score" style="background:${brand}">0 | 0</span>
-                    <span class="sb-team" style="background:${colB}">${nameB}</span>
+                    <div class="sb-row">
+                        <span class="sb-team" style="background:${colA}">${nameA}</span>
+                        <span class="sb-score" style="background:${brand}">0 | 0</span>
+                        <span class="sb-team" style="background:${colB}">${nameB}</span>
+                    </div>
                 </div>`;
         }
         if (styleSel) styleSel.onchange = updatePreview;
