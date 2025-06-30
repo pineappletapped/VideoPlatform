@@ -14,6 +14,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
 
     let teamsData = null;
     let currentData = null;
+    let timerInterval = null;
 
     const teamsRef = ref(db, `teams/${eventId}`);
     onValue(teamsRef, snap => { teamsData = snap.val(); if(currentData) render(currentData); });
@@ -24,6 +25,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
     listenOverlayState(eventId, state => {
         sbVisible = (state && state.scoreboardVisible) || false;
         sbPreview = (state && state.scoreboardPreviewVisible) || false;
+        if (currentData) render(currentData);
     });
 
     onValue(getScoreboardRef(eventId), snap => {
@@ -46,6 +48,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
     }
 
     function render(data) {
+        if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
         container.innerHTML = `
             <div class='scoreboard-panel'>
                 <h2 class="font-bold text-lg mb-2">${sport} Scoreboard</h2>
@@ -55,40 +58,40 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                     <button id="sb-hide" class="control-button btn-sm${!sbVisible && !sbPreview ? ' ring-2 ring-red-400' : ''}">Hide</button>
                     <button id="sb-save" class="control-button btn-sm ml-auto">Save</button>
                 </div>
-                <div id="sb-fields" class="space-y-2"></div>
+                <table id="sb-table" class="w-full text-sm"></table>
             </div>`;
-        const fieldsDiv = container.querySelector('#sb-fields');
+        const table = container.querySelector('#sb-table');
         const htmlParts = [];
         (data.scores || []).forEach((sc, i) => {
             const name = teamsData ? (i === 0 ? teamsData.teamA?.name : teamsData.teamB?.name) : `Team ${i + 1}`;
-            htmlParts.push(`<div class="flex items-center gap-1"><span class="mr-2">${name}</span><input type="number" class="border p-1 w-16" id="team-score-${i}" value="${sc}"><span id="score-btns-${i}" class="ml-1"></span></div>`);
+            htmlParts.push(`<tr><td class="pr-2 whitespace-nowrap">${name}</td><td><div class="flex items-center"><input type="number" class="border p-1 w-16" id="team-score-${i}" value="${sc}"><span id="score-btns-${i}" class="ml-1"></span></div></td></tr>`);
         });
         if (cfg.scoreboard.periods) {
-            htmlParts.push(`<div><label class="mr-2">${cfg.scoreboard.periodLabel || 'Period'}:</label><input type="number" class="border p-1 w-16" id="sb-period" value="${data.period || 1}"></div>`);
+            htmlParts.push(`<tr><td class="pr-2">${cfg.scoreboard.periodLabel || 'Period'}:</td><td><input type="number" class="border p-1 w-16" id="sb-period" value="${data.period || 1}"></td></tr>`);
         }
         if (cfg.scoreboard.time) {
-            htmlParts.push(`<div><label class="mr-2">Time:</label><input type="text" class="border p-1 w-24" id="sb-time" value="${data.time || ''}" placeholder="mm:ss"></div>`);
+            htmlParts.push(`<tr><td class="pr-2">Time:</td><td><div class="flex items-center gap-1"><input type="text" class="border p-1 w-20" id="sb-time" value="${data.time || '00:00'}" placeholder="mm:ss"><button id="sb-start" class="control-button btn-xs">Start</button><button id="sb-stop" class="control-button btn-xs">Stop</button><button id="sb-reset" class="control-button btn-xs">Reset</button></div></td></tr>`);
         }
         if (cfg.scoreboard.round) {
-            htmlParts.push(`<div><label class="mr-2">Round:</label><input type="number" class="border p-1 w-16" id="sb-round" value="${data.round || 1}"></div>`);
+            htmlParts.push(`<tr><td class="pr-2">Round:</td><td><input type="number" class="border p-1 w-16" id="sb-round" value="${data.round || 1}"></td></tr>`);
         }
         const count = (data.scores || []).length;
         if (cfg.scoreboard.sets) {
-            htmlParts.push(`<div><label>Sets:</label>${Array.from({length:count}).map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-set-${i}" value="${(data.sets && data.sets[i]) || 0}">`).join('')}</div>`);
+            htmlParts.push(`<tr><td class="pr-2">Sets:</td><td>${Array.from({length:count}).map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-set-${i}" value="${(data.sets && data.sets[i]) || 0}">`).join('')}</td></tr>`);
         }
         if (cfg.scoreboard.games) {
-            htmlParts.push(`<div><label>Games:</label>${Array.from({length:count}).map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-game-${i}" value="${(data.games && data.games[i]) || 0}">`).join('')}</div>`);
+            htmlParts.push(`<tr><td class="pr-2">Games:</td><td>${Array.from({length:count}).map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-game-${i}" value="${(data.games && data.games[i]) || 0}">`).join('')}</td></tr>`);
         }
         if (cfg.scoreboard.frames) {
-            htmlParts.push(`<div><label>Frames:</label>${Array.from({length:count}).map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-frame-${i}" value="${(data.frames && data.frames[i]) || 0}">`).join('')}</div>`);
+            htmlParts.push(`<tr><td class="pr-2">Frames:</td><td>${Array.from({length:count}).map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-frame-${i}" value="${(data.frames && data.frames[i]) || 0}">`).join('')}</td></tr>`);
         }
         if (cfg.scoreboard.legs) {
-            htmlParts.push(`<div><label>Legs:</label>${Array.from({length:count}).map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-leg-${i}" value="${(data.legs && data.legs[i]) || 0}">`).join('')}</div>`);
+            htmlParts.push(`<tr><td class="pr-2">Legs:</td><td>${Array.from({length:count}).map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-leg-${i}" value="${(data.legs && data.legs[i]) || 0}">`).join('')}</td></tr>`);
         }
         if (cfg.scoreboard.points) {
-            htmlParts.push(`<div><label>Points:</label>${Array.from({length:count}).map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-point-${i}" value="${(data.points && data.points[i]) || 0}">`).join('')}</div>`);
+            htmlParts.push(`<tr><td class="pr-2">Points:</td><td>${Array.from({length:count}).map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-point-${i}" value="${(data.points && data.points[i]) || 0}">`).join('')}</td></tr>`);
         }
-        fieldsDiv.innerHTML = htmlParts.join('');
+        table.innerHTML = htmlParts.join('');
         (data.scores || []).forEach((_, i) => {
             const holder = container.querySelector(`#score-btns-${i}`);
             if (holder && cfg.scoringButtons) {
@@ -107,6 +110,44 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                 });
             }
         });
+
+        const timeInput = container.querySelector('#sb-time');
+        const startBtn = container.querySelector('#sb-start');
+        const stopBtn = container.querySelector('#sb-stop');
+        const resetBtn = container.querySelector('#sb-reset');
+        const parseTime = str => {
+            const [m = '0', s = '0'] = str.split(':');
+            return parseInt(m) * 60 + parseInt(s);
+        };
+        const formatTime = secs => `${Math.floor(secs/60)}:${(secs%60).toString().padStart(2,'0')}`;
+        let timerSecs = timeInput ? parseTime(timeInput.value) : 0;
+        const sendTime = () => {
+            const obj = getFormData();
+            obj.time = formatTime(timerSecs);
+            updateOverlayState(eventId, { scoreboard: obj });
+        };
+        if (startBtn && timeInput) {
+            startBtn.onclick = () => {
+                if (timerInterval) return;
+                timerSecs = parseTime(timeInput.value);
+                timerInterval = setInterval(() => {
+                    timerSecs++;
+                    timeInput.value = formatTime(timerSecs);
+                    sendTime();
+                }, 1000);
+            };
+        }
+        if (stopBtn) {
+            stopBtn.onclick = () => { if (timerInterval) { clearInterval(timerInterval); timerInterval=null; } };
+        }
+        if (resetBtn && timeInput) {
+            resetBtn.onclick = () => {
+                if (timerInterval) { clearInterval(timerInterval); timerInterval=null; }
+                timerSecs = 0;
+                timeInput.value = formatTime(timerSecs);
+                sendTime();
+            };
+        }
 
         function getFormData() {
             const obj = { scores: (data.scores || []).map((_,i)=> parseInt(container.querySelector(`#team-score-${i}`).value) || 0) };

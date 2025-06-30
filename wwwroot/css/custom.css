@@ -80,6 +80,14 @@ body { margin: 0; }
   cursor: pointer;
 }
 
+.scoreboard-panel table td {
+  padding-bottom: 0.25rem;
+}
+.scoreboard-panel table td:first-child {
+  white-space: nowrap;
+  padding-right: 0.5rem;
+}
+
 /* Additional styles for column layouts */
 .col-cameras, .col-atem, .col-obs {
   background: #2a2a2a;

@@ -45,7 +45,7 @@ export const sportsData = {
     playersPerTeam: 1,
     subs: 0,
     positions: ["Fighter"],
-    scoreboard: { round: true, timer: true },
+    scoreboard: { round: true, time: true },
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }]
   },
   "Darts": {
