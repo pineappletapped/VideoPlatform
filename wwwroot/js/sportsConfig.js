@@ -4,7 +4,7 @@ export const sportsData = {
     playersPerTeam: 11,
     subs: 5,
     positions: ["GK","LB","CB","RB","LWB","RWB","DM","CM","AM","LW","RW","ST"],
-    scoreboard: { periods: 2, periodLabel: "Half", time: true },
+    scoreboard: { periods: 2, periodLabel: "Half", time: true, timeDirection: 'up' },
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }]
   },
   "Rugby": {
@@ -16,7 +16,7 @@ export const sportsData = {
       "Flanker","Flanker","Number 8","Scrum-half","Fly-half",
       "Wing","Inside Centre","Outside Centre","Wing","Full-back"
     ],
-    scoreboard: { periods: 2, periodLabel: "Half", time: true },
+    scoreboard: { periods: 2, periodLabel: "Half", time: true, timeDirection: 'up' },
     scoringButtons: [
       { label: "Try", value: 5, color: "#ef4444" },
       { label: "Conv", value: 2, color: "#3b82f6" },
@@ -29,7 +29,7 @@ export const sportsData = {
     playersPerTeam: 11,
     subs: 5,
     positions: ["Goalkeeper","Defender","Midfielder","Forward"],
-    scoreboard: { periods: 4, periodLabel: "Quarter", time: true },
+    scoreboard: { periods: 4, periodLabel: "Quarter", time: true, timeDirection: 'up' },
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }]
   },
   "Ice Hockey": {
@@ -37,7 +37,7 @@ export const sportsData = {
     playersPerTeam: 6,
     subs: 6,
     positions: ["Goalie","Defense","Center","Winger"],
-    scoreboard: { periods: 3, periodLabel: "Period", time: true },
+    scoreboard: { periods: 3, periodLabel: "Period", time: true, timeDirection: 'down' },
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }]
   },
   "Boxing": {
@@ -45,7 +45,7 @@ export const sportsData = {
     playersPerTeam: 1,
     subs: 0,
     positions: ["Fighter"],
-    scoreboard: { round: true, time: true },
+    scoreboard: { round: true, time: true, timeDirection: 'down' },
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }]
   },
   "Darts": {
@@ -108,7 +108,7 @@ export const sportsData = {
     playersPerTeam: 5,
     subs: 7,
     positions: ["PG","SG","SF","PF","C"],
-    scoreboard: { periods: 4, periodLabel: "Quarter", time: true },
+    scoreboard: { periods: 4, periodLabel: "Quarter", time: true, timeDirection: 'down' },
     scoringButtons: [
       { label: "+1", value: 1, color: "#3b82f6" },
       { label: "+2", value: 2, color: "#10b981" },
@@ -120,7 +120,7 @@ export const sportsData = {
     playersPerTeam: 7,
     subs: 5,
     positions: ["GS","GA","WA","C","WD","GD","GK"],
-    scoreboard: { periods: 4, periodLabel: "Quarter", time: true },
+    scoreboard: { periods: 4, periodLabel: "Quarter", time: true, timeDirection: 'down' },
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }]
   },
   "Golf": {

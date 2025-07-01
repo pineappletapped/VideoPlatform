@@ -298,6 +298,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     const scoreboardShow = previewMode ? state && state.scoreboardPreviewVisible : state && state.scoreboardVisible;
     const breakVisible = state && state.breakVisible;
     const breakPlayer = state && state.breakPlayer;
+    const highBreakVisible = state && state.highBreakVisible;
     if (scoreboardShow && scoreboardData) {
         if(scoreboardData.golf){
             if(!scoreboardOverlay){
@@ -356,7 +357,6 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         const textA = contrastColor(colors[0]);
         const textB = contrastColor(colors[1]);
         const textBrand = contrastColor(brand);
-        const breakHtml = scoreboardData.currentBreak !== undefined ? `<div class='sb-break'>Break: ${scoreboardData.currentBreak} | High: ${scoreboardData.highBreak || scoreboardData.currentBreak}</div>` : '';
         const breakInd = breakVisible && scoreboardData.currentBreak !== undefined ? `<div class='sb-current-break ${breakPlayer === 1 ? 'right' : 'left'}'>${scoreboardData.currentBreak}</div>` : '';
         const checkoutHtml = scoreboardData.checkoutText ? `<div class='sb-checkout'>${names[scoreboardData.checkoutPlayer || 0] || ''}: ${scoreboardData.checkoutText}</div>` : '';
         const aClassA = scoreboardData.turn === 0 ? ' active' : '';
@@ -369,10 +369,21 @@ function renderOverlayFromFirebase(state, graphics, branding) {
                 <span class="sb-team${aClassB}" style="background:${colors[1]};color:${textB}">${names[1] || 'Team 2'}</span>
             </div>
             ${infoHtml}
-            ${breakHtml}
             ${checkoutHtml}`;
+        if(highBreakVisible && scoreboardData.highBreak){
+            let hb = overlayContainer.querySelector('#high-break');
+            if(!hb){
+                hb = document.createElement('div');
+                hb.id = 'high-break';
+                overlayContainer.appendChild(hb);
+            }
+            hb.innerHTML = `<div class='lower-third-default' style='position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);font-family:${branding.font};'>Highest Break: ${scoreboardData.highBreak}</div>`;
+        } else {
+            overlayContainer.querySelector('#high-break')?.remove();
+        }
     } else if (scoreboardOverlay) {
         scoreboardOverlay.remove();
+        overlayContainer.querySelector('#high-break')?.remove();
     }
 }
 

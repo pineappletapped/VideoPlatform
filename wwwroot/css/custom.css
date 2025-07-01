@@ -128,8 +128,8 @@ html,body { margin: 0; width:100%; height:100%; overflow:hidden; }
   border-radius: 0.25rem;
   font-size: 1rem;
 }
-.sb-current-break.left { left: 25%; transform: translateX(-50%); }
-.sb-current-break.right { left: 75%; transform: translateX(-50%); }
+.sb-current-break.left { left: 40%; transform: translateX(-50%); }
+.sb-current-break.right { left: 60%; transform: translateX(-50%); }
 
 /* Additional styles for column layouts */
 .col-cameras, .col-atem, .col-obs {

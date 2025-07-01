@@ -117,6 +117,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                     <button id="sb-live" class="control-button btn-sm btn-live${sbVisible ? ' ring-2 ring-green-400' : ''}">Live</button>
                     <button id="sb-hide" class="control-button btn-sm${!sbVisible && !sbPreview ? ' ring-2 ring-red-400' : ''}">Hide</button>
                     ${cfg.scoreboard.breaks ? '<button id="sb-show-break" class="control-button btn-sm">Show Break</button>' : ''}
+                    ${cfg.scoreboard.highBreak ? '<button id="sb-show-high" class="control-button btn-sm">Show High Break</button>' : ''}
                     <button id="sb-save" class="control-button btn-sm ml-auto">Save</button>
                     <button id="sb-edit" class="control-button btn-sm">Edit</button>
                 </div>
@@ -159,7 +160,8 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             htmlParts.push(`<tr><td class="pr-2">${cfg.scoreboard.periodLabel || 'Period'}:</td><td><input type="number" class="border p-1 w-16" id="sb-period" value="${data.period || 1}"></td></tr>`);
         }
         if (cfg.scoreboard.time) {
-            htmlParts.push(`<tr><td class="pr-2">Time:</td><td><div class="flex items-center gap-1"><input type="text" class="border p-1 w-20" id="sb-time" value="${data.time || '00:00'}" placeholder="mm:ss"><button id="sb-start" class="control-button btn-xs">Start</button><button id="sb-stop" class="control-button btn-xs">Stop</button><button id="sb-reset" class="control-button btn-xs">Reset</button></div></td></tr>`);
+            const dir = cfg.scoreboard.timeDirection === 'down' ? 'down' : 'up';
+            htmlParts.push(`<tr><td class="pr-2">Time (${dir}):</td><td><div class="flex items-center gap-1"><input type="text" class="border p-1 w-20" id="sb-time" value="${data.time || '00:00'}" placeholder="mm:ss"><button id="sb-start" class="control-button btn-xs">Start</button><button id="sb-stop" class="control-button btn-xs">Stop</button><button id="sb-reset" class="control-button btn-xs">Reset</button></div></td></tr>`);
         }
         if (cfg.scoreboard.round) {
             htmlParts.push(`<tr><td class="pr-2">Round:</td><td><input type="number" class="border p-1 w-16" id="sb-round" value="${data.round || 1}"></td></tr>`);
@@ -248,8 +250,11 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             const [m = '0', s = '0'] = str.split(':');
             return parseInt(m) * 60 + parseInt(s);
         };
-        const formatTime = secs => `${Math.floor(secs/60)}:${(secs%60).toString().padStart(2,'0')}`;
-        let timerSecs = timeInput ? parseTime(timeInput.value) : 0;
+        const formatTime = secs => `${Math.floor(secs/60)}:${(Math.abs(secs)%60).toString().padStart(2,'0')}`;
+        const countDown = cfg.scoreboard.timeDirection === 'down';
+        let baseSecs = timeInput ? parseTime(timeInput.value) : 0;
+        let timerSecs = baseSecs;
+        let startTime = null;
         const sendTime = () => {
             const obj = getFormData();
             obj.time = formatTime(timerSecs);
@@ -258,16 +263,28 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         if (startBtn && timeInput) {
             startBtn.onclick = () => {
                 if (timerInterval) return;
-                timerSecs = parseTime(timeInput.value);
+                baseSecs = parseTime(timeInput.value);
+                timerSecs = baseSecs;
+                startTime = Date.now();
                 timerInterval = setInterval(() => {
-                    timerSecs++;
+                    const elapsed = Math.floor((Date.now() - startTime)/1000);
+                    timerSecs = countDown ? Math.max(0, baseSecs - elapsed) : baseSecs + elapsed;
                     timeInput.value = formatTime(timerSecs);
                     sendTime();
                 }, 1000);
             };
         }
         if (stopBtn) {
-            stopBtn.onclick = () => { if (timerInterval) { clearInterval(timerInterval); timerInterval=null; } };
+            stopBtn.onclick = () => {
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                    const elapsed = Math.floor((Date.now() - startTime)/1000);
+                    timerSecs = countDown ? Math.max(0, baseSecs - elapsed) : baseSecs + elapsed;
+                    timeInput.value = formatTime(timerSecs);
+                    sendTime();
+                }
+            };
         }
         if (resetBtn && timeInput) {
             resetBtn.onclick = () => {
@@ -325,7 +342,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             await updateOverlayState(eventId, { scoreboardVisible: true, scoreboardPreviewVisible: false });
         };
         container.querySelector('#sb-hide').onclick = async () => {
-            await updateOverlayState(eventId, { scoreboardVisible: false, scoreboardPreviewVisible: false, breakVisible: false });
+            await updateOverlayState(eventId, { scoreboardVisible: false, scoreboardPreviewVisible: false, breakVisible: false, highBreakVisible: false });
         };
 
         const breakBtn = container.querySelector('#sb-show-break');
@@ -334,6 +351,14 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                 const newData = getFormData();
                 await saveData(newData);
                 await updateOverlayState(eventId, { scoreboardVisible: true, breakVisible: true, breakPlayer: newData.turn || 0, scoreboard: newData });
+            };
+        }
+        const highBtn = container.querySelector('#sb-show-high');
+        if (highBtn) {
+            highBtn.onclick = async () => {
+                const newData = getFormData();
+                await saveData(newData);
+                await updateOverlayState(eventId, { highBreakVisible: true, scoreboard: newData });
             };
         }
         const modal = container.querySelector('#sb-modal');
