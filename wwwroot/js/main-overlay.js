@@ -364,9 +364,12 @@ let lastState = null;
 let lastGraphics = null;
 let lastBranding = DEFAULT_BRANDING;
 let teamsData = null;
+let scoreboardPersist = null;
 
 function updateOverlay() {
-    renderOverlayFromFirebase(lastState, lastGraphics, lastBranding);
+    const state = { ...(lastState || {}) };
+    if (!state.scoreboard && scoreboardPersist) state.scoreboard = scoreboardPersist;
+    renderOverlayFromFirebase(state, lastGraphics, lastBranding);
     masterVolume = lastState && lastState.masterVolume !== undefined ? lastState.masterVolume : 1;
     vtVolume = lastState && lastState.vtVolume !== undefined ? lastState.vtVolume : 1;
     musicVolume = lastState && lastState.musicVolume !== undefined ? lastState.musicVolume : 1;
@@ -388,6 +391,10 @@ listenBranding(eventId, (branding) => {
 });
 onValue(ref(getDatabaseInstance(), `teams/${eventId}`), snap => {
     teamsData = snap.val() || null;
+    updateOverlay();
+});
+onValue(ref(getDatabaseInstance(), `scoreboard/${eventId}`), snap => {
+    scoreboardPersist = snap.val();
     updateOverlay();
 });
 

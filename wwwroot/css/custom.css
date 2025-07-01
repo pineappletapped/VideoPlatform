@@ -1,7 +1,7 @@
 :root {
   --brand-color: #e16316;
 }
-body { margin: 0; }
+html,body { margin: 0; width:100%; height:100%; overflow:hidden; }
 .status-bar, .input-sources-bar, .graphics-panel, .obs-controls, .atem-controls, .ptz-controls, .branding-modal, .profile-wizard, .calendar-drawer {
   border: 2px dashed #e16316;
   background: #1f2937;
@@ -235,5 +235,5 @@ body { margin: 0; }
   max-width: 4rem;
 }
 
-#overlay-container { position: relative; width: 1920px; height: 1080px; }
+#overlay-container { position:absolute; inset:0; width:100%; height:100%; }
 
