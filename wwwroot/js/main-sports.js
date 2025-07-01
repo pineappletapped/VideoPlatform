@@ -5,6 +5,7 @@ import { renderScoreboardPanel } from './components/scoreboardPanel.js';
 import { renderTeamsPanel } from './components/teamsPanel.js';
 import { renderLineupPanel } from './components/lineupPanel.js';
 import { renderSportPanel } from './components/sportPanel.js';
+import { renderGolfPanel } from './components/golfPanel.js';
 import { renderBrandingModal } from './components/brandingModal.js';
 import { getEventMetadata, updateEventMetadata } from './firebase.js';
 
@@ -39,16 +40,26 @@ async function init() {
   const lineupPanel = document.createElement('div');
   lineupsTab.appendChild(lineupPanel);
 
+  function renderBySport(s){
+    if(s === 'Golf') {
+      renderGolfPanel(scoreboardPanel, eventId);
+      teamsTab.classList.add('hidden');
+      lineupsTab.classList.add('hidden');
+    } else {
+      renderScoreboardPanel(scoreboardPanel, s, eventId);
+      renderTeamsPanel(teamsPanel, eventId, s);
+      renderLineupPanel(lineupPanel, eventId, s);
+      teamsTab.classList.remove('hidden');
+      lineupsTab.classList.remove('hidden');
+    }
+  }
+
   renderSportPanel(sportPanel, meta, async (id,sport) => {
     await updateEventMetadata(eventId, { ...meta, sport });
     meta.sport = sport;
-    renderScoreboardPanel(scoreboardPanel, sport, eventId);
-    renderTeamsPanel(teamsPanel, eventId, sport);
-    renderLineupPanel(lineupPanel, eventId, sport);
+    renderBySport(sport);
   });
-  renderScoreboardPanel(scoreboardPanel, meta.sport, eventId);
-  renderTeamsPanel(teamsPanel, eventId, meta.sport);
-  renderLineupPanel(lineupPanel, eventId, meta.sport);
+  renderBySport(meta.sport);
 
   setupTabs();
 }

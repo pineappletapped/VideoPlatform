@@ -122,5 +122,13 @@ export const sportsData = {
     positions: ["GS","GA","WA","C","WD","GD","GK"],
     scoreboard: { periods: 4, periodLabel: "Quarter", time: true },
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }]
+  },
+  "Golf": {
+    teamCount: 1,
+    playersPerTeam: 1,
+    subs: 0,
+    positions: ["Player"],
+    scoreboard: { golf: true },
+    scoringButtons: []
   }
 };

@@ -299,6 +299,22 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     const breakVisible = state && state.breakVisible;
     const breakPlayer = state && state.breakPlayer;
     if (scoreboardShow && scoreboardData) {
+        if(scoreboardData.golf){
+            if(!scoreboardOverlay){
+                scoreboardOverlay = document.createElement('div');
+                scoreboardOverlay.id = 'scoreboard-overlay';
+                overlayContainer.appendChild(scoreboardOverlay);
+            }
+            const gd = scoreboardData.golf;
+            scoreboardOverlay.className = 'sb-container sb-style1';
+            scoreboardOverlay.style.position = 'absolute';
+            scoreboardOverlay.style.bottom = '2rem';
+            scoreboardOverlay.style.left = '50%';
+            scoreboardOverlay.style.transform = 'translateX(-50%)';
+            const rows = (gd.players||[]).slice().sort((a,b)=>(a.total||0)-(b.total||0)).map(p=>`<tr><td class='pr-4'>${p.name}</td><td>${p.total}</td><td>${p.thru||0}</td><td>${p.today>=0?`+${p.today}`:p.today}</td></tr>`).join('');
+            scoreboardOverlay.innerHTML = `<div class='sb-row'><span class='sb-team' style='background:#333'>${gd.course?.name||'Course'}</span></div><table class='golf-table text-sm mt-1'><thead><tr><th>Name</th><th>Tot</th><th>Thru</th><th>Today</th></tr></thead><tbody>${rows}</tbody></table>`;
+            return;
+        }
         if (!scoreboardOverlay) {
             scoreboardOverlay = document.createElement('div');
             scoreboardOverlay.id = 'scoreboard-overlay';
