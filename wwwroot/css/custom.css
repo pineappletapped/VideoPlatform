@@ -216,7 +216,9 @@ html,body { margin: 0; width:100%; height:100%; overflow:hidden; }
 .scoreboard-panel textarea,
 .teams-panel input,
 .teams-panel select,
-.teams-panel textarea {
+.teams-panel textarea,
+.lineup-panel input,
+.lineup-panel select {
   color: #000;
 }
 

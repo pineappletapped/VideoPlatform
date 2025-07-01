@@ -3,6 +3,7 @@ import './components/topBar.js';
 import { renderStatusBar } from './components/statusBar.js';
 import { renderScoreboardPanel } from './components/scoreboardPanel.js';
 import { renderTeamsPanel } from './components/teamsPanel.js';
+import { renderLineupPanel } from './components/lineupPanel.js';
 import { renderSportPanel } from './components/sportPanel.js';
 import { renderBrandingModal } from './components/brandingModal.js';
 import { getEventMetadata, updateEventMetadata } from './firebase.js';
@@ -26,22 +27,43 @@ async function init() {
 
   const left = document.getElementById('left');
   const right = document.getElementById('right');
+  const teamsTab = document.getElementById('teams');
+  const lineupsTab = document.getElementById('lineups');
 
   const sportPanel = document.createElement('div');
   left.appendChild(sportPanel);
   const scoreboardPanel = document.createElement('div');
   left.appendChild(scoreboardPanel);
   const teamsPanel = document.createElement('div');
-  right.appendChild(teamsPanel);
+  teamsTab.appendChild(teamsPanel);
+  const lineupPanel = document.createElement('div');
+  lineupsTab.appendChild(lineupPanel);
 
   renderSportPanel(sportPanel, meta, async (id,sport) => {
     await updateEventMetadata(eventId, { ...meta, sport });
     meta.sport = sport;
     renderScoreboardPanel(scoreboardPanel, sport, eventId);
     renderTeamsPanel(teamsPanel, eventId, sport);
+    renderLineupPanel(lineupPanel, eventId, sport);
   });
   renderScoreboardPanel(scoreboardPanel, meta.sport, eventId);
   renderTeamsPanel(teamsPanel, eventId, meta.sport);
+  renderLineupPanel(lineupPanel, eventId, meta.sport);
+
+  setupTabs();
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
+function setupTabs(){
+  const buttons = document.querySelectorAll('#right-tabs [data-tab]');
+  const contents = document.querySelectorAll('#right .tab-content');
+  buttons.forEach(btn=>{
+    btn.onclick = ()=>{
+      const tab = btn.getAttribute('data-tab');
+      buttons.forEach(b=>b.classList.remove('border-b-2','border-brand','text-brand','font-semibold'));
+      btn.classList.add('border-b-2','border-brand','text-brand','font-semibold');
+      contents.forEach(c=>{ if(c.id===tab) c.classList.remove('hidden'); else c.classList.add('hidden'); });
+    };
+  });
+}

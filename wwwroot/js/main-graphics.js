@@ -157,9 +157,10 @@ async function initializeComponents(eventData) {
             await updateEventMetadata(eventId,{...eventData,sport});
             eventData.sport = sport;
             renderScoreboardPanel(document.getElementById('scoreboard-panel'), sport, eventId);
+            renderLineupPanel(document.getElementById('lineups-panel'), eventId, sport, 'view');
         });
         renderScoreboardPanel(document.getElementById('scoreboard-panel'), eventData.sport, eventId);
-        renderLineupPanel(document.getElementById('lineups-panel'));
+        renderLineupPanel(document.getElementById('lineups-panel'), eventId, eventData.sport, 'view');
         renderStatsPanel(document.getElementById('stats-panel'));
         renderTeamsPanel(document.getElementById('teams-panel'), eventId, eventData.sport);
     } else {
