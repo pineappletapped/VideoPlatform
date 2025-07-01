@@ -369,6 +369,9 @@ let scoreboardPersist = null;
 function updateOverlay() {
     const state = { ...(lastState || {}) };
     if (!state.scoreboard && scoreboardPersist) state.scoreboard = scoreboardPersist;
+    if (state.scoreboard && scoreboardPersist && state.scoreboardVisible === undefined) {
+        state.scoreboardVisible = true;
+    }
     renderOverlayFromFirebase(state, lastGraphics, lastBranding);
     masterVolume = lastState && lastState.masterVolume !== undefined ? lastState.masterVolume : 1;
     vtVolume = lastState && lastState.vtVolume !== undefined ? lastState.vtVolume : 1;
