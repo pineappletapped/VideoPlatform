@@ -1,4 +1,6 @@
 import { setGraphicsData, updateGraphicsData, getGraphicsData, listenGraphicsData, listenFavorites, updateFavorites } from '../firebase.js';
+import { ref, onValue } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
+import { getDatabaseInstance } from '../firebaseApp.js';
 
 let liveLowerThirdId = null;
 let previewLowerThirdId = null;
@@ -31,22 +33,13 @@ function saveGraphicsData(eventId, graphics, mode) {
 export function renderGraphicsPanel(container, eventData, mode = 'live') {
     const eventId = eventData.id || 'demo';
     const eventType = eventData.eventType || 'corporate';
-    if (eventType === 'sports') {
-        container.innerHTML = `
-            <div class='graphics-panel flex flex-col items-center justify-center min-h-[200px] text-gray-500'>
-                <h2 class="font-bold text-lg mb-2">Sports Graphics Coming Soon</h2>
-                <ul class="list-disc ml-5 text-left">
-                    <li>Scoreboard</li>
-                    <li>Timer/Clock</li>
-                    <li>Team Lineups</li>
-                    <li>Player Stats</li>
-                    <li>Match Info</li>
-                    <li>Animated Transitions</li>
-                </ul>
-                <div class="mt-4 text-xs text-gray-400">(Switch to Corporate for current graphics options)</div>
-            </div>
-        `;
-        return;
+    const sportsMode = eventType === 'sports';
+    let teamsData = null;
+
+    if (sportsMode) {
+        const db = getDatabaseInstance();
+        const teamsRef = ref(db, `teams/${eventId}`);
+        onValue(teamsRef, snap => { teamsData = snap.val(); renderPanel(); });
     }
     // Listen for graphics changes from Firebase
     listenGraphicsData(eventId, (data) => {
@@ -160,6 +153,20 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                         </tbody>
                     </table>
                 </div>
+                ${sportsMode && teamsData ? `
+                <div class="mt-4">
+                    <strong>Add Example:</strong>
+                    <div class="flex gap-2 mt-1 text-sm items-center">
+                        <span>Substitution</span>
+                        <select id="ex-team" class="border p-1">
+                            ${['teamA','teamB'].map(k=>`<option value="${k}">${teamsData[k]?.name || k}</option>`).join('')}
+                        </select>
+                        <select id="ex-off" class="border p-1"></select>
+                        <select id="ex-on" class="border p-1"></select>
+                        <button id="ex-add" class="control-button btn-sm">Add</button>
+                    </div>
+                </div>
+                ` : ''}
                 ${modalHtml}
             </div>
         `;
@@ -230,6 +237,31 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
             idInput.value = '';
             modal.style.display = 'flex';
         };
+        if (sportsMode && teamsData) {
+            const teamSel = container.querySelector('#ex-team');
+            const offSel = container.querySelector('#ex-off');
+            const onSel = container.querySelector('#ex-on');
+            const fillPlayers = () => {
+                const teamKey = teamSel.value;
+                const players = (teamsData[teamKey]?.players || []).map(p => p.name);
+                offSel.innerHTML = players.map(p=>`<option value="${p}">${p}</option>`).join('');
+                onSel.innerHTML = players.map(p=>`<option value="${p}">${p}</option>`).join('');
+            };
+            fillPlayers();
+            teamSel.onchange = fillPlayers;
+            container.querySelector('#ex-add').onclick = () => {
+                const teamName = teamsData[teamSel.value]?.name || '';
+                const obj = {
+                    id: (Date.now()+Math.random()).toString(36),
+                    title: `${teamName} Substitution`,
+                    subtitle: `${offSel.value} → ${onSel.value}`,
+                    style: 'default',
+                    position: 'bottom-left'
+                };
+                lowerThirds.push(obj);
+                saveGraphicsData(eventId,{ lowerThirds, titleSlides }, mode);
+            };
+        }
         // Row button handlers
         container.querySelectorAll('button[data-action]').forEach(btn => {
             btn.onclick = e => {

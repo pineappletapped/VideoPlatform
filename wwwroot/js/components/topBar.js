@@ -5,7 +5,6 @@ export class TopBar extends HTMLElement {
     }
 
     connectedCallback() {
-        this.eventType = this.getAttribute('event-type') || 'corporate';
         this.isAdmin = this.getAttribute('is-admin') === 'true';
         this.render();
     }
@@ -75,10 +74,6 @@ export class TopBar extends HTMLElement {
                     <div class="title">Event Control</div>
                 </div>
                 <div class="controls">
-                    <select id="event-type" class="text-black p-1 rounded">
-                        <option value="corporate" ${this.eventType === 'corporate' ? 'selected' : ''}>Corporate Event</option>
-                        <option value="sports" ${this.eventType === 'sports' ? 'selected' : ''}>Sports Event</option>
-                    </select>
                     <div class="menu">
                         <button id="account-btn">Account ▾</button>
                         <div class="menu-items" id="account-menu">
@@ -109,11 +104,6 @@ export class TopBar extends HTMLElement {
         }
         this.shadowRoot.getElementById('logout').onclick = () =>
             this.dispatchEvent(new CustomEvent('logout'));
-
-        this.shadowRoot.getElementById('event-type').onchange = (e) => {
-            this.eventType = e.target.value;
-            this.dispatchEvent(new CustomEvent('event-type-change', { detail: this.eventType }));
-        };
     }
 }
 

@@ -27,7 +27,7 @@
                     <div class="text-sm">Preview</div>
                     <button id="cut-button" class="control-button btn-sm btn-live">Cut</button>
                 </div>
-                <div id="video-preview" class="bg-black rounded-lg shadow-md flex items-center justify-center overflow-hidden aspect-video"></div>
+                <div id="video-preview" class="bg-black rounded-lg shadow-md relative overflow-hidden aspect-video"></div>
             </div>
             <!-- Graphics Control Panel (Tabbed) -->
             <div class="bg-gray-800 text-gray-100 rounded-lg shadow graphics-panel flex-1">
@@ -54,44 +54,12 @@
                     <div id="sport-panel" class="tab-content hidden"></div>
                 </div>
             </div>
-            <div id="av-panel" class="mt-4">
-                <div class="bg-gray-800 text-gray-100 rounded-lg shadow av-panel">
-                    <div class="flex border-b">
-                        <button class="px-4 py-2 border-b-2 border-brand text-brand font-semibold" data-tab="vts">VTs</button>
-                        <button class="px-4 py-2" data-tab="music">Music</button>
-                    </div>
-                    <div class="p-4 flex">
-                        <div class="flex-1">
-                            <div id="vts-panel" class="tab-content"></div>
-                            <div id="music-panel" class="tab-content hidden"></div>
-                        </div>
-                        <div class="w-32 ml-4 border-l pl-4">
-                            <div class="text-sm font-semibold mb-2">Audio Levels</div>
-                            <div class="space-y-2">
-                                <div>
-                                    <label class="text-xs" for="audio-master">Master</label>
-                                    <input type="range" id="audio-master" class="w-full" min="0" max="1" step="0.01" value="1" />
-                                </div>
-                                <div>
-                                    <label class="text-xs" for="audio-vt">VT</label>
-                                    <input type="range" id="audio-vt" class="w-full" min="0" max="1" step="0.01" value="1" />
-                                </div>
-                                <div>
-                                    <label class="text-xs" for="audio-music">Music</label>
-                                    <input type="range" id="audio-music" class="w-full" min="0" max="1" step="0.01" value="1" />
-                                    <button class="control-button btn-xs mt-1 w-full" id="music-monitor">Monitor</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
         <!-- Right Column -->
         <div class="flex-1 flex flex-col gap-4 min-w-[320px]">
             <div>
                 <div class="text-center text-sm mb-1">Program</div>
-                <div id="video-program" class="bg-black rounded-lg shadow-md flex items-center justify-center overflow-hidden aspect-video"></div>
+                <div id="video-program" class="bg-black rounded-lg shadow-md relative overflow-hidden aspect-video"></div>
             </div>
             <!-- Active Graphics Panel -->
             <div id="active-graphics" class="bg-gray-800 text-gray-100 rounded-lg shadow p-4"></div>

@@ -56,11 +56,18 @@ export function login(email, password) {
 }
 
 export function register(email, password, tier, subId) {
+  const locals = getLocalUsers();
+  if (locals[email]) {
+    return Promise.reject(new Error('Email already registered'));
+  }
   return createUserWithEmailAndPassword(auth, email, password).then(async res => {
     localStorage.setItem('loginTime', Date.now().toString());
     await setUser(res.user.uid, { email, tier, subscription_id: subId });
     return res;
   }).catch(err => {
+    if (err.code === 'auth/email-already-in-use') {
+      throw new Error('Email already registered');
+    }
     const users = getLocalUsers();
     if (!users[email]) {
       users[email] = { password, tier, subscription_id: subId };

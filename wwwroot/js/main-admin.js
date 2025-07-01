@@ -1,5 +1,5 @@
 import { requireAuth, logout } from './auth.js';
-import { getAllUsers, updateUser } from './firebase.js';
+import { getAllUsers, updateUser, getAllEventsMetadata } from './firebase.js';
 import './components/topBar.js';
 import { renderBrandingModal } from './components/brandingModal.js';
 
@@ -21,9 +21,12 @@ async function init() {
   topBar.addEventListener('logout', logout);
   topBar.addEventListener('brand-settings', () => showBrandModal(user.uid));
   topBar.addEventListener('admin-panel', () => {});
+  topBar.addEventListener('edit-account', () => window.location.href = 'account.html');
   document.getElementById('top-bar').appendChild(topBar);
 
   loadUsers();
+  loadEvents();
+  setupTabs();
 }
 
 async function loadUsers() {
@@ -54,6 +57,35 @@ function showBrandModal(userId) {
   }
   renderBrandingModal(modal, { userId });
   modal.classList.remove('hidden');
+}
+
+async function loadEvents() {
+  const eventsDiv = document.getElementById('events');
+  if (!eventsDiv) return;
+  const events = await getAllEventsMetadata() || {};
+  eventsDiv.innerHTML = Object.keys(events).map(id => {
+    const ev = events[id];
+    return `<div class="bg-white text-black p-3 rounded shadow flex items-center gap-2">
+      <span class="flex-1">${ev.title || id}</span>
+      <a class="control-button btn-sm" href="graphics.html?event_id=${id}">Graphics</a>
+      <a class="control-button btn-sm" href="overlay.html?event_id=${id}" target="_blank">Overlay</a>
+    </div>`;
+  }).join('');
+}
+
+function setupTabs() {
+  const buttons = document.querySelectorAll('.tabs [data-tab]');
+  const contents = document.querySelectorAll('.tab-content');
+  buttons.forEach(btn => {
+    btn.onclick = () => {
+      const tab = btn.getAttribute('data-tab');
+      buttons.forEach(b => b.classList.remove('border-brand','border-b-2'));
+      btn.classList.add('border-brand','border-b-2');
+      contents.forEach(c => {
+        if (c.id === tab) c.classList.remove('hidden'); else c.classList.add('hidden');
+      });
+    };
+  });
 }
 
 init();

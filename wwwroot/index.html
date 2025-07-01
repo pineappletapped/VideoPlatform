@@ -12,39 +12,42 @@
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col">
     <div id="top-bar"></div>
-    <div class="container mx-auto p-8">
-        <h1 class="text-3xl font-bold mb-4">Event Dashboard</h1>
-        <div id="auth" class="space-y-4">
-            <form id="login-form" class="bg-white p-4 rounded shadow">
-                <h2 class="font-semibold mb-2">Login</h2>
-                <input name="email" type="text" placeholder="Email or username" class="border p-1 w-full mb-2" required>
-                <input name="password" type="password" placeholder="Password" class="border p-1 w-full mb-2" required>
-                <button class="control-button">Login</button>
-            </form>
-            <form id="register-form" class="bg-white p-4 rounded shadow space-y-2">
-                <h2 class="font-semibold">Register</h2>
-                <input name="email" type="text" placeholder="Email or username" class="border p-1 w-full" required>
-                <input name="password" type="password" placeholder="Password" class="border p-1 w-full" required>
-                <select name="tier" class="border p-1 w-full">
-                    <option value="single">Single Event £3.75/month</option>
-                    <option value="three">3 Events £6/month</option>
-                    <option value="eight">8 Events £15/month</option>
-                </select>
-                <div id="card-container" class="border p-2"></div>
-                <button class="control-button w-full">Register &amp; Subscribe</button>
-            </form>
+    <div class="container mx-auto p-8 flex flex-col items-center">
+        <h1 class="text-3xl font-bold mb-8">Event Dashboard</h1>
+        <div id="auth" class="w-full max-w-sm text-gray-900">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-center text-xl font-bold mb-4">Welcome</h2>
+                <form id="login-form" class="space-y-3" method="post" autocomplete="off">
+                    <input name="email" type="text" placeholder="Email or username" class="border p-2 w-full" required>
+                    <input name="password" type="password" placeholder="Password" class="border p-2 w-full" required>
+                    <div id="login-error" class="text-red-600 text-center hidden"></div>
+                    <button class="control-button w-full">Login</button>
+                </form>
+                <button id="show-register" class="w-full text-center text-brand mt-4">Create account</button>
+                <form id="register-form" class="space-y-3 mt-4 hidden" method="post">
+                    <input name="email" type="text" placeholder="Email" class="border p-2 w-full" required>
+                    <input name="password" type="password" placeholder="Password" class="border p-2 w-full" required>
+                    <select name="tier" class="border p-2 w-full">
+                        <option value="single">Single Event £3.75/month</option>
+                        <option value="three">3 Events £6/month</option>
+                        <option value="eight">8 Events £15/month</option>
+                    </select>
+                    <div id="card-container" class="border p-2"></div>
+                    <div id="payment-msg" class="text-center text-xs text-gray-500"></div>
+                    <div id="register-error" class="text-red-600 text-center hidden"></div>
+                    <button class="control-button w-full">Register &amp; Subscribe</button>
+                    <button type="button" id="hide-register" class="w-full text-center text-brand">Back to login</button>
+                </form>
+            </div>
         </div>
         <div id="dashboard" class="hidden">
             <div class="flex gap-2 mb-4">
                 <button id="signout-btn" class="control-button">Sign Out</button>
                 <button id="admin-btn" class="control-button hidden">Admin</button>
             </div>
-            <form id="create-form" class="bg-white p-4 rounded shadow mb-4">
-                <h2 class="font-semibold mb-2">Create Event</h2>
-                <input name="id" placeholder="Event ID" class="border p-1 w-full mb-2" required>
-                <input name="title" placeholder="Event Title" class="border p-1 w-full mb-2" required>
-                <button class="control-button">Save</button>
-            </form>
+            <div id="event-allowance" class="mb-2"></div>
+            <button id="open-create" class="control-button mb-4">Create Event</button>
+            <div id="create-modal" class="hidden"></div>
             <ul id="events-list" class="space-y-4"></ul>
         </div>
     </div>

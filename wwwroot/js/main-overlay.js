@@ -13,6 +13,16 @@ let masterVolume = 1;
 let vtVolume = 1;
 let musicVolume = 1;
 
+function contrastColor(hex) {
+    let c = hex.replace('#', '');
+    if (c.length === 3) c = c.split('').map(x => x + x).join('');
+    const r = parseInt(c.substr(0,2),16);
+    const g = parseInt(c.substr(2,2),16);
+    const b = parseInt(c.substr(4,2),16);
+    const lum = (0.299*r + 0.587*g + 0.114*b)/255;
+    return lum > 0.6 ? '#000' : '#fff';
+}
+
 // Overlay heartbeat for status bar feedback
 setInterval(() => {
     localStorage.setItem('overlayHeartbeat', Date.now().toString());
@@ -281,14 +291,104 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         holdslateOverlay.remove();
         if (countdownInterval) clearInterval(countdownInterval);
     }
+
+    // Scoreboard Overlay
+    let scoreboardOverlay = overlayContainer.querySelector('#scoreboard-overlay');
+    const scoreboardData = state && state.scoreboard;
+    const scoreboardShow = previewMode ? state && state.scoreboardPreviewVisible : state && state.scoreboardVisible;
+    const breakVisible = state && state.breakVisible;
+    const breakPlayer = state && state.breakPlayer;
+    if (scoreboardShow && scoreboardData) {
+        if(scoreboardData.golf){
+            if(!scoreboardOverlay){
+                scoreboardOverlay = document.createElement('div');
+                scoreboardOverlay.id = 'scoreboard-overlay';
+                overlayContainer.appendChild(scoreboardOverlay);
+            }
+            const gd = scoreboardData.golf;
+            scoreboardOverlay.className = 'sb-container sb-style1';
+            scoreboardOverlay.style.position = 'absolute';
+            scoreboardOverlay.style.bottom = '2rem';
+            scoreboardOverlay.style.left = '50%';
+            scoreboardOverlay.style.transform = 'translateX(-50%)';
+            const rows = (gd.players||[]).slice().sort((a,b)=>(a.total||0)-(b.total||0)).map(p=>`<tr><td class='pr-4'>${p.name}</td><td>${p.total}</td><td>${p.thru||0}</td><td>${p.today>=0?`+${p.today}`:p.today}</td></tr>`).join('');
+            scoreboardOverlay.innerHTML = `<div class='sb-row'><span class='sb-team' style='background:#333'>${gd.course?.name||'Course'}</span></div><table class='golf-table text-sm mt-1'><thead><tr><th>Name</th><th>Tot</th><th>Thru</th><th>Today</th></tr></thead><tbody>${rows}</tbody></table>`;
+            return;
+        }
+        if (!scoreboardOverlay) {
+            scoreboardOverlay = document.createElement('div');
+            scoreboardOverlay.id = 'scoreboard-overlay';
+            overlayContainer.appendChild(scoreboardOverlay);
+        }
+        const style = scoreboardData.style || 'style1';
+        const pos = scoreboardData.position || 'bottom-center';
+        scoreboardOverlay.className = `sb-container sb-${style}`;
+        scoreboardOverlay.style.position = 'absolute';
+        scoreboardOverlay.style.fontFamily = branding.font;
+        scoreboardOverlay.style.fontSize = '1.5rem';
+        scoreboardOverlay.style.pointerEvents = 'none';
+        scoreboardOverlay.style.left = '';
+        scoreboardOverlay.style.right = '';
+        scoreboardOverlay.style.top = '';
+        scoreboardOverlay.style.bottom = '';
+        scoreboardOverlay.style.transform = '';
+        if (pos === 'top-left') { scoreboardOverlay.style.top = '2rem'; scoreboardOverlay.style.left = '2rem'; }
+        else if (pos === 'top-right') { scoreboardOverlay.style.top = '2rem'; scoreboardOverlay.style.right = '2rem'; }
+        else if (pos === 'bottom-left') { scoreboardOverlay.style.bottom = '2rem'; scoreboardOverlay.style.left = '2rem'; }
+        else if (pos === 'bottom-right') { scoreboardOverlay.style.bottom = '2rem'; scoreboardOverlay.style.right = '2rem'; }
+        else if (pos === 'top-center') { scoreboardOverlay.style.top = '2rem'; scoreboardOverlay.style.left = '50%'; scoreboardOverlay.style.transform = 'translateX(-50%)'; }
+        else { scoreboardOverlay.style.bottom = '2rem'; scoreboardOverlay.style.left = '50%'; scoreboardOverlay.style.transform = 'translateX(-50%)'; }
+        const names = teamsData ? [teamsData.teamA?.name, teamsData.teamB?.name] : [];
+        const colors = teamsData ? [teamsData.teamA?.color || '#333', teamsData.teamB?.color || '#333'] : ['#333','#333'];
+        const sA = scoreboardData.scores?.[0] ?? 0;
+        const sB = scoreboardData.scores?.[1] ?? 0;
+        const info = [];
+        if (scoreboardData.time) info.push(scoreboardData.time);
+        if (scoreboardData.period) info.push('P' + scoreboardData.period);
+        if (scoreboardData.round) info.push('R' + scoreboardData.round);
+        if (scoreboardData.sets) info.push('Sets ' + scoreboardData.sets.join('-'));
+        if (scoreboardData.games) info.push('Games ' + scoreboardData.games.join('-'));
+        if (scoreboardData.frames) info.push('Frames ' + scoreboardData.frames.join('-'));
+        if (scoreboardData.legs) info.push('Legs ' + scoreboardData.legs.join('-'));
+        if (scoreboardData.points) info.push('Pts ' + scoreboardData.points.join('-'));
+        const infoHtml = info.length ? `<div class='sb-info'>${info.join(' | ')}</div>` : '';
+        const brand = branding.primaryColor || '#e16316';
+        const textA = contrastColor(colors[0]);
+        const textB = contrastColor(colors[1]);
+        const textBrand = contrastColor(brand);
+        const breakHtml = scoreboardData.currentBreak !== undefined ? `<div class='sb-break'>Break: ${scoreboardData.currentBreak} | High: ${scoreboardData.highBreak || scoreboardData.currentBreak}</div>` : '';
+        const breakInd = breakVisible && scoreboardData.currentBreak !== undefined ? `<div class='sb-current-break ${breakPlayer === 1 ? 'right' : 'left'}'>${scoreboardData.currentBreak}</div>` : '';
+        const checkoutHtml = scoreboardData.checkoutText ? `<div class='sb-checkout'>${names[scoreboardData.checkoutPlayer || 0] || ''}: ${scoreboardData.checkoutText}</div>` : '';
+        const aClassA = scoreboardData.turn === 0 ? ' active' : '';
+        const aClassB = scoreboardData.turn === 1 ? ' active' : '';
+        scoreboardOverlay.innerHTML = `
+            ${breakInd}
+            <div class="sb-row">
+                <span class="sb-team${aClassA}" style="background:${colors[0]};color:${textA}">${names[0] || 'Team 1'}</span>
+                <span class="sb-score" style="background:${brand};color:${textBrand}">${sA} | ${sB}</span>
+                <span class="sb-team${aClassB}" style="background:${colors[1]};color:${textB}">${names[1] || 'Team 2'}</span>
+            </div>
+            ${infoHtml}
+            ${breakHtml}
+            ${checkoutHtml}`;
+    } else if (scoreboardOverlay) {
+        scoreboardOverlay.remove();
+    }
 }
 
 let lastState = null;
 let lastGraphics = null;
 let lastBranding = DEFAULT_BRANDING;
+let teamsData = null;
+let scoreboardPersist = null;
 
 function updateOverlay() {
-    renderOverlayFromFirebase(lastState, lastGraphics, lastBranding);
+    const state = { ...(lastState || {}) };
+    if (!state.scoreboard && scoreboardPersist) state.scoreboard = scoreboardPersist;
+    if (state.scoreboard && scoreboardPersist && state.scoreboardVisible === undefined) {
+        state.scoreboardVisible = true;
+    }
+    renderOverlayFromFirebase(state, lastGraphics, lastBranding);
     masterVolume = lastState && lastState.masterVolume !== undefined ? lastState.masterVolume : 1;
     vtVolume = lastState && lastState.vtVolume !== undefined ? lastState.vtVolume : 1;
     musicVolume = lastState && lastState.musicVolume !== undefined ? lastState.musicVolume : 1;
@@ -306,6 +406,14 @@ listenGraphicsData(eventId, (graphics) => {
 });
 listenBranding(eventId, (branding) => {
     lastBranding = branding || DEFAULT_BRANDING;
+    updateOverlay();
+});
+onValue(ref(getDatabaseInstance(), `teams/${eventId}`), snap => {
+    teamsData = snap.val() || null;
+    updateOverlay();
+});
+onValue(ref(getDatabaseInstance(), `scoreboard/${eventId}`), snap => {
+    scoreboardPersist = snap.val();
     updateOverlay();
 });
 

@@ -10,12 +10,15 @@ function saveProgramData(eventId, program) {
 }
 
 function loadProgramData(eventId, fallback, callback) {
+    let first = true;
     listenOverlayState(eventId, (state) => {
         if (state && state.program) {
             callback(state.program, state.liveProgramVisible, state.previewProgramVisible);
         } else {
             callback(fallback, false, false);
+            if (first && fallback) updateOverlayState(eventId, { program: fallback });
         }
+        first = false;
     });
 }
 
@@ -131,10 +134,12 @@ export function renderProgramPreview(container, eventData, onOverlayStateChange)
         }
         // Preview/Take/Hide/Edit handlers
         container.querySelector('#preview-program').onclick = () => {
+            saveProgramData(eventId, programData);
             savePreviewProgramVisible(eventId, true);
             if (onOverlayStateChange) onOverlayStateChange({ previewProgramVisible: true, program: programData });
         };
         container.querySelector('#take-program').onclick = () => {
+            saveProgramData(eventId, programData);
             saveLiveProgramVisible(eventId, true);
             savePreviewProgramVisible(eventId, false);
             renderProgramPreview(container, eventData, onOverlayStateChange);
