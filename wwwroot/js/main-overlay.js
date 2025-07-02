@@ -484,6 +484,22 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     prevScoreboardVisible = scoreboardShow;
     prevScoreboardData = scoreboardData;
 
+    // Formation Overlay
+    let formOverlay = overlayContainer.querySelector('#formation-overlay');
+    const formData = state && state.formation;
+    const formShow = state && state.formationVisible;
+    if (formShow && formData) {
+        if (!formOverlay) {
+            formOverlay = document.createElement('div');
+            formOverlay.id = 'formation-overlay';
+            overlayContainer.appendChild(formOverlay);
+        }
+        formOverlay.innerHTML = `<div class='formation-pitch'></div>` +
+            formData.players.map(p=>`<div class='formation-player' style='top:${p.y}%;left:${p.x}%;font-family:${branding.font};'>${p.name}</div>`).join('');
+    } else if (formOverlay) {
+        formOverlay.remove();
+    }
+
     // Stats Overlay
     let statOverlay = overlayContainer.querySelector('#stat-overlay');
     const statData = state && state.stat;
