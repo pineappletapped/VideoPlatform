@@ -76,10 +76,14 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
 
     let sbVisible = false;
     let sbPreview = false;
+    let breakVisible = false;
+    let highBreakVisible = false;
 
     listenOverlayState(eventId, state => {
         sbVisible = (state && state.scoreboardVisible) || false;
         sbPreview = (state && state.scoreboardPreviewVisible) || false;
+        breakVisible = (state && state.breakVisible) || false;
+        highBreakVisible = (state && state.highBreakVisible) || false;
         if (currentData) render(currentData);
     });
 
@@ -116,8 +120,8 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                     <button id="sb-preview" class="control-button btn-sm btn-preview${sbPreview ? ' ring-2 ring-brand' : ''}">Preview</button>
                     <button id="sb-live" class="control-button btn-sm btn-live${sbVisible ? ' ring-2 ring-green-400' : ''}">Live</button>
                     <button id="sb-hide" class="control-button btn-sm${!sbVisible && !sbPreview ? ' ring-2 ring-red-400' : ''}">Hide</button>
-                    ${cfg.scoreboard.breaks ? '<button id="sb-show-break" class="control-button btn-sm">Show Break</button>' : ''}
-                    ${cfg.scoreboard.highBreak ? '<button id="sb-show-high" class="control-button btn-sm">Show High Break</button>' : ''}
+                    ${cfg.scoreboard.breaks ? `<button id="sb-show-break" class="control-button btn-sm${breakVisible ? ' ring-2 ring-green-400' : ''}">Show Break</button>` : ''}
+                    ${cfg.scoreboard.highBreak ? `<button id="sb-show-high" class="control-button btn-sm${highBreakVisible ? ' ring-2 ring-green-400' : ''}">Show High Break</button>` : ''}
                     <button id="sb-save" class="control-button btn-sm ml-auto">Save</button>
                     <button id="sb-edit" class="control-button btn-sm">Edit</button>
                 </div>
@@ -298,6 +302,12 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         const turnSel = container.querySelector('#sb-turn');
         if (turnSel) {
             turnSel.value = data.turn || 0;
+            turnSel.onchange = () => {
+                if (cfg.scoreboard.breaks) {
+                    const br = container.querySelector('#sb-break');
+                    if (br) br.value = 0;
+                }
+            };
         }
 
         function getFormData() {
@@ -350,7 +360,15 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             breakBtn.onclick = async () => {
                 const newData = getFormData();
                 await saveData(newData);
-                await updateOverlayState(eventId, { scoreboardVisible: true, breakVisible: true, breakPlayer: newData.turn || 0, scoreboard: newData });
+                const show = !breakVisible;
+                await updateOverlayState(eventId, {
+                    scoreboardVisible: true,
+                    breakVisible: show,
+                    breakPlayer: show ? (newData.turn || 0) : null,
+                    scoreboard: newData
+                });
+                breakVisible = show;
+                render(newData);
             };
         }
         const highBtn = container.querySelector('#sb-show-high');
@@ -358,7 +376,10 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             highBtn.onclick = async () => {
                 const newData = getFormData();
                 await saveData(newData);
-                await updateOverlayState(eventId, { highBreakVisible: true, scoreboard: newData });
+                const show = !highBreakVisible;
+                await updateOverlayState(eventId, { highBreakVisible: show, scoreboard: newData });
+                highBreakVisible = show;
+                render(newData);
             };
         }
         const modal = container.querySelector('#sb-modal');
