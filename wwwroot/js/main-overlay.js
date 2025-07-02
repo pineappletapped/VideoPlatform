@@ -419,6 +419,8 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         else { scoreboardOverlay.style.bottom = '2rem'; scoreboardOverlay.style.left = '50%'; scoreboardOverlay.style.transform = 'translateX(-50%)'; }
         const names = teamsData ? [teamsData.teamA?.name, teamsData.teamB?.name] : [];
         const colors = teamsData ? [teamsData.teamA?.color || '#333', teamsData.teamB?.color || '#333'] : ['#333','#333'];
+        const logos = teamsData && teamsData.teamA?.logo && teamsData.teamB?.logo ? [teamsData.teamA.logo, teamsData.teamB.logo] : [null, null];
+        const showLogos = logos[0] && logos[1];
         const sA = scoreboardData.scores?.[0] ?? 0;
         const sB = scoreboardData.scores?.[1] ?? 0;
         const info = [];
@@ -458,9 +460,9 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         scoreboardOverlay.innerHTML = `
             ${breakInd}
             <div class="sb-row">
-                <span class="sb-team${aClassA}" style="background:${colors[0]};color:${textA}">${names[0] || 'Team 1'}</span>
+                <span class="sb-team${aClassA}" style="background:${colors[0]};color:${textA}">${showLogos ? `<img src='${logos[0]}' class='sb-team-logo'>` : ''}${names[0] || 'Team 1'}</span>
                 <span class="sb-score" style="background:${brand};color:${textBrand}">${sA} | ${sB}</span>
-                <span class="sb-team${aClassB}" style="background:${colors[1]};color:${textB}">${names[1] || 'Team 2'}</span>
+                <span class="sb-team${aClassB}" style="background:${colors[1]};color:${textB}">${showLogos ? `<img src='${logos[1]}' class='sb-team-logo'>` : ''}${names[1] || 'Team 2'}</span>
             </div>
             ${infoHtml}
             ${checkoutHtml}

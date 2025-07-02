@@ -417,6 +417,9 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             const colB = teamsData?.teamB?.color || '#333';
             const nameA = teamsData?.teamA?.name || 'Team 1';
             const nameB = teamsData?.teamB?.name || 'Team 2';
+            const logoA = teamsData?.teamA?.logo || '';
+            const logoB = teamsData?.teamB?.logo || '';
+            const showLogo = logoA && logoB;
             const brand = getComputedStyle(document.documentElement).getPropertyValue('--brand-primary') || '#e16316';
             const textA = contrastColor(colA);
             const textB = contrastColor(colB);
@@ -424,9 +427,9 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             prevDiv.innerHTML = `
                 <div class="sb-container sb-${styleSel.value}">
                     <div class="sb-row">
-                        <span class="sb-team" style="background:${colA};color:${textA}">${nameA}</span>
+                        <span class="sb-team" style="background:${colA};color:${textA}">${showLogo ? `<img src="${logoA}" class="sb-team-logo">` : ''}${nameA}</span>
                         <span class="sb-score" style="background:${brand};color:${textBrand}">0 | 0</span>
-                        <span class="sb-team" style="background:${colB};color:${textB}">${nameB}</span>
+                        <span class="sb-team" style="background:${colB};color:${textB}">${showLogo ? `<img src="${logoB}" class="sb-team-logo">` : ''}${nameB}</span>
                     </div>
                 </div>`;
         }
