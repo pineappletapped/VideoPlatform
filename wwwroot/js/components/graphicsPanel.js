@@ -1,6 +1,7 @@
 import { setGraphicsData, updateGraphicsData, getGraphicsData, listenGraphicsData, listenFavorites, updateFavorites } from '../firebase.js';
 import { ref, onValue } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
 import { getDatabaseInstance } from '../firebaseApp.js';
+import { sportsData } from '../sportsConfig.js';
 
 let liveLowerThirdId = null;
 let previewLowerThirdId = null;
@@ -153,7 +154,7 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                         </tbody>
                     </table>
                 </div>
-                ${sportsMode && teamsData ? `
+                ${sportsMode && teamsData && (sportsData[eventData.sport]?.subs || 0) > 0 ? `
                 <div class="mt-4">
                     <strong>Add Example:</strong>
                     <div class="flex gap-2 mt-1 text-sm items-center">
@@ -313,10 +314,12 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                     const idx = favorites.lowerThirds.indexOf(id);
                     if (idx >= 0) favorites.lowerThirds.splice(idx,1); else favorites.lowerThirds.push(id);
                     updateFavorites(eventId, favorites);
+                    renderPanel();
                 } else if (action === 'favorite-ts') {
                     const idx = favorites.titleSlides.indexOf(id);
                     if (idx >= 0) favorites.titleSlides.splice(idx,1); else favorites.titleSlides.push(id);
                     updateFavorites(eventId, favorites);
+                    renderPanel();
                 } else if (action === 'remove-lt') {
                     const idx = lowerThirds.findIndex(x => x.id === id);
                     if (idx >= 0) lowerThirds.splice(idx, 1);

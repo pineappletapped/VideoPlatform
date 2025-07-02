@@ -164,7 +164,13 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         document.getElementById('lower-third').innerHTML = '';
     }
     if (state && state.musicVisible && state.nowPlaying) {
-        document.getElementById('now-playing').innerHTML = `<div class='now-playing' style='position:absolute;top:2rem;right:2rem;background:var(--brand-secondary1);color:#fff;padding:0.5rem 1rem;border-radius:0.5rem;font-family:${branding.font};'>Now Playing: ${state.nowPlaying.name}</div>`;
+        let np = document.getElementById('now-playing');
+        if (!np) {
+            np = document.createElement('div');
+            np.id = 'now-playing';
+            overlayContainer.appendChild(np);
+        }
+        np.innerHTML = `<div class='now-playing' style='position:absolute;top:2rem;right:2rem;background:var(--brand-secondary1);color:#fff;padding:0.5rem 1rem;border-radius:0.5rem;font-family:${branding.font};'>Now Playing: ${state.nowPlaying.name}</div>`;
         if (!window.musicAudio || window.musicAudio.src !== state.nowPlaying.audioUrl) {
             if (window.musicAudio) window.musicAudio.pause();
             window.musicAudio = new Audio(state.nowPlaying.audioUrl);
@@ -173,7 +179,8 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         }
         if (window.musicAudio) window.musicAudio.volume = masterVolume * musicVolume;
     } else {
-        document.getElementById('now-playing').innerHTML = '';
+        const np = document.getElementById('now-playing');
+        if (np) np.innerHTML = '';
         if (window.musicAudio) {
             window.musicAudio.pause();
             window.musicAudio = null;
