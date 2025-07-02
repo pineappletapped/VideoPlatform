@@ -252,3 +252,29 @@ html,body { margin: 0; width:100%; height:100%; overflow:hidden; }
 
 .golf-table td, .golf-table th { padding:0 0.4rem; text-align:center; }
 
+/* Overlay transitions */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+.fade-in { animation: fadeIn 0.5s forwards; }
+.fade-out { animation: fadeOut 0.5s forwards; }
+
+@keyframes slideInLeft { from { transform: translateX(-100%); opacity:0; } to { transform: translateX(0); opacity:1; } }
+@keyframes slideOutLeft { from { transform: translateX(0); opacity:1; } to { transform: translateX(-100%); opacity:0; } }
+.slide-in-left { animation: slideInLeft 0.5s forwards; }
+.slide-out-left { animation: slideOutLeft 0.5s forwards; }
+
+@keyframes slideInRight { from { transform: translateX(100%); opacity:0; } to { transform: translateX(0); opacity:1; } }
+@keyframes slideOutRight { from { transform: translateX(0); opacity:1; } to { transform: translateX(100%); opacity:0; } }
+.slide-in-right { animation: slideInRight 0.5s forwards; }
+.slide-out-right { animation: slideOutRight 0.5s forwards; }
+
+@keyframes slideInUp { from { transform: translateY(100%); opacity:0; } to { transform: translateY(0); opacity:1; } }
+@keyframes slideOutUp { from { transform: translateY(0); opacity:1; } to { transform: translateY(-100%); opacity:0; } }
+.slide-in-up { animation: slideInUp 0.5s forwards; }
+.slide-out-up { animation: slideOutUp 0.5s forwards; }
+
+@keyframes slideInDown { from { transform: translateY(-100%); opacity:0; } to { transform: translateY(0); opacity:1; } }
+@keyframes slideOutDown { from { transform: translateY(0); opacity:1; } to { transform: translateY(100%); opacity:0; } }
+.slide-in-down { animation: slideInDown 0.5s forwards; }
+.slide-out-down { animation: slideOutDown 0.5s forwards; }
+

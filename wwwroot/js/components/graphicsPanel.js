@@ -3,6 +3,15 @@ import { ref, onValue } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase
 import { getDatabaseInstance } from '../firebaseApp.js';
 import { sportsData } from '../sportsConfig.js';
 
+const transitions = [
+    { value: 'cut', label: 'Cut' },
+    { value: 'fade', label: 'Fade' },
+    { value: 'slide-left', label: 'Slide Left' },
+    { value: 'slide-right', label: 'Slide Right' },
+    { value: 'slide-up', label: 'Slide Up' },
+    { value: 'slide-down', label: 'Slide Down' }
+];
+
 let liveLowerThirdId = null;
 let previewLowerThirdId = null;
 let liveTitleSlideId = null;
@@ -101,6 +110,18 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                                 </div>
                             </div>
                         </div>
+                        <div class="mb-2">
+                            <label class="block text-sm">Transition In</label>
+                            <select id="modal-trans-in" class="border p-1 w-full">
+                                ${transitions.map(t=>`<option value="${t.value}">${t.label}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label class="block text-sm">Transition Out</label>
+                            <select id="modal-trans-out" class="border p-1 w-full">
+                                ${transitions.map(t=>`<option value="${t.value}">${t.label}</option>`).join('')}
+                            </select>
+                        </div>
                         <div class="flex gap-2 mt-4">
                             <button type="submit" class="control-button btn-sm">Save</button>
                             <button type="button" id="modal-cancel" class="control-button btn-sm bg-gray-400 hover:bg-gray-600">Cancel</button>
@@ -178,6 +199,8 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
         const subtitleInput = container.querySelector('#modal-subtitle-input');
         const styleInput = container.querySelector('#modal-style-input');
         const posInput = container.querySelector('#modal-position-input');
+        const transInInput = container.querySelector('#modal-trans-in');
+        const transOutInput = container.querySelector('#modal-trans-out');
         const posX = container.querySelector('#modal-pos-x');
         const posY = container.querySelector('#modal-pos-y');
         const customWrap = container.querySelector('#custom-pos');
@@ -207,7 +230,7 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                     const y = parseInt(posY.value || '0', 10);
                     position = `custom:${x},${y}`;
                 }
-                const obj = { id, title: titleInput.value, subtitle: subtitleInput.value, style: styleInput.value, position };
+                const obj = { id, title: titleInput.value, subtitle: subtitleInput.value, style: styleInput.value, position, transitionIn: transInInput.value, transitionOut: transOutInput.value };
                 if (idx >= 0) {
                     arr[idx] = obj;
                 } else {
@@ -224,6 +247,8 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
             subtitleInput.value = '';
             styleInput.value = 'default';
             posInput.value = 'bottom-left';
+            transInInput.value = 'fade';
+            transOutInput.value = 'fade';
             customWrap.style.display = 'none';
             idInput.value = '';
             modal.style.display = 'flex';
@@ -234,6 +259,8 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
             subtitleInput.value = '';
             styleInput.value = 'default';
             posInput.value = 'bottom-left';
+            transInInput.value = 'fade';
+            transOutInput.value = 'fade';
             customWrap.style.display = 'none';
             idInput.value = '';
             modal.style.display = 'flex';
@@ -257,7 +284,9 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                     title: `${teamName} Substitution`,
                     subtitle: `${offSel.value} → ${onSel.value}`,
                     style: 'default',
-                    position: 'bottom-left'
+                    position: 'bottom-left',
+                    transitionIn: 'fade',
+                    transitionOut: 'fade'
                 };
                 lowerThirds.push(obj);
                 saveGraphicsData(eventId,{ lowerThirds, titleSlides }, mode);
@@ -308,6 +337,8 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                     posX.value = '';
                     posY.value = '';
                 }
+                transInInput.value = item?.transitionIn || 'fade';
+                transOutInput.value = item?.transitionOut || 'fade';
                 idInput.value = id;
                 modal.style.display = 'flex';
                 } else if (action === 'favorite-lt') {

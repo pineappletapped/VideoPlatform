@@ -21,6 +21,15 @@ const scoreboardPositions = [
     { value: 'bottom-center', label: 'Bottom Center' }
 ];
 
+const transitions = [
+    { value: 'cut', label: 'Cut' },
+    { value: 'fade', label: 'Fade' },
+    { value: 'slide-left', label: 'Slide Left' },
+    { value: 'slide-right', label: 'Slide Right' },
+    { value: 'slide-up', label: 'Slide Up' },
+    { value: 'slide-down', label: 'Slide Down' }
+];
+
 function contrastColor(hex) {
     let c = hex.replace('#', '');
     if (c.length === 3) c = c.split('').map(x => x + x).join('');
@@ -96,7 +105,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
     function defaultData() {
         const startVal = cfg.scoreboard.start || 0;
         const scores = Array.from({ length: cfg.teamCount }).map(() => startVal);
-        const base = { scores, style: 'style1', position: 'bottom-center' };
+        const base = { scores, style: 'style1', position: 'bottom-center', transitionIn: 'fade', transitionOut: 'fade' };
         if (cfg.scoreboard.periods) base.period = 1;
         if (cfg.scoreboard.time) base.time = '00:00';
         if (cfg.scoreboard.round) base.round = 1;
@@ -139,6 +148,18 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                             <label class="block text-sm">Position</label>
                             <select id="sb-position" class="border p-1 w-full">
                                 ${scoreboardPositions.map(p=>`<option value="${p.value}">${p.label}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label class="block text-sm">Transition In</label>
+                            <select id="sb-trans-in" class="border p-1 w-full">
+                                ${transitions.map(t=>`<option value="${t.value}">${t.label}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label class="block text-sm">Transition Out</label>
+                            <select id="sb-trans-out" class="border p-1 w-full">
+                                ${transitions.map(t=>`<option value="${t.value}">${t.label}</option>`).join('')}
                             </select>
                         </div>
                         <div id="sb-prev" class="mt-2 flex justify-center"></div>
@@ -329,6 +350,8 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             }
             obj.style = data.style || 'style1';
             obj.position = data.position || 'bottom-center';
+            obj.transitionIn = data.transitionIn || 'fade';
+            obj.transitionOut = data.transitionOut || 'fade';
             return obj;
         }
 
@@ -385,6 +408,8 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         const modal = container.querySelector('#sb-modal');
         const styleSel = container.querySelector('#sb-style');
         const posSel = container.querySelector('#sb-position');
+        const transInSel = container.querySelector('#sb-trans-in');
+        const transOutSel = container.querySelector('#sb-trans-out');
         const prevDiv = container.querySelector('#sb-prev');
         function updatePreview() {
             if (!prevDiv) return;
@@ -411,6 +436,8 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             container.querySelector('#sb-edit').onclick = () => {
                 if (styleSel) styleSel.value = data.style || 'style1';
                 if (posSel) posSel.value = data.position || 'bottom-center';
+                if (transInSel) transInSel.value = data.transitionIn || 'fade';
+                if (transOutSel) transOutSel.value = data.transitionOut || 'fade';
                 updatePreview();
                 modal.style.display = 'flex';
             };
@@ -422,6 +449,8 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             container.querySelector('#sb-modal-save').onclick = async () => {
                 data.style = styleSel.value;
                 data.position = posSel.value;
+                data.transitionIn = transInSel ? transInSel.value : 'fade';
+                data.transitionOut = transOutSel ? transOutSel.value : 'fade';
                 modal.style.display = 'none';
                 const newData = getFormData();
                 await saveData(newData);

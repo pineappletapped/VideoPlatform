@@ -12,6 +12,10 @@ let preloadedVT = null;
 let masterVolume = 1;
 let vtVolume = 1;
 let musicVolume = 1;
+let prevScoreboardVisible = false;
+let prevScoreboardData = null;
+let prevLowerThirdId = null;
+let prevLowerThirdData = null;
 
 function contrastColor(hex) {
     let c = hex.replace('#', '');
@@ -21,6 +25,20 @@ function contrastColor(hex) {
     const b = parseInt(c.substr(4,2),16);
     const lum = (0.299*r + 0.587*g + 0.114*b)/255;
     return lum > 0.6 ? '#000' : '#fff';
+}
+
+function playTransition(el, type, name) {
+    if (!el) return;
+    if (!name || name === 'cut') {
+        if (type === 'out') el.remove();
+        return;
+    }
+    const cls = `${type === 'in' ? 'slide-in' : 'slide-out'}-${name.replace('slide-','')}`;
+    const fadeCls = name === 'fade' ? (type === 'in' ? 'fade-in' : 'fade-out') : cls;
+    el.classList.add(fadeCls);
+    if (type === 'out') {
+        el.addEventListener('animationend', () => el.remove(), { once: true });
+    }
 }
 
 // Overlay heartbeat for status bar feedback
@@ -156,14 +174,28 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         else if (pos === 'top-right') stylePos = 'top:2rem;right:2rem;';
         else stylePos = 'bottom:2rem;left:2rem;';
         const styleClass = `lower-third-${lowerThird.style || 'default'}`;
-        document.getElementById('lower-third').innerHTML =
-            `<div class='${styleClass}' style='position:absolute;${stylePos}min-width:300px;font-family:${branding.font};'>`+
-            `${branding.logoPrimary ? `<img src='${branding.logoPrimary}' alt='Logo' style='height:32px;display:inline-block;margin-right:1rem;vertical-align:middle;' />` : ''}`+
-            `<span style='vertical-align:middle;'><span style='font-weight:bold;font-size:1.2em;'>${lowerThird.title}</span><br><span style='font-size:1em;'>${lowerThird.subtitle}</span></span>`+
-            `</div>`;
+        const containerEl = document.getElementById('lower-third');
+        const oldEl = containerEl.firstElementChild;
+        if (oldEl && prevLowerThirdId && prevLowerThirdId !== liveLowerThirdId) {
+            playTransition(oldEl,'out',prevLowerThirdData?.transitionOut);
+        } else {
+            containerEl.innerHTML = '';
+        }
+        const ltWrap = document.createElement('div');
+        ltWrap.className = styleClass;
+        ltWrap.style.position = 'absolute';
+        ltWrap.style.cssText += stylePos + `min-width:300px;font-family:${branding.font};`;
+        ltWrap.innerHTML = `${branding.logoPrimary ? `<img src='${branding.logoPrimary}' alt='Logo' style='height:32px;display:inline-block;margin-right:1rem;vertical-align:middle;' />` : ''}`+
+            `<span style='vertical-align:middle;'><span style='font-weight:bold;font-size:1.2em;'>${lowerThird.title}</span><br><span style='font-size:1em;'>${lowerThird.subtitle}</span></span>`;
+        containerEl.appendChild(ltWrap);
+        playTransition(ltWrap,'in',lowerThird.transitionIn);
     } else if (!previewMode) {
-        document.getElementById('lower-third').innerHTML = '';
+        const ltWrap = document.getElementById('lower-third').firstElementChild;
+        if (ltWrap) playTransition(ltWrap,'out',prevLowerThirdData?.transitionOut);
+        else document.getElementById('lower-third').innerHTML = '';
     }
+    prevLowerThirdId = liveLowerThirdId;
+    prevLowerThirdData = lowerThird;
     if (state && state.musicVisible && state.nowPlaying) {
         let np = document.getElementById('now-playing');
         if (!np) {
@@ -347,6 +379,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
                 scoreboardOverlay = document.createElement('div');
                 scoreboardOverlay.id = 'scoreboard-overlay';
                 overlayContainer.appendChild(scoreboardOverlay);
+                playTransition(scoreboardOverlay,'in',scoreboardData.transitionIn);
             }
             const gd = scoreboardData.golf;
             scoreboardOverlay.className = 'sb-container sb-style1';
@@ -362,6 +395,9 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             scoreboardOverlay = document.createElement('div');
             scoreboardOverlay.id = 'scoreboard-overlay';
             overlayContainer.appendChild(scoreboardOverlay);
+            playTransition(scoreboardOverlay,'in',scoreboardData.transitionIn);
+        } else if (!prevScoreboardVisible) {
+            playTransition(scoreboardOverlay,'in',scoreboardData.transitionIn);
         }
         const style = scoreboardData.style || 'style1';
         const pos = scoreboardData.position || 'bottom-center';
@@ -440,10 +476,13 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         } else {
             overlayContainer.querySelector('#high-break')?.remove();
         }
-    } else if (scoreboardOverlay) {
-        scoreboardOverlay.remove();
+    } else if (scoreboardOverlay && prevScoreboardVisible) {
+        playTransition(scoreboardOverlay,'out',prevScoreboardData?.transitionOut);
+        scoreboardOverlay = null;
         overlayContainer.querySelector('#high-break')?.remove();
     }
+    prevScoreboardVisible = scoreboardShow;
+    prevScoreboardData = scoreboardData;
 
     // Stats Overlay
     let statOverlay = overlayContainer.querySelector('#stat-overlay');
