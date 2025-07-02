@@ -222,6 +222,16 @@ html,body { margin: 0; width:100%; height:100%; overflow:hidden; }
   color: #000;
 }
 
+/* Ensure text is readable in stats panel */
+.stats-panel {
+  color: #000;
+}
+.stats-panel input,
+.stats-panel select,
+.stats-panel textarea {
+  color: #000;
+}
+
 /* Limit widths so the tab doesn't scroll horizontally */
 .teams-panel table {
   table-layout: fixed;
