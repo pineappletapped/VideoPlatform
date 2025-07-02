@@ -36,7 +36,8 @@ const DEFAULT_BRANDING = {
     logoSecondary: '',
     font: 'Arial',
     logos: { tl:'', tr:'', bl:'', br:'' },
-    sponsors: []
+    sponsors: [],
+    scheduleSponsorPlacement: 'bottom-spaced'
 };
 
 function applyBranding(branding = DEFAULT_BRANDING) {
@@ -246,7 +247,24 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         programOverlay.style.borderRadius = '0.5rem';
         programOverlay.style.boxShadow = '0 2px 8px #0003';
         programOverlay.style.fontFamily = branding.font;
-        programOverlay.innerHTML = `<div class='font-bold text-lg mb-2'>Program</div><table><tbody>${program.map(item => `<tr><td class='pr-4'>${item.time}</td><td class='pr-4'>${item.title}</td><td>${item.presenter}</td></tr>`).join('')}</tbody></table>`;
+        const sponsors = branding.sponsors || [];
+        const placement = branding.scheduleSponsorPlacement || 'bottom-spaced';
+        let sponsorHtml = '';
+        if (sponsors.length) {
+            if (placement === 'top-right') {
+                const s = sponsors[0];
+                sponsorHtml = `<img src='${s.logo}' alt='${s.name}' style='height:60px;position:absolute;top:0.5rem;right:0.5rem;'/>`;
+            } else if (placement === 'bottom-centered') {
+                sponsorHtml = `<div style='display:flex;gap:1rem;justify-content:center;margin-top:0.5rem;'>${sponsors.map(s=>`<img src='${s.logo}' alt='${s.name}' style='height:60px;'>`).join('')}</div>`;
+            } else if (placement === 'bottom-sides') {
+                const l = sponsors[0];
+                const r = sponsors[1];
+                sponsorHtml = `${l?`<img src='${l.logo}' alt='${l.name}' style='height:60px;position:absolute;bottom:0.5rem;left:0.5rem;'>`:''}${r?`<img src='${r.logo}' alt='${r.name}' style='height:60px;position:absolute;bottom:0.5rem;right:0.5rem;'>`:''}`;
+            } else {
+                sponsorHtml = `<div style='display:flex;gap:1rem;justify-content:space-around;margin-top:0.5rem;'>${sponsors.slice(0,4).map(s=>`<img src='${s.logo}' alt='${s.name}' style='height:60px;'>`).join('')}</div>`;
+            }
+        }
+        programOverlay.innerHTML = `<div class='font-bold text-lg mb-2'>Program</div><table><tbody>${program.map(item => `<tr><td class='pr-4'>${item.time}</td><td class='pr-4'>${item.title}</td><td>${item.presenter}</td></tr>`).join('')}</tbody></table>${sponsorHtml}`;
     } else if (previewMode && state && state.previewProgramVisible && program && program.length) {
         if (!programOverlay) {
             programOverlay = document.createElement('div');
@@ -263,7 +281,24 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         programOverlay.style.boxShadow = '0 2px 8px #0003';
         programOverlay.style.fontFamily = branding.font;
         programOverlay.style.opacity = '0.6';
-        programOverlay.innerHTML = `<div class='font-bold text-lg mb-2'>Program</div><table><tbody>${program.map(item => `<tr><td class='pr-4'>${item.time}</td><td class='pr-4'>${item.title}</td><td>${item.presenter}</td></tr>`).join('')}</tbody></table>`;
+        const sponsors2 = branding.sponsors || [];
+        const placement2 = branding.scheduleSponsorPlacement || 'bottom-spaced';
+        let sponsorHtml2 = '';
+        if (sponsors2.length) {
+            if (placement2 === 'top-right') {
+                const s = sponsors2[0];
+                sponsorHtml2 = `<img src='${s.logo}' alt='${s.name}' style='height:60px;position:absolute;top:0.5rem;right:0.5rem;'/>`;
+            } else if (placement2 === 'bottom-centered') {
+                sponsorHtml2 = `<div style='display:flex;gap:1rem;justify-content:center;margin-top:0.5rem;'>${sponsors2.map(s=>`<img src='${s.logo}' alt='${s.name}' style='height:60px;'>`).join('')}</div>`;
+            } else if (placement2 === 'bottom-sides') {
+                const l = sponsors2[0];
+                const r = sponsors2[1];
+                sponsorHtml2 = `${l?`<img src='${l.logo}' alt='${l.name}' style='height:60px;position:absolute;bottom:0.5rem;left:0.5rem;'>`:''}${r?`<img src='${r.logo}' alt='${r.name}' style='height:60px;position:absolute;bottom:0.5rem;right:0.5rem;'>`:''}`;
+            } else {
+                sponsorHtml2 = `<div style='display:flex;gap:1rem;justify-content:space-around;margin-top:0.5rem;'>${sponsors2.slice(0,4).map(s=>`<img src='${s.logo}' alt='${s.name}' style='height:60px;'>`).join('')}</div>`;
+            }
+        }
+        programOverlay.innerHTML = `<div class='font-bold text-lg mb-2'>Program</div><table><tbody>${program.map(item => `<tr><td class='pr-4'>${item.time}</td><td class='pr-4'>${item.title}</td><td>${item.presenter}</td></tr>`).join('')}</tbody></table>${sponsorHtml2}`;
     } else if (programOverlay) {
         programOverlay.remove();
     }
@@ -368,6 +403,22 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         const checkoutHtml = scoreboardData.checkoutText ? `<div class='sb-checkout'>${names[scoreboardData.checkoutPlayer || 0] || ''}: ${scoreboardData.checkoutText}</div>` : '';
         const aClassA = scoreboardData.turn === 0 ? ' active' : '';
         const aClassB = scoreboardData.turn === 1 ? ' active' : '';
+        const sbSponsors = branding.sponsors || [];
+        const sbPlacement = branding.scheduleSponsorPlacement || 'bottom-spaced';
+        let sbSponsorHtml = '';
+        if(sbSponsors.length){
+            if(sbPlacement === 'top-right'){
+                const s = sbSponsors[0];
+                sbSponsorHtml = `<img src='${s.logo}' alt='${s.name}' style='height:50px;position:absolute;top:-2.5rem;right:0;'>`;
+            }else if(sbPlacement === 'bottom-centered'){
+                sbSponsorHtml = `<div style='display:flex;gap:1rem;justify-content:center;margin-top:0.25rem;'>${sbSponsors.map(s=>`<img src='${s.logo}' alt='${s.name}' style='height:50px;'>`).join('')}</div>`;
+            }else if(sbPlacement === 'bottom-sides'){
+                const l=sbSponsors[0]; const r=sbSponsors[1];
+                sbSponsorHtml=`${l?`<img src='${l.logo}' alt='${l.name}' style='height:50px;position:absolute;bottom:-3rem;left:0;'>`:''}${r?`<img src='${r.logo}' alt='${r.name}' style='height:50px;position:absolute;bottom:-3rem;right:0;'>`:''}`;
+            }else{
+                sbSponsorHtml = `<div style='display:flex;gap:1rem;justify-content:space-around;margin-top:0.25rem;'>${sbSponsors.slice(0,4).map(s=>`<img src='${s.logo}' alt='${s.name}' style='height:50px;'>`).join('')}</div>`;
+            }
+        }
         scoreboardOverlay.innerHTML = `
             ${breakInd}
             <div class="sb-row">
@@ -376,7 +427,8 @@ function renderOverlayFromFirebase(state, graphics, branding) {
                 <span class="sb-team${aClassB}" style="background:${colors[1]};color:${textB}">${names[1] || 'Team 2'}</span>
             </div>
             ${infoHtml}
-            ${checkoutHtml}`;
+            ${checkoutHtml}
+            ${sbSponsorHtml}`;
         if(highBreakVisible && scoreboardData.highBreak){
             let hb = overlayContainer.querySelector('#high-break');
             if(!hb){
