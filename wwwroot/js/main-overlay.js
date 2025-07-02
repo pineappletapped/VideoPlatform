@@ -385,6 +385,28 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         scoreboardOverlay.remove();
         overlayContainer.querySelector('#high-break')?.remove();
     }
+
+    // Stats Overlay
+    let statOverlay = overlayContainer.querySelector('#stat-overlay');
+    const statData = state && state.stat;
+    const statShow = previewMode ? state && state.statPreviewVisible : state && state.statVisible;
+    if (statShow && statData) {
+        if (!statOverlay) {
+            statOverlay = document.createElement('div');
+            statOverlay.id = 'stat-overlay';
+            overlayContainer.appendChild(statOverlay);
+        }
+        statOverlay.style.position = 'absolute';
+        statOverlay.style.bottom = '2rem';
+        statOverlay.style.left = '50%';
+        statOverlay.style.transform = 'translateX(-50%)';
+        statOverlay.style.fontFamily = branding.font;
+        statOverlay.style.opacity = previewMode ? '0.6' : '1';
+        const teamName = statData.team && teamsData ? (teamsData[statData.team]?.name || '') : '';
+        statOverlay.innerHTML = `<div class='lower-third-default'>${statData.fact}${statData.player ? ' - ' + statData.player : ''}${teamName ? ' (' + teamName + ')' : ''}</div>`;
+    } else if (statOverlay) {
+        statOverlay.remove();
+    }
 }
 
 let lastState = null;

@@ -14,6 +14,7 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
         const items = [];
         if (overlayState.holdslateVisible) items.push({ key:'holdslate', label:'Holdslate', type:'holdslate' });
         if (overlayState.liveProgramVisible) items.push({ key:'program', label:'Program', type:'program' });
+        if (overlayState.statVisible) items.push({ key:'stat', label:'Stat', type:'stat' });
         if (graphicsData.liveLowerThirdId && graphicsData.lowerThirds) {
             const lt = graphicsData.lowerThirds.find(l=>l.id===graphicsData.liveLowerThirdId);
             if (lt) items.push({ key:'lt', label:`Lower Third: ${lt.title}`, type:'lowerThird' });
@@ -31,6 +32,7 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
         else if(type==='program') updateOverlayState(eventId,{liveProgramVisible:false,previewProgramVisible:false});
         else if(type==='lowerThird') updateGraphicsData(eventId,{liveLowerThirdId:null}, mode);
         else if(type==='titleSlide') updateGraphicsData(eventId,{liveTitleSlideId:null}, mode);
+        else if(type==='stat') updateOverlayState(eventId,{statVisible:false,statPreviewVisible:false});
     }
 
     function renderFav() {
@@ -87,7 +89,7 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
 
     container.querySelector('#hide-selected').addEventListener('click', ()=>{
         const checks = container.querySelectorAll('#active-list input[type="checkbox"]');
-        checks.forEach((ch,i)=>{ if(ch.checked){ const itemIndex=i; const items=[]; if(overlayState.holdslateVisible) items.push({type:'holdslate'}); if(overlayState.liveProgramVisible) items.push({type:'program'}); if(graphicsData.liveLowerThirdId) items.push({type:'lowerThird'}); if(graphicsData.liveTitleSlideId) items.push({type:'titleSlide'}); const item=items[itemIndex]; if(item) hideItem(item.type); }});
+        checks.forEach((ch,i)=>{ if(ch.checked){ const itemIndex=i; const items=[]; if(overlayState.holdslateVisible) items.push({type:'holdslate'}); if(overlayState.liveProgramVisible) items.push({type:'program'}); if(graphicsData.liveLowerThirdId) items.push({type:'lowerThird'}); if(graphicsData.liveTitleSlideId) items.push({type:'titleSlide'}); if(overlayState.statVisible) items.push({type:'stat'}); const item=items[itemIndex]; if(item) hideItem(item.type); }});
     });
     container.querySelector('#fav-live').addEventListener('click', ()=>{
         const favChecks = container.querySelectorAll('#fav-list input[type="checkbox"]');

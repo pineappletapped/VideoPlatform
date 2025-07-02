@@ -161,7 +161,7 @@ async function initializeComponents(eventData) {
         });
         renderScoreboardPanel(document.getElementById('scoreboard-panel'), eventData.sport, eventId);
         renderLineupPanel(document.getElementById('lineups-panel'), eventId, eventData.sport, 'view');
-        renderStatsPanel(document.getElementById('stats-panel'));
+        renderStatsPanel(document.getElementById('stats-panel'), eventId);
         renderTeamsPanel(document.getElementById('teams-panel'), eventId, eventData.sport);
     } else {
         renderProgramPreview(document.getElementById('schedule-panel'), eventData, onOverlayStateChange);
