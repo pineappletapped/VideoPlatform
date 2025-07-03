@@ -55,7 +55,8 @@ const DEFAULT_BRANDING = {
     font: 'Arial',
     logos: { tl:'', tr:'', bl:'', br:'' },
     sponsors: [],
-    scheduleSponsorPlacement: 'bottom-spaced'
+    scheduleSponsorPlacement: 'bottom-spaced',
+    scheduleLayout: 'corner'
 };
 
 function applyBranding(branding = DEFAULT_BRANDING) {
@@ -270,18 +271,34 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             programOverlay.id = 'program-overlay';
             overlayContainer.appendChild(programOverlay);
         }
+        const layout = branding.scheduleLayout || 'corner';
         programOverlay.style.position = 'absolute';
-        programOverlay.style.bottom = '2rem';
-        programOverlay.style.right = '2rem';
+        programOverlay.style.fontFamily = branding.font;
         programOverlay.style.background = branding.primaryColor + 'cc';
         programOverlay.style.color = '#fff';
-        programOverlay.style.padding = '1rem 2rem';
         programOverlay.style.borderRadius = '0.5rem';
         programOverlay.style.boxShadow = '0 2px 8px #0003';
-        programOverlay.style.fontFamily = branding.font;
+        if(layout === 'center'){
+            programOverlay.style.top = '50%';
+            programOverlay.style.left = '50%';
+            programOverlay.style.transform = 'translate(-50%,-50%)';
+            programOverlay.style.padding = '2rem 3rem';
+            programOverlay.style.maxWidth = '80vw';
+            programOverlay.style.bottom = '';
+            programOverlay.style.right = '';
+        } else {
+            programOverlay.style.bottom = '2rem';
+            programOverlay.style.right = '2rem';
+            programOverlay.style.padding = '1rem 2rem';
+            programOverlay.style.transform = '';
+            programOverlay.style.top = '';
+            programOverlay.style.left = '';
+            programOverlay.style.maxWidth = '';
+        }
         const sponsors = branding.sponsors || [];
         const placement = branding.scheduleSponsorPlacement || 'bottom-spaced';
         let sponsorHtml = '';
+        const eventLogo = branding.logoSecondary || branding.logoPrimary || '';
         if (sponsors.length) {
             if (placement === 'top-right') {
                 const s = sponsors[0];
@@ -296,26 +313,46 @@ function renderOverlayFromFirebase(state, graphics, branding) {
                 sponsorHtml = `<div style='display:flex;gap:1rem;justify-content:space-around;margin-top:0.5rem;'>${sponsors.slice(0,4).map(s=>`<img src='${s.logo}' alt='${s.name}' style='height:60px;'>`).join('')}</div>`;
             }
         }
-        programOverlay.innerHTML = `<div class='font-bold text-lg mb-2'>Program</div><table><tbody>${program.map(item => `<tr><td class='pr-4'>${item.time}</td><td class='pr-4'>${item.title}</td><td>${item.presenter}</td></tr>`).join('')}</tbody></table>${sponsorHtml}`;
+        let html = `<div class='font-bold text-lg mb-2'>Program</div>`;
+        if(eventLogo && layout==='center') html += `<img src='${eventLogo}' alt='Logo' style='height:80px;margin:0.5rem auto;'>`;
+        html += `<table><tbody>${program.map(item=>`<tr><td class='pr-4'>${item.time}</td><td class='pr-4'>${item.title}</td><td>${item.presenter}</td></tr>`).join('')}</tbody></table>`;
+        html += sponsorHtml;
+        programOverlay.innerHTML = html;
     } else if (previewMode && state && state.previewProgramVisible && program && program.length) {
         if (!programOverlay) {
             programOverlay = document.createElement('div');
             programOverlay.id = 'program-overlay';
             overlayContainer.appendChild(programOverlay);
         }
+        const layoutPrev = branding.scheduleLayout || 'corner';
         programOverlay.style.position = 'absolute';
-        programOverlay.style.bottom = '2rem';
-        programOverlay.style.right = '2rem';
+        programOverlay.style.fontFamily = branding.font;
         programOverlay.style.background = branding.primaryColor + 'cc';
         programOverlay.style.color = '#fff';
-        programOverlay.style.padding = '1rem 2rem';
         programOverlay.style.borderRadius = '0.5rem';
         programOverlay.style.boxShadow = '0 2px 8px #0003';
-        programOverlay.style.fontFamily = branding.font;
         programOverlay.style.opacity = '0.6';
+        if(layoutPrev === 'center'){
+            programOverlay.style.top = '50%';
+            programOverlay.style.left = '50%';
+            programOverlay.style.transform = 'translate(-50%,-50%)';
+            programOverlay.style.padding = '2rem 3rem';
+            programOverlay.style.maxWidth = '80vw';
+            programOverlay.style.bottom = '';
+            programOverlay.style.right = '';
+        } else {
+            programOverlay.style.bottom = '2rem';
+            programOverlay.style.right = '2rem';
+            programOverlay.style.padding = '1rem 2rem';
+            programOverlay.style.transform = '';
+            programOverlay.style.top = '';
+            programOverlay.style.left = '';
+            programOverlay.style.maxWidth = '';
+        }
         const sponsors2 = branding.sponsors || [];
         const placement2 = branding.scheduleSponsorPlacement || 'bottom-spaced';
         let sponsorHtml2 = '';
+        const eventLogo2 = branding.logoSecondary || branding.logoPrimary || '';
         if (sponsors2.length) {
             if (placement2 === 'top-right') {
                 const s = sponsors2[0];
@@ -330,7 +367,11 @@ function renderOverlayFromFirebase(state, graphics, branding) {
                 sponsorHtml2 = `<div style='display:flex;gap:1rem;justify-content:space-around;margin-top:0.5rem;'>${sponsors2.slice(0,4).map(s=>`<img src='${s.logo}' alt='${s.name}' style='height:60px;'>`).join('')}</div>`;
             }
         }
-        programOverlay.innerHTML = `<div class='font-bold text-lg mb-2'>Program</div><table><tbody>${program.map(item => `<tr><td class='pr-4'>${item.time}</td><td class='pr-4'>${item.title}</td><td>${item.presenter}</td></tr>`).join('')}</tbody></table>${sponsorHtml2}`;
+        let html2 = `<div class='font-bold text-lg mb-2'>Program</div>`;
+        if(eventLogo2 && layoutPrev==='center') html2 += `<img src='${eventLogo2}' alt='Logo' style='height:80px;margin:0.5rem auto;'>`;
+        html2 += `<table><tbody>${program.map(item=>`<tr><td class='pr-4'>${item.time}</td><td class='pr-4'>${item.title}</td><td>${item.presenter}</td></tr>`).join('')}</tbody></table>`;
+        html2 += sponsorHtml2;
+        programOverlay.innerHTML = html2;
     } else if (programOverlay) {
         programOverlay.remove();
     }

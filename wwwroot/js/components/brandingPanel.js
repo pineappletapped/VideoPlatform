@@ -2,7 +2,7 @@ import { getBranding, updateBranding } from '../firebase.js';
 
 export function renderBrandingPanel(container, eventId){
     getBranding(eventId).then(branding => {
-        branding = branding || { logos:{tl:'',tr:'',bl:'',br:''}, sponsors:[], scheduleSponsorPlacement:'bottom-spaced' };
+        branding = branding || { logos:{tl:'',tr:'',bl:'',br:''}, sponsors:[], scheduleSponsorPlacement:'bottom-spaced', scheduleLayout:'corner' };
         container.innerHTML = `
             <div class="space-y-4">
                 <div>
@@ -22,6 +22,13 @@ export function renderBrandingPanel(container, eventId){
                             <option value="bottom-centered">Bottom Center</option>
                             <option value="bottom-spaced">Bottom Spaced</option>
                             <option value="bottom-sides">Two Sides</option>
+                        </select>
+                    </div>
+                    <div class="mt-2">
+                        <label class="block text-xs mb-1">Schedule Layout</label>
+                        <select id="schedule-layout" class="border p-1 w-full text-black">
+                            <option value="corner">Corner Box</option>
+                            <option value="center">Center Box</option>
                         </select>
                     </div>
                 </div>
@@ -50,6 +57,11 @@ export function renderBrandingPanel(container, eventId){
         if (placementSel) {
             placementSel.value = branding.scheduleSponsorPlacement || 'bottom-spaced';
             placementSel.onchange = () => { branding.scheduleSponsorPlacement = placementSel.value; save(); };
+        }
+        const layoutSel = container.querySelector('#schedule-layout');
+        if (layoutSel) {
+            layoutSel.value = branding.scheduleLayout || 'corner';
+            layoutSel.onchange = () => { branding.scheduleLayout = layoutSel.value; save(); };
         }
         container.addEventListener('click', e=>{
             const edit = e.target.getAttribute('data-edit');
