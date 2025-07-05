@@ -5,6 +5,8 @@ import { renderBrandingModal } from './components/brandingModal.js';
 let SQUARE_APP_ID = '';
 let SQUARE_LOCATION_ID = '';
 let SQUARE_PLANS = {};
+let STRIPE_PUBLISHABLE_KEY = '';
+let STRIPE_PRICE_IDS = {};
 const PLAN_LIMITS = { single: 1, three: 3, eight: 8 };
 import { sportsData } from './sportsConfig.js';
 
@@ -16,6 +18,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     SQUARE_PLANS = cfg.SQUARE_PLANS;
   } catch (e) {
     console.warn('Square config missing', e);
+  }
+  try {
+    const scfg = await import('../stripeConfig.js');
+    STRIPE_PUBLISHABLE_KEY = scfg.STRIPE_PUBLISHABLE_KEY;
+    STRIPE_PRICE_IDS = scfg.STRIPE_PRICE_IDS;
+  } catch (e) {
+    console.warn('Stripe config missing', e);
   }
   const topBar = document.createElement('top-bar');
   topBar.addEventListener('logout', logout);
@@ -160,15 +169,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
 
   async function initPayments() {
-    if (!SQUARE_APP_ID || !SQUARE_LOCATION_ID) {
+    if (STRIPE_PUBLISHABLE_KEY) {
+      payments = Stripe(STRIPE_PUBLISHABLE_KEY);
+      payMsg.textContent = '';
+      document.getElementById('card-container').style.display = 'none';
+    } else if (SQUARE_APP_ID && SQUARE_LOCATION_ID) {
+      const mod = await window.Square.payments(SQUARE_APP_ID, SQUARE_LOCATION_ID);
+      payments = mod;
+      card = await payments.card();
+      await card.attach('#card-container');
+      payMsg.textContent = '';
+    } else {
       payMsg.textContent = 'Payment gateway not configured - subscription will be skipped.';
-      return;
     }
-    const mod = await window.Square.payments(SQUARE_APP_ID, SQUARE_LOCATION_ID);
-    payments = mod;
-    card = await payments.card();
-    await card.attach('#card-container');
-    payMsg.textContent = '';
   }
 
   initPayments();
@@ -192,34 +205,46 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
     try {
-      let subId = '';
-      if (card) {
-        const result = await card.tokenize();
-        if (result.status !== 'OK') throw new Error('Card error');
-        const res = await fetch('create-subscription.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            nonce: result.token,
-            tier: data.tier,
-            email: data.email
-          })
-        });
-        const sub = await res.json();
-        if (!res.ok) throw new Error(sub.error || 'Subscription failed');
-        subId = sub.subscription_id;
-      }
-      await register(data.email, data.password, data.tier, subId);
-      try {
-        await fetch('send-confirmation.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: data.email })
-        });
-      } catch (e) {
-        console.warn('Failed to send confirmation', e);
-      }
-      window.location.reload();
+        let subId = '';
+        if (card) {
+          const result = await card.tokenize();
+          if (result.status !== 'OK') throw new Error('Card error');
+          const res = await fetch('create-subscription.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              nonce: result.token,
+              tier: data.tier,
+              email: data.email
+            })
+          });
+          const sub = await res.json();
+          if (!res.ok) throw new Error(sub.error || 'Subscription failed');
+          subId = sub.subscription_id;
+          await register(data.email, data.password, data.tier, subId);
+        } else if (STRIPE_PUBLISHABLE_KEY) {
+          const res = await fetch('create-stripe-session.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tier: data.tier, email: data.email })
+          });
+          const sess = await res.json();
+          if (!res.ok) throw new Error(sess.error || 'Checkout failed');
+          await payments.redirectToCheckout({ sessionId: sess.session_id });
+          return;
+        } else {
+          await register(data.email, data.password, data.tier, subId);
+        }
+        try {
+          await fetch('send-confirmation.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: data.email })
+          });
+        } catch (e) {
+          console.warn('Failed to send confirmation', e);
+        }
+        window.location.reload();
     } catch (err) {
       regError.textContent = err.message;
       regError.classList.remove('hidden');
