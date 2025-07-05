@@ -69,7 +69,10 @@
     <div id="profile-wizard" class="hidden"></div>
     <div id="calendar-drawer" class="hidden"></div>
     <footer class="fixed bottom-0 left-0 w-full bg-gray-800 border-t border-gray-700 flex items-center justify-between px-6 py-2 z-50 shadow">
-        <button id="footer-branding" class="control-button">Event Branding</button>
+        <div class="flex items-center gap-4">
+            <button id="footer-branding" class="control-button">Event Branding</button>
+            <label class="text-xs flex items-center gap-1"><input id="hotkey-toggle" type="checkbox" class="align-middle">Enable Hotkeys</label>
+        </div>
     </footer>
     <script type="module" src="js/main-graphics.js?v=20240610"></script>
 </body>

@@ -12,7 +12,7 @@ import { renderBrandingModal } from './components/brandingModal.js';
 import { renderProfileWizard } from './components/profileWizard.js';
 import { renderCalendarDrawer } from './components/calendarDrawer.js';
 import { renderHoldslatePanel } from './components/holdslatePanel.js';
-import { updateOverlayState, getOverlayState, getEventMetadata, updateEventMetadata, getGraphicsData, updateGraphicsData } from './firebase.js';
+import { updateOverlayState, getOverlayState, getEventMetadata, updateEventMetadata, getGraphicsData, updateGraphicsData, listenOverlayState, listenGraphicsData } from './firebase.js';
 import { renderActiveGraphicsPanel } from './components/activeGraphicsPanel.js';
 import { renderBrandingPanel } from './components/brandingPanel.js';
 import { requireAuth, logout } from './auth.js';
@@ -23,6 +23,9 @@ const eventId = params.get('event_id') || 'demo';
 let currentUserId = '';
 
 let graphicsMode = 'live';
+let overlayHotkeys = {};
+let graphicsHotkeys = {};
+let hotkeysEnabled = false;
 
 async function initializeApp(user) {
     currentUserId = user ? user.uid.replace('local-','') : '';
@@ -173,6 +176,14 @@ async function initializeComponents(eventData) {
     renderActiveGraphicsPanel(document.getElementById('active-graphics'), eventId, graphicsMode);
     renderBrandingPanel(document.getElementById('branding-panel'), eventId);
 
+    listenOverlayState(eventId, s => { overlayHotkeys = s || {}; });
+    listenGraphicsData(eventId, g => { graphicsHotkeys = g || {}; }, graphicsMode);
+    const hotToggle = document.getElementById('hotkey-toggle');
+    if (hotToggle) {
+        hotkeysEnabled = hotToggle.checked;
+        hotToggle.addEventListener('change', () => { hotkeysEnabled = hotToggle.checked; });
+    }
+
 
     const brandingModal = document.getElementById('branding-modal');
     renderBrandingModal(brandingModal, { eventId });
@@ -225,5 +236,37 @@ async function cutToProgram() {
         await updateOverlayState(eventId, overlayUpdates);
     }
 }
+
+function handleHotkeys(e) {
+    if (!hotkeysEnabled) return;
+    if (['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) return;
+    const k = e.key.toLowerCase();
+    if (k === 'h') {
+        e.preventDefault();
+        updateOverlayState(eventId, { holdslateVisible: !overlayHotkeys.holdslateVisible, holdslatePreviewVisible: false });
+    } else if (k === 's') {
+        e.preventDefault();
+        updateOverlayState(eventId, { scoreboardVisible: !overlayHotkeys.scoreboardVisible, scoreboardPreviewVisible: false });
+    } else if (k === 'p') {
+        e.preventDefault();
+        updateOverlayState(eventId, { liveProgramVisible: !overlayHotkeys.liveProgramVisible, previewProgramVisible: false });
+    } else if (k === 'l') {
+        e.preventDefault();
+        if (graphicsHotkeys.liveLowerThirdId) {
+            updateGraphicsData(eventId, { liveLowerThirdId: null }, graphicsMode);
+        } else if (graphicsHotkeys.lowerThirds && graphicsHotkeys.lowerThirds.length) {
+            updateGraphicsData(eventId, { liveLowerThirdId: graphicsHotkeys.lowerThirds[0].id }, graphicsMode);
+        }
+    } else if (k === 't') {
+        e.preventDefault();
+        if (graphicsHotkeys.liveTitleSlideId) {
+            updateGraphicsData(eventId, { liveTitleSlideId: null }, graphicsMode);
+        } else if (graphicsHotkeys.titleSlides && graphicsHotkeys.titleSlides.length) {
+            updateGraphicsData(eventId, { liveTitleSlideId: graphicsHotkeys.titleSlides[0].id }, graphicsMode);
+        }
+    }
+}
+
+document.addEventListener('keydown', handleHotkeys);
 
 requireAuth(`graphics.html?event_id=${eventId}`).then(u => initializeApp(u));
