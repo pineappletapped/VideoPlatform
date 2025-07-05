@@ -70,6 +70,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
     let teamsData = null;
     let currentData = null;
     let timerInterval = null;
+    const timerCommandRef = ref(db, `status/${eventId}/timerCommand`);
 
     const teamsRef = ref(db, `teams/${eventId}`);
     onValue(teamsRef, snap => { teamsData = snap.val(); if(currentData) render(currentData); });
@@ -259,6 +260,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             startBtn.onclick = () => {
                 if (timerInterval) return;
                 timerSecs = parseTime(timeInput.value);
+                set(timerCommandRef, { action: 'start', timestamp: Date.now(), base: timerSecs });
                 timerInterval = setInterval(() => {
                     timerSecs++;
                     timeInput.value = formatTime(timerSecs);
@@ -267,7 +269,10 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             };
         }
         if (stopBtn) {
-            stopBtn.onclick = () => { if (timerInterval) { clearInterval(timerInterval); timerInterval=null; } };
+            stopBtn.onclick = () => {
+                if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+                set(timerCommandRef, { action: 'stop' });
+            };
         }
         if (resetBtn && timeInput) {
             resetBtn.onclick = () => {
@@ -383,7 +388,12 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             };
         }
         if (!container.dataset.heartbeat) {
-            setInterval(() => localStorage.setItem('sportsHeartbeat', Date.now().toString()), 5000);
+            setInterval(() => {
+                localStorage.setItem('sportsHeartbeat', Date.now().toString());
+                const tInput = container.querySelector('#sb-time');
+                const secs = tInput ? parseTime(tInput.value) : 0;
+                set(timerCommandRef, { action: 'status', running: !!timerInterval, timestamp: Date.now(), base: secs });
+            }, 15000);
             container.dataset.heartbeat = 'true';
         }
     }
