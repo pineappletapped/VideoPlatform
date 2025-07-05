@@ -5,3 +5,6 @@ wwwroot/uploads/
 # Local Square configuration
 wwwroot/squareConfig.js
 wwwroot/square-config.php
+
+wwwroot/stripeConfig.js
+wwwroot/stripe-config.php

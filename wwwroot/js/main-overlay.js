@@ -12,6 +12,10 @@ let preloadedVT = null;
 let masterVolume = 1;
 let vtVolume = 1;
 let musicVolume = 1;
+let timerBase = 0;
+let timerStart = 0;
+let timerRunning = false;
+let timerInterval = null;
 
 function contrastColor(hex) {
     let c = hex.replace('#', '');
@@ -388,6 +392,10 @@ function updateOverlay() {
     if (state.scoreboard && scoreboardPersist && state.scoreboardVisible === undefined) {
         state.scoreboardVisible = true;
     }
+    if (timerRunning && state.scoreboard && state.scoreboard.time !== undefined) {
+        const secs = timerBase + Math.floor((Date.now() - timerStart) / 1000);
+        state.scoreboard = { ...state.scoreboard, time: `${Math.floor(secs/60)}:${(secs%60).toString().padStart(2,'0')}` };
+    }
     renderOverlayFromFirebase(state, lastGraphics, lastBranding);
     masterVolume = lastState && lastState.masterVolume !== undefined ? lastState.masterVolume : 1;
     vtVolume = lastState && lastState.vtVolume !== undefined ? lastState.vtVolume : 1;
@@ -418,6 +426,23 @@ onValue(ref(getDatabaseInstance(), `scoreboard/${eventId}`), snap => {
 });
 
 const db = getDatabaseInstance();
+onValue(ref(db, `status/${eventId}/timerCommand`), snap => {
+    const cmd = snap.val();
+    if (!cmd) return;
+    if (cmd.action === 'start' || (cmd.action === 'status' && cmd.running)) {
+        timerBase = cmd.base || 0;
+        timerStart = cmd.timestamp || Date.now();
+        if (!timerRunning) {
+            timerRunning = true;
+            timerInterval = setInterval(updateOverlay, 1000);
+        }
+        updateOverlay();
+    } else if (cmd.action === 'stop' || (cmd.action === 'status' && !cmd.running)) {
+        timerRunning = false;
+        if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+        updateOverlay();
+    }
+});
 onValue(ref(db, `status/${eventId}/vtCommand`), snap => {
     const cmd = snap.val();
     if (!cmd || cmd.action !== 'play' || !cmd.vt) return;

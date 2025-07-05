@@ -109,7 +109,10 @@
     <div id="calendar-drawer" class="hidden"></div>
     <!-- Fixed Footer Bar -->
     <footer class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-300 flex items-center justify-between px-6 py-2 z-50 shadow">
-        <button id="footer-branding" class="control-button">Event Branding</button>
+        <div class="flex items-center gap-4">
+            <button id="footer-branding" class="control-button">Event Branding</button>
+            <label class="text-xs flex items-center gap-1"><input id="hotkey-toggle" type="checkbox" class="align-middle">Enable Hotkeys</label>
+        </div>
         <div class="flex gap-2">
             <button class="control-button btn-sm" id="footer-obs-record">Start Recording (OBS)</button>
             <button class="control-button btn-sm" id="footer-obs-stream">Start Streaming (OBS)</button>

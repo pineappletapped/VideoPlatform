@@ -40,6 +40,16 @@ Create a `squareConfig.js` file next to `index.html` with your Square
 Application ID, location ID and plan IDs based on the `squareConfig.sample.js`
 template.
 
+### Subscriptions with Stripe
+
+If you prefer using Stripe, copy `stripe-config.sample.php` to
+`stripe-config.php` and fill in your secret key along with price IDs for each
+billing tier. Create a `stripeConfig.js` file next to `index.html` based on the
+`stripeConfig.sample.js` template containing your publishable key and price ID
+mapping. During registration the client will create a Checkout session via
+`create-stripe-session.php` and redirect the user to Stripe to complete the
+subscription.
+
 ### Optional ATEM bridge
 
 If you need to control a Blackmagic ATEM switcher, generate and run the Python
