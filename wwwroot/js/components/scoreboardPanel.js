@@ -251,6 +251,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         };
         const formatTime = secs => `${Math.floor(secs/60)}:${(secs%60).toString().padStart(2,'0')}`;
         let timerSecs = timeInput ? parseTime(timeInput.value) : 0;
+        let timerStartMs = 0;
         const sendTime = () => {
             const obj = getFormData();
             obj.time = formatTime(timerSecs);
@@ -260,7 +261,9 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             startBtn.onclick = () => {
                 if (timerInterval) return;
                 timerSecs = parseTime(timeInput.value);
-                set(timerCommandRef, { action: 'start', timestamp: Date.now(), base: timerSecs });
+                timerStartMs = Date.now();
+                set(timerCommandRef, { action: 'start', timestamp: timerStartMs, base: timerSecs });
+                sendTime();
                 timerInterval = setInterval(() => {
                     timerSecs++;
                     timeInput.value = formatTime(timerSecs);
@@ -271,13 +274,16 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         if (stopBtn) {
             stopBtn.onclick = () => {
                 if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+                timerStartMs = 0;
                 set(timerCommandRef, { action: 'stop' });
+                sendTime();
             };
         }
         if (resetBtn && timeInput) {
             resetBtn.onclick = () => {
                 if (timerInterval) { clearInterval(timerInterval); timerInterval=null; }
                 timerSecs = 0;
+                timerStartMs = 0;
                 timeInput.value = formatTime(timerSecs);
                 sendTime();
             };
@@ -392,7 +398,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                 localStorage.setItem('sportsHeartbeat', Date.now().toString());
                 const tInput = container.querySelector('#sb-time');
                 const secs = tInput ? parseTime(tInput.value) : 0;
-                set(timerCommandRef, { action: 'status', running: !!timerInterval, timestamp: Date.now(), base: secs });
+                set(timerCommandRef, { action: 'status', running: !!timerInterval, timestamp: timerStartMs, base: secs });
             }, 15000);
             container.dataset.heartbeat = 'true';
         }
