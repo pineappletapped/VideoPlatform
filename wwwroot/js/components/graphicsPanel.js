@@ -68,6 +68,7 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
     listenFavorites(eventId, (fav) => { favorites = fav || { lowerThirds: [], titleSlides: [] }; renderPanel(); });
 
     function renderPanel() {
+        if (!graphicsData) return;
         const lowerThirds = graphicsData.lowerThirds || [];
         const titleSlides = graphicsData.titleSlides || [];
         // Modal HTML (hidden by default)
@@ -368,3 +369,4 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
         });
     }
 }
+
