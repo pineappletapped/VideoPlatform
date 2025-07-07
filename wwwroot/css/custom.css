@@ -1,0 +1,286 @@
+:root {
+  --brand-color: #e16316;
+}
+html,body { margin: 0; width:100%; height:100%; overflow:hidden; }
+.status-bar, .input-sources-bar, .graphics-panel, .obs-controls, .atem-controls, .ptz-controls, .branding-modal, .profile-wizard, .calendar-drawer {
+  border: 2px dashed #e16316;
+  background: #1f2937;
+  color: #f3f4f6;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 0.5rem;
+  min-height: 48px;
+}
+
+.status-bar {
+  border: none;
+}
+
+/* Remove dotted border from main graphics panel */
+.graphics-panel {
+  border: none;
+}
+
+.branding-modal, .profile-wizard, .calendar-drawer {
+  background: #2d2d2d;
+  color: #000;
+}
+
+#top-bar {
+  margin-bottom: 1rem;
+}
+
+.control-button {
+  background: #e16316;
+  color: #fff;
+  font-weight: bold;
+  padding: 0.18rem 0.5rem;
+  border-radius: 0.18rem;
+  border: none;
+  margin-right: 0.15rem;
+  margin-bottom: 0.15rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  line-height: 1.1;
+}
+
+.control-button:hover {
+  background: #c45012;
+}
+
+/* Preview and live button variants */
+.btn-preview {
+  background: #10b981;
+}
+.btn-preview:hover {
+  background: #059669;
+}
+.btn-live {
+  background: #ef4444;
+}
+.btn-live:hover {
+  background: #dc2626;
+}
+
+.btn-sm {
+  font-size: 0.7rem;
+  padding: 0.12rem 0.32rem;
+  border-radius: 0.13rem;
+  margin-right: 0.12rem;
+  margin-bottom: 0.12rem;
+}
+
+.score-btn {
+  font-size: 0.65rem;
+  padding: 0.1rem 0.3rem;
+  border-radius: 0.2rem;
+  color: #fff;
+  border: none;
+  margin-left: 0.15rem;
+  cursor: pointer;
+}
+
+.scoreboard-panel table td {
+  padding-bottom: 0.25rem;
+}
+.scoreboard-panel table td:first-child {
+  white-space: nowrap;
+  padding-right: 0.5rem;
+}
+
+.sb-container {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  font-weight: bold;
+  color: #fff;
+  position: relative;
+}
+.sb-row { display:flex; align-items:center; }
+.sb-team { padding: 0.25rem 0.5rem; color:#fff; min-width:6rem; text-align:center; display:flex; align-items:center; justify-content:center; }
+.sb-team-logo{height:1.2rem;margin-right:0.25rem;}
+.sb-score { padding: 0.25rem 0.75rem; margin: 0 0.25rem; color:#fff; }
+.sb-info { font-size: 0.875rem; text-align:center; margin-top:0.25rem; }
+.sb-style1 { background: var(--brand-secondary1, rgba(0,0,0,0.6)); border-radius:0.5rem; padding:0.25rem 0.5rem; }
+.sb-style2 { background: rgba(0,0,0,0.8); border-radius:0.25rem; padding:0.25rem 0.5rem; }
+.sb-style3 { background: transparent; border:2px solid var(--brand-primary); padding:0.25rem 0.5rem; }
+.sb-style4 { background: #fff; color:#000; border-radius:0.25rem; padding:0.25rem 0.5rem; }
+.sb-style4 .sb-team { color:#000; }
+.sb-style5 { background: var(--brand-primary); padding:0.25rem 0.5rem; }
+.sb-h1 { display:flex; width:100%; }
+.sb-h1 .sb-row { width:100%; justify-content:space-between; }
+.sb-h1 .sb-team { flex:1; text-align:center; }
+.sb-h1 .sb-score { flex:0 0 auto; }
+.sb-h2 { display:flex; width:100%; }
+.sb-h2 .sb-row { width:100%; justify-content:center; }
+.sb-h2 .sb-team { flex:0 0 20%; text-align:center; }
+.sb-h2 .sb-score { flex:0 0 auto; margin:0 1rem; }
+.sb-team.active { text-decoration: underline; }
+.sb-break { font-size: 0.875rem; text-align:center; margin-top:0.25rem; }
+.sb-checkout { font-size: 0.875rem; text-align:center; margin-top:0.25rem; }
+.active-player td:first-child { text-decoration: underline; }
+
+.sb-current-break {
+  position: absolute;
+  top: -1.2rem;
+  padding: 0.1rem 0.4rem;
+  background: var(--brand-primary, #e16316);
+  color: #fff;
+  border-radius: 0.25rem;
+  font-size: 1rem;
+}
+.sb-current-break.left { left: 40%; transform: translateX(-50%); }
+.sb-current-break.right { left: 60%; transform: translateX(-50%); }
+
+/* Additional styles for column layouts */
+.col-cameras, .col-atem, .col-obs {
+  background: #2a2a2a;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.program-preview {
+  padding: 1rem;
+}
+
+.lower-third-default {
+  background: var(--brand-primary);
+  color: #fff;
+  border-radius: 0.5rem;
+  padding: 1rem 2rem;
+  box-shadow: 0 2px 8px #0003;
+}
+
+.lower-third-rounded {
+  background: var(--brand-primary);
+  color: #fff;
+  padding: 1rem 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 2px 8px #0003;
+}
+
+.lower-third-underline {
+  background: transparent;
+  color: #fff;
+  padding: 0.5rem 0;
+  border-bottom: 4px solid var(--brand-primary);
+}
+
+/* Indicate when a VT clip is fully buffered */
+.vt-buffered {
+  box-shadow: 0 0 0 2px #38a169 inset;
+}
+
+/* Prevent double borders when panels nest */
+.graphics-panel .graphics-panel {
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Generic modal styling */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-window {
+  background: #ffffff;
+  color: #000000;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  min-width: 320px;
+  max-width: 95vw;
+}
+
+.modal-window input,
+.modal-window select,
+.modal-window textarea {
+  color: #000;
+}
+
+/* Ensure form field text is readable inside panels */
+.graphics-panel input,
+.graphics-panel select,
+.graphics-panel textarea,
+.scoreboard-panel input,
+.scoreboard-panel select,
+.scoreboard-panel textarea,
+.teams-panel input,
+.teams-panel select,
+.teams-panel textarea,
+.lineup-panel input,
+.lineup-panel select {
+  color: #000;
+}
+
+/* Ensure text is readable in stats panel */
+.stats-panel {
+  color: #000;
+}
+.stats-panel input,
+.stats-panel select,
+.stats-panel textarea {
+  color: #000;
+}
+
+/* Limit widths so the tab doesn't scroll horizontally */
+.teams-panel table {
+  table-layout: fixed;
+  width: 100%;
+}
+.teams-panel table td:first-child input {
+  max-width: 10rem;
+}
+.teams-panel table td:last-child select {
+  max-width: 8rem;
+}
+.teams-panel input[type="color"] {
+  max-width: 4rem;
+}
+
+#overlay-container { position:absolute; inset:0; width:100%; height:100%; }
+#scoreboard-overlay { position:absolute; z-index:60; }
+
+.golf-table td, .golf-table th { padding:0 0.4rem; text-align:center; }
+
+/* Overlay transitions */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+.fade-in { animation: fadeIn 0.5s forwards; }
+.fade-out { animation: fadeOut 0.5s forwards; }
+
+@keyframes slideInLeft { from { transform: translateX(-100%); opacity:0; } to { transform: translateX(0); opacity:1; } }
+@keyframes slideOutLeft { from { transform: translateX(0); opacity:1; } to { transform: translateX(-100%); opacity:0; } }
+.slide-in-left { animation: slideInLeft 0.5s forwards; }
+.slide-out-left { animation: slideOutLeft 0.5s forwards; }
+
+@keyframes slideInRight { from { transform: translateX(100%); opacity:0; } to { transform: translateX(0); opacity:1; } }
+@keyframes slideOutRight { from { transform: translateX(0); opacity:1; } to { transform: translateX(100%); opacity:0; } }
+.slide-in-right { animation: slideInRight 0.5s forwards; }
+.slide-out-right { animation: slideOutRight 0.5s forwards; }
+
+@keyframes slideInUp { from { transform: translateY(100%); opacity:0; } to { transform: translateY(0); opacity:1; } }
+@keyframes slideOutUp { from { transform: translateY(0); opacity:1; } to { transform: translateY(-100%); opacity:0; } }
+.slide-in-up { animation: slideInUp 0.5s forwards; }
+.slide-out-up { animation: slideOutUp 0.5s forwards; }
+
+@keyframes slideInDown { from { transform: translateY(-100%); opacity:0; } to { transform: translateY(0); opacity:1; } }
+@keyframes slideOutDown { from { transform: translateY(0); opacity:1; } to { transform: translateY(100%); opacity:0; } }
+.slide-in-down { animation: slideInDown 0.5s forwards; }
+.slide-out-down { animation: slideOutDown 0.5s forwards; }
+
+/* Formation overlay */
+#formation-overlay { position:absolute; inset:0; z-index:55; pointer-events:none; }
+.formation-pitch { position:absolute; inset:10% 10%; background:#006400; border:4px solid #fff; border-radius:0.5rem; }
+.formation-player { position:absolute; transform:translate(-50%,-50%); background:rgba(0,0,0,0.6); color:#fff; padding:0.2rem 0.4rem; border-radius:0.25rem; font-size:0.9rem; text-align:center; white-space:nowrap; }
+

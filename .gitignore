@@ -1,0 +1,7 @@
+node_modules/
+
+# Ignore uploaded media
+wwwroot/uploads/
+# Local Square configuration
+wwwroot/squareConfig.js
+wwwroot/square-config.php

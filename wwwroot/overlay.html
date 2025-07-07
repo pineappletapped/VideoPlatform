@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Event Overlay</title>
+
+    <!-- Tailwind (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { brand: '#e16316' } } }
+        };
+    </script>
+
+    <!-- GSAP (CDN) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <link rel="stylesheet" href="css/custom.css?v=20240610">
+</head>
+<body class="bg-transparent">
+    <div id="overlay-container">
+        <div id="corner-logos">
+            <img id="logo-tl" class="absolute top-0 left-0 m-4 h-16" />
+            <img id="logo-tr" class="absolute top-0 right-0 m-4 h-16" />
+            <img id="logo-bl" class="absolute bottom-0 left-0 m-4 h-16" />
+            <img id="logo-br" class="absolute bottom-0 right-0 m-4 h-16" />
+        </div>
+        <div id="preview-lower-third"></div>
+        <div id="lower-third"></div>
+        <div id="formation-overlay"></div>
+        <div id="scoreboard-overlay"></div>
+        <div id="high-break"></div>
+        <div id="stat-overlay"></div>
+        <div id="program-overlay"></div>
+        <div id="vt-overlay"></div>
+        <div id="title-slide"></div>
+    </div>
+
+    <!-- Page-specific entry point -->
+    <script type="module" src="js/main-overlay.js?v=20240610"></script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Event Multiview</title>
+
+    <!-- Tailwind (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { brand: '#e16316' } } }
+        };
+    </script>
+
+    <!-- GSAP (CDN) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <link rel="stylesheet" href="css/custom.css?v=20240610">
+</head>
+<body class="bg-gray-900 text-gray-100">
+    <div id="top-bar"></div>
+    <div class="grid grid-cols-2 gap-2 p-2 h-screen">
+        <div id="preview-window" class="bg-black"></div>
+        <div id="program-window" class="bg-black"></div>
+        <div id="overlay-preview" class="bg-black"></div>
+        <div id="status-panel" class="bg-gray-800 text-white"></div>
+    </div>
+
+    <div id="branding-modal" class="hidden"></div>
+    <!-- Page-specific entry point -->
+    <script type="module" src="js/main-multiview.js?v=20240610"></script>
+</body>
+</html>
