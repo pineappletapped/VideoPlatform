@@ -17,7 +17,9 @@ function getBranding(targetId, isUser, callback) {
                 logoSecondary: '',
                 font: 'Arial',
                 logos: { tl:'', tr:'', bl:'', br:'' },
-                sponsors: []
+                sponsors: [],
+                scheduleSponsorPlacement: 'bottom-spaced',
+                scheduleLayout: 'corner'
             });
         } else {
             callback(branding);
@@ -69,6 +71,22 @@ export function renderBrandingModal(container, opts) {
                                 ${FONT_OPTIONS.map(f => `<option value="${f}"${branding.font === f ? ' selected' : ''}>${f}</option>`).join('')}
                             </select>
                         </div>
+                        <div class="mb-3">
+                            <label class="block text-sm font-semibold mb-1">Schedule Sponsor Placement</label>
+                            <select name="scheduleSponsorPlacement" class="border p-1 w-full">
+                                <option value="top-right"${branding.scheduleSponsorPlacement==='top-right'?' selected':''}>Top Right</option>
+                                <option value="bottom-centered"${branding.scheduleSponsorPlacement==='bottom-centered'?' selected':''}>Bottom Center</option>
+                                <option value="bottom-spaced"${!branding.scheduleSponsorPlacement || branding.scheduleSponsorPlacement==='bottom-spaced'?' selected':''}>Bottom Spaced</option>
+                                <option value="bottom-sides"${branding.scheduleSponsorPlacement==='bottom-sides'?' selected':''}>Two Sides</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-sm font-semibold mb-1">Schedule Layout</label>
+                            <select name="scheduleLayout" class="border p-1 w-full">
+                                <option value="corner"${!branding.scheduleLayout || branding.scheduleLayout==='corner'?' selected':''}>Corner Box</option>
+                                <option value="center"${branding.scheduleLayout==='center'?' selected':''}>Center Box</option>
+                            </select>
+                        </div>
                         <div class="flex gap-2 mt-4">
                             <button type="submit" class="control-button btn-sm">Save</button>
                             <button type="button" id="branding-cancel" class="control-button btn-sm bg-gray-400 hover:bg-gray-600">Cancel</button>
@@ -104,7 +122,9 @@ export function renderBrandingModal(container, opts) {
                 logoSecondary,
                 font: data.font,
                 logos: branding.logos || {tl:'',tr:'',bl:'',br:''},
-                sponsors: branding.sponsors || []
+                sponsors: branding.sponsors || [],
+                scheduleSponsorPlacement: data.scheduleSponsorPlacement || branding.scheduleSponsorPlacement || 'bottom-spaced',
+                scheduleLayout: data.scheduleLayout || branding.scheduleLayout || 'corner'
             };
             saveBranding(targetId, newBranding, isUser);
             container.classList.add('hidden');

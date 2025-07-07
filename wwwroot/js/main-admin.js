@@ -62,15 +62,55 @@ function showBrandModal(userId) {
 async function loadEvents() {
   const eventsDiv = document.getElementById('events');
   if (!eventsDiv) return;
-  const events = await getAllEventsMetadata() || {};
-  eventsDiv.innerHTML = Object.keys(events).map(id => {
-    const ev = events[id];
-    return `<div class="bg-white text-black p-3 rounded shadow flex items-center gap-2">
-      <span class="flex-1">${ev.title || id}</span>
-      <a class="control-button btn-sm" href="graphics.html?event_id=${id}">Graphics</a>
-      <a class="control-button btn-sm" href="overlay.html?event_id=${id}" target="_blank">Overlay</a>
-    </div>`;
-  }).join('');
+
+  const [events, users] = await Promise.all([
+    getAllEventsMetadata().catch(()=>({})),
+    getAllUsers().catch(()=>({}))
+  ]);
+
+  const userOptions = Object.keys(users).map(uid =>
+    `<option value="${uid}">${users[uid].email || uid}</option>`
+  ).join('');
+
+  eventsDiv.innerHTML = `
+    <div class="flex gap-2 mb-2">
+      <input id="events-search" class="border p-1 flex-1 text-black" placeholder="Search..." />
+      <select id="events-user" class="border p-1 text-black">
+        <option value="">All Users</option>
+        ${userOptions}
+      </select>
+    </div>
+    <div id="events-list" class="space-y-2"></div>`;
+
+  const searchEl = eventsDiv.querySelector('#events-search');
+  const userSel = eventsDiv.querySelector('#events-user');
+  const listEl = eventsDiv.querySelector('#events-list');
+
+  function renderList() {
+    const term = searchEl.value.toLowerCase();
+    const owner = userSel.value;
+    listEl.innerHTML = Object.keys(events || {}).filter(id => {
+      const ev = events[id] || {};
+      if (owner && ev.owner !== owner) return false;
+      const title = (ev.title || '').toLowerCase();
+      return !term || id.toLowerCase().includes(term) || title.includes(term);
+    }).map(id => {
+      const ev = events[id];
+      const ownerEmail = users[ev.owner]?.email || ev.owner || '';
+      return `<div class="bg-white text-black p-3 rounded shadow flex items-center gap-2">
+        <div class="flex-1">
+          <div>${ev.title || id}</div>
+          <div class="text-xs text-gray-600">${ownerEmail}</div>
+        </div>
+        <a class="control-button btn-sm" href="graphics.html?event_id=${id}">Graphics</a>
+        <a class="control-button btn-sm" href="overlay.html?event_id=${id}" target="_blank">Overlay</a>
+      </div>`;
+    }).join('');
+  }
+
+  searchEl.oninput = renderList;
+  userSel.onchange = renderList;
+  renderList();
 }
 
 function setupTabs() {

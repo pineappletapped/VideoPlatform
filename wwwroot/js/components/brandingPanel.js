@@ -2,7 +2,7 @@ import { getBranding, updateBranding } from '../firebase.js';
 
 export function renderBrandingPanel(container, eventId){
     getBranding(eventId).then(branding => {
-        branding = branding || { logos:{tl:'',tr:'',bl:'',br:''}, sponsors:[] };
+        branding = branding || { logos:{tl:'',tr:'',bl:'',br:''}, sponsors:[], scheduleSponsorPlacement:'bottom-spaced', scheduleLayout:'corner' };
         container.innerHTML = `
             <div class="space-y-4">
                 <div>
@@ -15,6 +15,22 @@ export function renderBrandingPanel(container, eventId){
                         <button class="control-button btn-sm" id="add-sponsor">Add Sponsor</button>
                     </div>
                     <ul id="sponsor-list" class="space-y-1 text-sm"></ul>
+                    <div class="mt-2">
+                        <label class="block text-xs mb-1">Schedule Sponsor Placement</label>
+                        <select id="schedule-placement" class="border p-1 w-full text-black">
+                            <option value="top-right">Top Right</option>
+                            <option value="bottom-centered">Bottom Center</option>
+                            <option value="bottom-spaced">Bottom Spaced</option>
+                            <option value="bottom-sides">Two Sides</option>
+                        </select>
+                    </div>
+                    <div class="mt-2">
+                        <label class="block text-xs mb-1">Schedule Layout</label>
+                        <select id="schedule-layout" class="border p-1 w-full text-black">
+                            <option value="corner">Corner Box</option>
+                            <option value="center">Center Box</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             <div id="sponsor-modal" class="modal-overlay" style="display:none;">
@@ -37,6 +53,16 @@ export function renderBrandingPanel(container, eventId){
             list.innerHTML = branding.sponsors.map((s,i)=>`<li class="flex items-center gap-2"><span class="flex-1">${s.name}</span><button class="control-button btn-xs" data-edit="${i}">Edit</button><button class="control-button btn-xs" data-remove="${i}">Remove</button></li>`).join('') || '<li class="text-gray-500">None</li>';
         }
         renderSponsors();
+        const placementSel = container.querySelector('#schedule-placement');
+        if (placementSel) {
+            placementSel.value = branding.scheduleSponsorPlacement || 'bottom-spaced';
+            placementSel.onchange = () => { branding.scheduleSponsorPlacement = placementSel.value; save(); };
+        }
+        const layoutSel = container.querySelector('#schedule-layout');
+        if (layoutSel) {
+            layoutSel.value = branding.scheduleLayout || 'corner';
+            layoutSel.onchange = () => { branding.scheduleLayout = layoutSel.value; save(); };
+        }
         container.addEventListener('click', e=>{
             const edit = e.target.getAttribute('data-edit');
             if(edit!==null){ showModal(edit); }
