@@ -1,41 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Graphics Control Panel</title>
-    <link rel="stylesheet" href="css/graphics.css?v=20240610">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Graphics Control Panel</title>
 </head>
 <body>
-<div id="app">
-  <header class="transport-bar">
-    <span id="conn-led" class="led led--ok"></span>
-    <button id="take" class="btn btn--solid">TAKE</button>
-    <button id="preview" class="btn btn--ghost">PREVIEW</button>
-    <button id="cut" class="btn btn--flat">CUT</button>
-    <span id="transport-spacer"></span>
-  </header>
-  <aside class="sidebar">
-    <button class="sidebar__item active" data-cat="holdslate">Holdslate</button>
-    <button class="sidebar__item" data-cat="lower-thirds">Lower Thirds</button>
-    <button class="sidebar__item" data-cat="schedule">Schedule</button>
-    <button class="sidebar__item" data-cat="scorebug">Scorebug</button>
-    <details>
-      <summary class="sidebar__item">More ▾</summary>
-    </details>
-  </aside>
-  <main class="workspace">
-    <section id="graphic-list" class="listview"></section>
-    <section id="preview-pane" class="pane">
-      <h2>PREVIEW</h2><canvas id="preview-canvas"></canvas>
-    </section>
-    <section id="program-pane" class="pane">
-      <h2>PROGRAM</h2><canvas id="program-canvas"></canvas>
-    </section>
-  </main>
-  <div id="edit-drawer" class="drawer hidden"></div>
-  <div id="toast-stack" class="toasts"></div>
-</div>
-<script src="js/graphics.js?v=20240610" type="module"></script>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>
