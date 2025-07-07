@@ -50,7 +50,8 @@ export function renderBrandingPanel(container, eventId){
         const modal = container.querySelector('#sponsor-modal');
         const form = container.querySelector('#sponsor-form');
         function renderSponsors(){
-            list.innerHTML = branding.sponsors.map((s,i)=>`<li class="flex items-center gap-2"><span class="flex-1">${s.name}</span><button class="control-button btn-xs" data-edit="${i}">Edit</button><button class="control-button btn-xs" data-remove="${i}">Remove</button></li>`).join('') || '<li class="text-gray-500">None</li>';
+            const sponsors = (branding && Array.isArray(branding.sponsors)) ? branding.sponsors : [];
+            list.innerHTML = sponsors.map((s,i)=>`<li class="flex items-center gap-2"><span class="flex-1">${s.name}</span><button class="control-button btn-xs" data-edit="${i}">Edit</button><button class="control-button btn-xs" data-remove="${i}">Remove</button></li>`).join('') || '<li class="text-gray-500">None</li>';
         }
         renderSponsors();
         const placementSel = container.querySelector('#schedule-placement');
