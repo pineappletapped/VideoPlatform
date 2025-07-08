@@ -369,4 +369,3 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
         });
     }
 }
-
