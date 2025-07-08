@@ -29,7 +29,8 @@ export const sportsData = {
     playersPerTeam: 11,
     subs: 5,
     positions: ["Goalkeeper","Defender","Midfielder","Forward"],
-    scoreboard: { periods: 4, periodLabel: "Quarter", time: true, timeDirection: 'up' },
+    // Use a countdown timer for modern field hockey timing
+    scoreboard: { periods: 4, periodLabel: "Quarter", time: true, timeDirection: 'down' },
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }]
   },
   "Ice Hockey": {
