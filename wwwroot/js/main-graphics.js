@@ -7,12 +7,11 @@ import { renderScoreboardPanel } from './components/scoreboardPanel.js';
 import { renderLineupPanel } from './components/lineupPanel.js';
 import { renderStatsPanel } from './components/statsPanel.js';
 import { renderTeamsPanel } from './components/teamsPanel.js';
-import { renderSportPanel } from './components/sportPanel.js';
 import { renderBrandingModal } from './components/brandingModal.js';
 import { renderProfileWizard } from './components/profileWizard.js';
 import { renderCalendarDrawer } from './components/calendarDrawer.js';
 import { renderHoldslatePanel } from './components/holdslatePanel.js';
-import { updateOverlayState, getOverlayState, getEventMetadata, updateEventMetadata, getGraphicsData, updateGraphicsData } from './firebase.js';
+import { updateOverlayState, getOverlayState, getEventMetadata, getGraphicsData, updateGraphicsData } from './firebase.js';
 import { renderActiveGraphicsPanel } from './components/activeGraphicsPanel.js';
 import { renderBrandingPanel } from './components/brandingPanel.js';
 import { requireAuth, logout } from './auth.js';
@@ -79,7 +78,7 @@ function setupTabs() {
 function updateGraphicsTabs(type) {
     const tabBar = document.getElementById('graphics-tabs');
     if (!tabBar) return;
-    const sports = ['scoreboard','lineups','stats','teams','sport'];
+    const sports = ['scoreboard','lineups','stats','teams'];
     sports.forEach(t=>{
         const btn = tabBar.querySelector(`[data-tab="${t}"]`);
         const panel = document.getElementById(`${t}-panel`);
@@ -153,12 +152,6 @@ async function initializeComponents(eventData) {
     renderStatusBar(document.getElementById('status-bar'), eventData, {listener:false, atem:false, obs:false, sport:true, clock:true});
     updateGraphicsTabs(eventData.eventType || 'corporate');
     if ((eventData.eventType || 'corporate') === 'sports') {
-        renderSportPanel(document.getElementById('sport-panel'), eventData, async (id,sport)=>{
-            await updateEventMetadata(eventId,{...eventData,sport});
-            eventData.sport = sport;
-            renderScoreboardPanel(document.getElementById('scoreboard-panel'), sport, eventId);
-            renderLineupPanel(document.getElementById('lineups-panel'), eventId, sport, 'view');
-        });
         renderScoreboardPanel(document.getElementById('scoreboard-panel'), eventData.sport, eventId);
         renderLineupPanel(document.getElementById('lineups-panel'), eventId, eventData.sport, 'view');
         renderStatsPanel(document.getElementById('stats-panel'), eventId);

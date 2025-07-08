@@ -4,11 +4,10 @@ import { renderStatusBar } from './components/statusBar.js';
 import { renderScoreboardPanel } from './components/scoreboardPanel.js';
 import { renderTeamsPanel } from './components/teamsPanel.js';
 import { renderLineupPanel } from './components/lineupPanel.js';
-import { renderSportPanel } from './components/sportPanel.js';
 import { renderGolfPanel } from './components/golfPanel.js';
 import { renderStatsPanel } from './components/statsPanel.js';
 import { renderBrandingModal } from './components/brandingModal.js';
-import { getEventMetadata, updateEventMetadata } from './firebase.js';
+import { getEventMetadata } from './firebase.js';
 
 const params = new URLSearchParams(window.location.search);
 const eventId = params.get('event_id') || 'demo';
@@ -33,8 +32,6 @@ async function init() {
   const lineupsTab = document.getElementById('lineups');
   const statsTab = document.getElementById('stats');
 
-  const sportPanel = document.createElement('div');
-  left.appendChild(sportPanel);
   const scoreboardPanel = document.createElement('div');
   left.appendChild(scoreboardPanel);
   const teamsPanel = document.createElement('div');
@@ -60,11 +57,6 @@ async function init() {
     }
   }
 
-  renderSportPanel(sportPanel, meta, async (id,sport) => {
-    await updateEventMetadata(eventId, { ...meta, sport });
-    meta.sport = sport;
-    renderBySport(sport);
-  });
   renderBySport(meta.sport);
 
   setupTabs();
