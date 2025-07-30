@@ -1,7 +1,7 @@
 import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 import { getDatabaseInstance } from "../firebaseApp.js";
 import { sportsData } from "../sportsConfig.js";
-import { updateOverlayState, listenOverlayState } from "../firebase.js";
+import { updateOverlayState, listenOverlayState, addMatchLog, listenMatchLog } from "../firebase.js";
 import { suggestAbbreviation } from "../teamUtils.js";
 
 const scoreboardStyles = [
@@ -80,6 +80,8 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
     let teamsData = null;
     let currentData = null;
     let timerInterval = null;
+    let matchLog = [];
+    let logVisible = false;
 
     const teamsRef = ref(db, `teams/${eventId}`);
     onValue(teamsRef, snap => { teamsData = snap.val(); if(currentData) render(currentData); });
@@ -94,6 +96,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         sbPreview = (state && state.scoreboardPreviewVisible) || false;
         breakVisible = (state && state.breakVisible) || false;
         highBreakVisible = (state && state.highBreakVisible) || false;
+        logVisible = (state && state.matchLogVisible) || false;
         if (currentData) render(currentData);
     });
 
@@ -102,13 +105,20 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         render(currentData);
         updateOverlayState(eventId, { scoreboard: currentData });
     });
+    listenMatchLog(eventId, data => { matchLog = data ? Object.values(data) : []; render(currentData); });
 
     function defaultData() {
         const startVal = cfg.scoreboard.start || 0;
         const scores = Array.from({ length: cfg.teamCount }).map(() => startVal);
         const base = { scores, style: 'style1', position: 'bottom-center', transitionIn: 'fade', transitionOut: 'fade', abbreviate: false, showLogos: true };
         if (cfg.scoreboard.periods) base.period = 1;
-        if (cfg.scoreboard.time) base.time = '00:00';
+        if (cfg.scoreboard.time) {
+            base.time = '00:00';
+            base.timerStart = null;
+            base.timerBase = 0;
+            base.timerRunning = false;
+            base.timeDirection = cfg.scoreboard.timeDirection || 'up';
+        }
         if (cfg.scoreboard.round) base.round = 1;
         if (cfg.scoreboard.sets) base.sets = scores.map(() => 0);
         if (cfg.scoreboard.games) base.games = scores.map(() => 0);
@@ -231,6 +241,11 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             htmlParts.push(`<tr><td class="pr-2">In Play:</td><td><select id="sb-turn" class="border p-1"><option value="0">${optA}</option><option value="1">${optB}</option></select></td></tr>`);
         }
         table.innerHTML = htmlParts.join('');
+        const logDiv = document.createElement('div');
+        logDiv.className = 'mt-4';
+        logDiv.innerHTML = `<h3 class='font-semibold mb-1'>Match Log</h3><table id='log-table' class='text-sm w-full mb-2'></table><div class='flex flex-wrap gap-1'><button id='add-goal-a' class='control-button btn-xs'>Goal ${tnA}</button><button id='add-goal-b' class='control-button btn-xs'>Goal ${tnB}</button><button id='add-sub-a' class='control-button btn-xs'>Sub ${tnA}</button><button id='add-sub-b' class='control-button btn-xs'>Sub ${tnB}</button><button id='add-pen-a' class='control-button btn-xs'>Pen ${tnA}</button><button id='add-pen-b' class='control-button btn-xs'>Pen ${tnB}</button><button id='show-log' class='control-button btn-xs ml-auto'>Show Log</button></div>`;
+        table.parentNode.appendChild(logDiv);
+        renderLog();
         (data.scores || []).forEach((_, i) => {
             const holder = container.querySelector(`#score-btns-${i}`);
             if (holder && cfg.scoringButtons) {
@@ -292,44 +307,101 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         let baseSecs = timeInput ? parseTime(timeInput.value) : 0;
         let timerSecs = baseSecs;
         let startTime = null;
-        const sendTime = () => {
-            const obj = getFormData();
-            obj.time = formatTime(timerSecs);
-            updateOverlayState(eventId, { scoreboard: obj });
-        };
+        if(data.timerRunning && data.timerStart){
+            const elapsed = Math.floor((Date.now()-data.timerStart)/1000);
+            timerSecs = countDown ? Math.max(0,data.timerBase - elapsed) : data.timerBase + elapsed;
+            timeInput.value = formatTime(timerSecs);
+            baseSecs = data.timerBase;
+            startTime = Date.now() - elapsed*1000;
+            timerInterval = setInterval(()=>{
+                const e = Math.floor((Date.now()-startTime)/1000);
+                timerSecs = countDown ? Math.max(0,baseSecs - e) : baseSecs + e;
+                timeInput.value = formatTime(timerSecs);
+            },1000);
+        }
         if (startBtn && timeInput) {
-            startBtn.onclick = () => {
+            startBtn.onclick = async () => {
                 if (timerInterval) return;
                 baseSecs = parseTime(timeInput.value);
                 timerSecs = baseSecs;
                 startTime = Date.now();
+                data.timerStart = startTime;
+                data.timerBase = baseSecs;
+                data.timerRunning = true;
+                await saveData(getFormData());
                 timerInterval = setInterval(() => {
                     const elapsed = Math.floor((Date.now() - startTime)/1000);
                     timerSecs = countDown ? Math.max(0, baseSecs - elapsed) : baseSecs + elapsed;
                     timeInput.value = formatTime(timerSecs);
-                    sendTime();
                 }, 1000);
             };
         }
         if (stopBtn) {
-            stopBtn.onclick = () => {
+            stopBtn.onclick = async () => {
                 if (timerInterval) {
                     clearInterval(timerInterval);
                     timerInterval = null;
-                    const elapsed = Math.floor((Date.now() - startTime)/1000);
-                    timerSecs = countDown ? Math.max(0, baseSecs - elapsed) : baseSecs + elapsed;
-                    timeInput.value = formatTime(timerSecs);
-                    sendTime();
                 }
+                const elapsed = startTime ? Math.floor((Date.now() - startTime)/1000) : 0;
+                timerSecs = countDown ? Math.max(0, baseSecs - elapsed) : baseSecs + elapsed;
+                timeInput.value = formatTime(timerSecs);
+                data.timerRunning = false;
+                data.timerStart = null;
+                data.timerBase = timerSecs;
+                data.time = formatTime(timerSecs);
+                await saveData(getFormData());
             };
         }
         if (resetBtn && timeInput) {
-            resetBtn.onclick = () => {
+            resetBtn.onclick = async () => {
                 if (timerInterval) { clearInterval(timerInterval); timerInterval=null; }
                 timerSecs = 0;
+                baseSecs = 0;
+                startTime = null;
                 timeInput.value = formatTime(timerSecs);
-                sendTime();
+                data.timerRunning = false;
+                data.timerStart = null;
+                data.timerBase = 0;
+                data.time = formatTime(timerSecs);
+                await saveData(getFormData());
             };
+        }
+
+        const btnGoalA = container.querySelector('#add-goal-a');
+        const btnGoalB = container.querySelector('#add-goal-b');
+        const btnSubA = container.querySelector('#add-sub-a');
+        const btnSubB = container.querySelector('#add-sub-b');
+        const btnPenA = container.querySelector('#add-pen-a');
+        const btnPenB = container.querySelector('#add-pen-b');
+        const showLogBtn = container.querySelector('#show-log');
+
+        function addEntry(type, team){
+            const player = prompt('Player name (optional)') || '';
+            const timeStr = timeInput ? timeInput.value : '';
+            const entry = { ts: Date.now(), type, team, player, time: timeStr };
+            matchLog.push(entry);
+            renderLog();
+            addMatchLog(eventId, entry);
+        }
+        if(btnGoalA) btnGoalA.onclick=()=>addEntry('goal','a');
+        if(btnGoalB) btnGoalB.onclick=()=>addEntry('goal','b');
+        if(btnSubA) btnSubA.onclick=()=>addEntry('substitution','a');
+        if(btnSubB) btnSubB.onclick=()=>addEntry('substitution','b');
+        if(btnPenA) btnPenA.onclick=()=>addEntry('penalty','a');
+        if(btnPenB) btnPenB.onclick=()=>addEntry('penalty','b');
+        if(showLogBtn) showLogBtn.onclick=()=>{
+            logVisible = !logVisible;
+            updateOverlayState(eventId,{matchLog:matchLog,matchLogVisible:logVisible});
+        };
+
+        function renderLog(){
+            const table = container.querySelector('#log-table');
+            if(!table) return;
+            const rows = (matchLog || []).map(entry=>{
+                const teamName = entry.team==='a'?tnA:tnB;
+                return `<tr><td class='pr-2'>${entry.time}</td><td>${teamName}</td><td>${entry.type}</td><td>${entry.player||''}</td></tr>`;
+            }).join('');
+            table.innerHTML = `<thead><tr><th class='pr-2'>Time</th><th>Team</th><th>Type</th><th>Player</th></tr></thead><tbody>${rows}</tbody>`;
         }
 
         const turnSel = container.querySelector('#sb-turn');
@@ -346,7 +418,13 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         function getFormData() {
             const obj = { scores: (data.scores || []).map((_,i)=> parseInt(container.querySelector(`#team-score-${i}`).value) || 0) };
             if (cfg.scoreboard.periods) obj.period = parseInt(container.querySelector('#sb-period').value) || 1;
-            if (cfg.scoreboard.time) obj.time = container.querySelector('#sb-time').value;
+            if (cfg.scoreboard.time) {
+                obj.time = container.querySelector('#sb-time').value;
+                obj.timerStart = data.timerStart || null;
+                obj.timerBase = data.timerBase || parseTime(obj.time);
+                obj.timerRunning = data.timerRunning || false;
+                obj.timeDirection = data.timeDirection || cfg.scoreboard.timeDirection || 'up';
+            }
             if (cfg.scoreboard.round) obj.round = parseInt(container.querySelector('#sb-round').value) || 1;
             if (cfg.scoreboard.sets) obj.sets = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-set-${i}`).value) || 0);
             if (cfg.scoreboard.games) obj.games = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-game-${i}`).value) || 0);

@@ -102,3 +102,11 @@ can hide them in one click.
 The Lineups panel now offers **Table** buttons to show each team's roster in a
 simple list overlay. There's also a **Match Result** button that displays the
 final score along with goal scorers and times based on the scoreboard log.
+
+### Match Logs & Real-time Clocks
+
+The scoreboard timer now runs client-side. Starting the clock records a start
+timestamp so overlay pages keep counting without constant database updates. The
+Scoreboard panel also includes **Match Log** buttons to record goals,
+substitutions and penalties with the current time. These entries can be shown as
+an overlay via the **Show Log** button.

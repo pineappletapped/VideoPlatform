@@ -31,6 +31,14 @@ function contrastColor(hex) {
     return lum > 0.6 ? '#000' : '#fff';
 }
 
+function parseTime(str){
+    const [m='0',s='0'] = str.split(':');
+    return parseInt(m)*60 + parseInt(s);
+}
+function formatTime(secs){
+    return `${Math.floor(secs/60)}:${(Math.abs(secs)%60).toString().padStart(2,'0')}`;
+}
+
 function playTransition(el, type, name) {
     if (!el) return;
     if (!name || name === 'cut') {
@@ -475,8 +483,16 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         scoreboardOverlay.style.setProperty('--sb-team-width', `${longest}ch`);
         const sA = scoreboardData.scores?.[0] ?? 0;
         const sB = scoreboardData.scores?.[1] ?? 0;
+        let timeStr = scoreboardData.time || '';
+        if(scoreboardData.timerRunning && scoreboardData.timerStart){
+            const elapsed = Math.floor((Date.now() - scoreboardData.timerStart)/1000);
+            const base = scoreboardData.timerBase || parseTime(timeStr || '0:00');
+            const countDown = (scoreboardData.timeDirection || 'up') === 'down';
+            const secs = countDown ? Math.max(0, base - elapsed) : base + elapsed;
+            timeStr = formatTime(secs);
+        }
         const info = [];
-        if (scoreboardData.time) info.push(scoreboardData.time);
+        if (timeStr) info.push(timeStr);
         if (scoreboardData.period) info.push('P' + scoreboardData.period);
         if (scoreboardData.round) info.push('R' + scoreboardData.round);
         if (scoreboardData.sets) info.push('Sets ' + scoreboardData.sets.join('-'));
@@ -644,6 +660,25 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     }
     prevResultsVisible = resShow;
 
+    // Match Log Overlay
+    let logOverlay = overlayContainer.querySelector('#log-overlay');
+    const logData = state && state.matchLog;
+    const logShow = state && state.matchLogVisible;
+    if(logShow && logData && logData.length){
+        if(!logOverlay){
+            logOverlay = document.createElement('div');
+            logOverlay.id = 'log-overlay';
+            overlayContainer.appendChild(logOverlay);
+        }
+        const rows = logData.map(e=>{
+            const teamName = teamsData ? (e.team==='a'?teamsData.teamA?.name:teamsData.teamB?.name) : e.team;
+            return `<div>${e.time} - ${teamName} ${e.type}${e.player?` - ${e.player}`:''}</div>`;
+        }).join('');
+        logOverlay.innerHTML = `<div class='results-box' style='font-family:${branding.font};max-height:80vh;overflow-y:auto;'>${rows}</div>`;
+    } else if(logOverlay){
+        logOverlay.remove();
+    }
+
     // Stats Overlay
     let statOverlay = overlayContainer.querySelector('#stat-overlay');
     const statData = state && state.stat;
@@ -716,6 +751,12 @@ onValue(ref(getDatabaseInstance(), `scoreboard/${eventId}`), snap => {
 });
 listenSponsors(eventId, data => { sponsorsData = data || []; updateOverlay(); });
 listenSponsorPlacements(eventId, data => { sponsorPlacements = data || {}; updateOverlay(); });
+
+setInterval(()=>{
+    if(lastState && lastState.scoreboard && lastState.scoreboard.timerRunning){
+        updateOverlay();
+    }
+},1000);
 
 const db = getDatabaseInstance();
 onValue(ref(db, `status/${eventId}/vtCommand`), snap => {

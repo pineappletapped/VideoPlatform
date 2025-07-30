@@ -188,3 +188,15 @@ export function getSponsorLog(eventId) {
 export function listenSponsorLog(eventId, cb) {
   return onValue(ref(db, `sponsorLog/${eventId}`), snap => cb(snap.val()));
 }
+
+// Match log helpers
+export function addMatchLog(eventId, entry) {
+  const r = ref(db, `matchLog/${eventId}`);
+  return push(r, entry);
+}
+export function listenMatchLog(eventId, cb) {
+  return onValue(ref(db, `matchLog/${eventId}`), snap => cb(snap.val()));
+}
+export function getMatchLog(eventId) {
+  return get(ref(db, `matchLog/${eventId}`)).then(snap => snap.val());
+}
