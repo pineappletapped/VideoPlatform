@@ -3,7 +3,6 @@ import './components/topBar.js';
 import { renderStatusBar } from './components/statusBar.js';
 import { renderScoreboardPanel } from './components/scoreboardPanel.js';
 import { renderTeamsPanel } from './components/teamsPanel.js';
-import { renderLineupPanel } from './components/lineupPanel.js';
 import { renderSportPanel } from './components/sportPanel.js';
 import { renderGolfPanel } from './components/golfPanel.js';
 import { renderStatsPanel } from './components/statsPanel.js';
@@ -32,7 +31,6 @@ async function init() {
   const left = document.getElementById('left');
   const right = document.getElementById('right');
   const teamsTab = document.getElementById('teams');
-  const lineupsTab = document.getElementById('lineups');
   const statsTab = document.getElementById('stats');
   const sponsorsTab = document.getElementById('sponsors');
 
@@ -42,8 +40,6 @@ async function init() {
   left.appendChild(scoreboardPanel);
   const teamsPanel = document.createElement('div');
   teamsTab.appendChild(teamsPanel);
-  const lineupPanel = document.createElement('div');
-  lineupsTab.appendChild(lineupPanel);
   const statsPanel = document.createElement('div');
   statsTab.appendChild(statsPanel);
   const sponsorsPanel = document.createElement('div');
@@ -53,17 +49,14 @@ async function init() {
     if(s === 'Golf') {
       renderGolfPanel(scoreboardPanel, eventId);
       teamsTab.classList.add('hidden');
-      lineupsTab.classList.add('hidden');
       renderStatsPanel(statsPanel, eventId);
       renderSponsorsPanel(sponsorsPanel, eventId);
     } else {
       renderScoreboardPanel(scoreboardPanel, s, eventId);
       renderTeamsPanel(teamsPanel, eventId, s);
-      renderLineupPanel(lineupPanel, eventId, s);
       renderStatsPanel(statsPanel, eventId);
       renderSponsorsPanel(sponsorsPanel, eventId);
       teamsTab.classList.remove('hidden');
-      lineupsTab.classList.remove('hidden');
     }
   }
 

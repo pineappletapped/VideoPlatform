@@ -4,7 +4,6 @@ import { renderStatusBar } from './components/statusBar.js';
 import { renderProgramPreview } from './components/programPreview.js';
 import { renderGraphicsPanel } from './components/graphicsPanel.js';
 import { renderScoreboardPanel } from './components/scoreboardPanel.js';
-import { renderLineupPanel } from './components/lineupPanel.js';
 import { renderStatsPanel } from './components/statsPanel.js';
 import { renderTeamsPanel } from './components/teamsPanel.js';
 import { renderBrandingModal } from './components/brandingModal.js';
@@ -78,7 +77,7 @@ function setupTabs() {
 function updateGraphicsTabs(type, tournament) {
     const tabBar = document.getElementById('graphics-tabs');
     if (!tabBar) return;
-    const sports = ['scoreboard','lineups','stats','teams'];
+    const sports = ['scoreboard','stats','teams'];
     if (tournament) sports.push('tournament');
     sports.forEach(t=>{
         const btn = tabBar.querySelector(`[data-tab="${t}"]`);
@@ -90,8 +89,6 @@ function updateGraphicsTabs(type, tournament) {
     });
     const scheduleBtn = tabBar.querySelector('[data-tab="schedule"]');
     const schedulePanel = document.getElementById('schedule-panel');
-    const brandingBtn = tabBar.querySelector('[data-tab="branding"]');
-    const brandingPanel = document.getElementById('branding-panel');
     const presBtn = tabBar.querySelector('[data-tab="presentation"]');
     const presPanel = document.getElementById('presentation-panel');
     if (scheduleBtn && schedulePanel) {
@@ -103,18 +100,18 @@ function updateGraphicsTabs(type, tournament) {
             schedulePanel.classList.remove('hidden');
         }
     }
-    if (brandingBtn && brandingPanel) {
-        if (type === 'sports') {
-            brandingBtn.classList.add('hidden');
-            brandingPanel.classList.add('hidden');
-            if(presBtn) presBtn.classList.add('hidden');
-            if(presPanel) presPanel.classList.add('hidden');
-        } else {
-            brandingBtn.classList.remove('hidden');
-            brandingPanel.classList.remove('hidden');
-            if(presBtn) presBtn.classList.remove('hidden');
-            if(presPanel) presPanel.classList.add('hidden');
+    if(presBtn && presPanel){
+        if(type === 'sports'){
+            presBtn.classList.add('hidden');
+            presPanel.classList.add('hidden');
+        }else{
+            presBtn.classList.remove('hidden');
+            presPanel.classList.add('hidden');
         }
+    }
+    const eventsLabel = document.getElementById('events-tab-label');
+    if(eventsLabel){
+        eventsLabel.textContent = type === 'sports' ? 'In Game Events' : 'Lower Thirds';
     }
 }
 
@@ -161,7 +158,6 @@ async function initializeComponents(eventData) {
     updateGraphicsTabs(eventData.eventType || 'corporate', !!eventData.tournament);
     if ((eventData.eventType || 'corporate') === 'sports') {
         renderScoreboardPanel(document.getElementById('scoreboard-panel'), eventData.sport, eventId);
-        renderLineupPanel(document.getElementById('lineups-panel'), eventId, eventData.sport, 'view');
         renderStatsPanel(document.getElementById('stats-panel'), eventId);
         renderTeamsPanel(document.getElementById('teams-panel'), eventId, eventData.sport, !!eventData.tournament);
         if(eventData.tournament){
@@ -185,7 +181,6 @@ async function initializeComponents(eventData) {
     renderGraphicsPanel(document.getElementById('events-panel'), eventData, graphicsMode);
 
     renderActiveGraphicsPanel(document.getElementById('active-graphics'), eventId, graphicsMode);
-    renderBrandingPanel(document.getElementById('branding-panel'), eventId);
 
 
     const brandingModal = document.getElementById('branding-modal');

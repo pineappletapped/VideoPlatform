@@ -2,6 +2,7 @@ import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/fir
 import { getDatabaseInstance } from "../firebaseApp.js";
 import { sportsData } from "../sportsConfig.js";
 import { suggestAbbreviation } from "../teamUtils.js";
+import { listenOverlayState, updateOverlayState } from "../firebase.js";
 
 const db = getDatabaseInstance();
 
@@ -26,6 +27,12 @@ async function uploadToServer(file, path) {
 
 export function renderTeamsPanel(container, eventId, sport = 'Football', tournament = false) {
     const cfg = sportsData[sport] || sportsData['Football'];
+
+    let overlayState = {};
+
+    listenOverlayState(eventId, state => { overlayState = state || {}; });
+
+    let editMode = false;
 
     onValue(getTeamsRef(eventId), (snap) => {
         const data = snap.val() || defaultData();
@@ -75,7 +82,16 @@ export function renderTeamsPanel(container, eventId, sport = 'Football', tournam
         if (!tournament) {
             container.innerHTML = `
                 <div class='teams-panel'>
-                    <h2 class="font-bold text-lg mb-2">Teams</h2>
+                    <div class="flex items-center justify-between mb-2">
+                        <h2 class="font-bold text-lg">Teams</h2>
+                        <div class="space-x-1">
+                            <button id="form-a" class="control-button btn-xs">Formation A</button>
+                            <button id="form-b" class="control-button btn-xs">Formation B</button>
+                            <button id="table-a" class="control-button btn-xs">Table A</button>
+                            <button id="table-b" class="control-button btn-xs">Table B</button>
+                            <button id="results-btn" class="control-button btn-xs">Results</button>
+                        </div>
+                    </div>
                     <div class="flex gap-4 mb-4 text-sm">
                         <div class="flex-1 team-column min-w-0">
                             <input class="border p-1 w-full mb-2" id="team-a-name" value="${data.teamA.name}" />
