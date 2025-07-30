@@ -1,5 +1,6 @@
 import { listenOverlayState, updateOverlayState, listenGraphicsData, updateGraphicsData, listenMatchLog, updateMatchLogEntry } from '../firebase.js';
 import { listenFavorites, updateFavorites } from '../firebase.js';
+import { renderSponsorsPanel } from './sponsorsPanel.js';
 import { getDatabaseInstance } from '../firebaseApp.js';
 import { ref, onValue } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
 
@@ -74,6 +75,7 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
             <button class="px-4 py-2 border-b-2 border-brand text-brand font-semibold" data-tab="active">Active</button>
             <button class="px-4 py-2" data-tab="favourites">Favourites</button>
             <button class="px-4 py-2" data-tab="logs">Logs</button>
+            <button class="px-4 py-2" data-tab="sponsors">Sponsors</button>
         </div>
         <div id="active-tab" class="tab-content">
             <ul id="active-list" class="space-y-1 text-sm"></ul>
@@ -86,18 +88,23 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
         <div id="logs-tab" class="tab-content hidden">
             <table class="text-sm w-full mb-2" id="logs-table"></table>
             <button id="logs-toggle" class="control-button btn-sm">Toggle Overlay</button>
-        </div>`;
+        </div>
+        <div id="sponsors-tab" class="tab-content hidden"></div>`;
     renderLog();
+    const sponsorsContainer = container.querySelector('#sponsors-tab');
+    if (sponsorsContainer) {
+        renderSponsorsPanel(sponsorsContainer, eventId);
+    }
 
     function setTab(name){
-        ['active','favourites','logs'].forEach(t=>{
+        ['active','favourites','logs','sponsors'].forEach(t=>{
             const btn = container.querySelector(`[data-tab="${t}"]`);
             if(btn){
                 btn.classList.toggle('border-b-2', t===name);
                 btn.classList.toggle('border-brand', t===name);
                 btn.classList.toggle('text-brand', t===name);
             }
-            const panelId = t==='active'?'active':t==='favourites'?'fav':'logs';
+            const panelId = t==='active'?'active':t==='favourites'?'fav':t==='logs'?'logs':'sponsors';
             const panel = container.querySelector(`#${panelId}-tab`);
             if(panel) panel.classList.toggle('hidden', t!==name);
         });
