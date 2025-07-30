@@ -502,6 +502,8 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         if (scoreboardData.frames) info.push('Frames ' + scoreboardData.frames.join('-'));
         if (scoreboardData.legs) info.push('Legs ' + scoreboardData.legs.join('-'));
         if (scoreboardData.points) info.push('Pts ' + scoreboardData.points.join('-'));
+        if (scoreboardData.overs) info.push('Ov ' + scoreboardData.overs.join('-'));
+        if (scoreboardData.wickets) info.push('Wk ' + scoreboardData.wickets.join('-'));
         const infoHtml = info.length ? `<div class='sb-info'>${info.join(' | ')}</div>` : '';
         const brand = branding.primaryColor || '#e16316';
         const textA = contrastColor(colors[0]);
@@ -531,7 +533,24 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         const bottomSp = sponsorsData[sponsorPlacements.scoreboardBottom];
         const topImg = topSp ? `<img src='${topSp.logo}' class='sb-sponsor top'>` : '';
         const bottomImg = bottomSp ? `<img src='${bottomSp.logo}' class='sb-sponsor bottom'>` : '';
-        scoreboardOverlay.innerHTML = `
+        if(style==='cricket'){
+            const oA = scoreboardData.overs?.[0] ?? 0;
+            const bA = scoreboardData.balls?.[0] ?? 0;
+            const wA = scoreboardData.wickets?.[0] ?? 0;
+            const oB = scoreboardData.overs?.[1] ?? 0;
+            const bB = scoreboardData.balls?.[1] ?? 0;
+            const wB = scoreboardData.wickets?.[1] ?? 0;
+            scoreboardOverlay.innerHTML = `
+            ${topImg}
+            <div class="sb-row">
+                <span class="sb-team${aClassA}" style="background:${colors[0]};color:${textA}">${names[0]}</span>
+                <span class="sb-score" style="background:${brand};color:${textBrand}">${sA}/${wA} (${oA}.${bA})</span>
+                <span class="sb-team${aClassB}" style="background:${colors[1]};color:${textB}">${names[1]}</span>
+            </div>
+            ${sbSponsorHtml}
+            ${bottomImg}`;
+        } else {
+            scoreboardOverlay.innerHTML = `
             ${topImg}
             ${breakInd}
             <div class="sb-row">
@@ -543,6 +562,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             ${checkoutHtml}
             ${sbSponsorHtml}
             ${bottomImg}`;
+        }
         if(!prevScoreboardVisible){
             if(topSp) addSponsorLog(eventId,{ts:Date.now(),placement:'scoreboardTop',sponsor:sponsorPlacements.scoreboardTop,action:'show'});
             if(bottomSp) addSponsorLog(eventId,{ts:Date.now(),placement:'scoreboardBottom',sponsor:sponsorPlacements.scoreboardBottom,action:'show'});

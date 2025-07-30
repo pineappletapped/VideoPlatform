@@ -121,3 +121,15 @@ When an event is created in **Tournament Mode** an extra tab appears in the
 Graphics panel. The **Tournament** tab lets you list all the match-ups,
 configure scoring for wins, draws and losses and show individual match results
 as an overlay.
+
+### Sport-specific Scoreboards
+
+Each sport can now define its own scoreboard styles. Darts scoreboards track
+every throw and automatically deduct scores. The panel keeps a running 3‑dart
+average, counts 180s, 140s and 100+ scores and records the highest checkout of
+the match. Use the **New Leg** button to reset both players to 301 or 501 as
+configured.
+
+Cricket mode offers a dedicated scoreboard style showing runs, wickets and
+overs for both sides in a single bar. Choose between this and the regular
+styles from the options modal.

@@ -4,15 +4,22 @@ import { sportsData } from "../sportsConfig.js";
 import { updateOverlayState, listenOverlayState, addMatchLog, listenMatchLog } from "../firebase.js";
 import { suggestAbbreviation } from "../teamUtils.js";
 
-const scoreboardStyles = [
+const DEFAULT_STYLES = [
     { id: 'style1', label: 'Classic' },
     { id: 'style2', label: 'Dark Box' },
     { id: 'style3', label: 'Outline' },
     { id: 'style4', label: 'Light' },
     { id: 'style5', label: 'Solid' },
     { id: 'h1', label: 'Horizontal 1' },
-    { id: 'h2', label: 'Horizontal 2' }
+    { id: 'h2', label: 'Horizontal 2' },
+    { id: 'cricket', label: 'Cricket' }
 ];
+
+function getStylesForSport(sport){
+    const ids = sportsData[sport]?.scoreboardStyles;
+    if(!ids) return DEFAULT_STYLES;
+    return ids.map(id=>DEFAULT_STYLES.find(s=>s.id===id) || {id,label:id});
+}
 const scoreboardPositions = [
     { value: 'top-left', label: 'Top Left' },
     { value: 'top-right', label: 'Top Right' },
@@ -76,6 +83,7 @@ function getScoreboardRef(eventId) {
 
 export function renderScoreboardPanel(container, sport = 'Football', eventId = 'demo') {
     const cfg = sportsData[sport] || sportsData['Football'];
+    const scoreboardStyles = getStylesForSport(sport);
 
     let teamsData = null;
     let currentData = null;
@@ -110,7 +118,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
     function defaultData() {
         const startVal = cfg.scoreboard.start || 0;
         const scores = Array.from({ length: cfg.teamCount }).map(() => startVal);
-        const base = { scores, style: 'style1', position: 'bottom-center', transitionIn: 'fade', transitionOut: 'fade', abbreviate: false, showLogos: true };
+        const base = { scores, style: 'style1', position: 'bottom-center', transitionIn: 'fade', transitionOut: 'fade', abbreviate: false, showLogos: true, start: startVal };
         if (cfg.scoreboard.periods) base.period = 1;
         if (cfg.scoreboard.time) {
             base.time = '00:00';
@@ -125,9 +133,16 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         if (cfg.scoreboard.frames) base.frames = scores.map(() => 0);
         if (cfg.scoreboard.legs) base.legs = scores.map(() => 0);
         if (cfg.scoreboard.points) base.points = scores.map(() => 0);
+        if (cfg.scoreboard.overs) base.overs = scores.map(() => 0);
+        if (cfg.scoreboard.balls) base.balls = scores.map(() => 0);
+        if (cfg.scoreboard.wickets) base.wickets = scores.map(() => 0);
         if (cfg.scoreboard.breaks) base.currentBreak = 0;
         if (cfg.scoreboard.highBreak) base.highBreak = 0;
         if (cfg.scoreboard.turn) base.turn = 0;
+        if (sport === 'Darts') {
+            base.dartStats = scores.map(() => ({ throws: 0, highCheckout: 0, count180: 0, count140: 0, count100: 0 }));
+            base.dartLogs = scores.map(() => []);
+        }
         base.scorers = scores.map(() => []);
         return base;
     }
@@ -234,8 +249,21 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         if (cfg.scoreboard.points) {
             htmlParts.push(`<tr><td class="pr-2">Points:</td><td>${Array.from({length:count}).map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-point-${i}" value="${(data.points && data.points[i]) || 0}">`).join('')}</td></tr>`);
         }
+        if (cfg.scoreboard.overs) {
+            htmlParts.push(`<tr><td class="pr-2">Overs:</td><td>${Array.from({length:count}).map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-over-${i}" value="${(data.overs && data.overs[i]) || 0}">`).join('')}</td></tr>`);
+        }
+        if (cfg.scoreboard.balls) {
+            htmlParts.push(`<tr><td class="pr-2">Balls:</td><td>${Array.from({length:count}).map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-ball-${i}" value="${(data.balls && data.balls[i]) || 0}">`).join('')}</td></tr>`);
+        }
+        if (cfg.scoreboard.wickets) {
+            htmlParts.push(`<tr><td class="pr-2">Wkts:</td><td>${Array.from({length:count}).map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-wkt-${i}" value="${(data.wickets && data.wickets[i]) || 0}">`).join('')}</td></tr>`);
+        }
         const tnA = getTeam(0).name || 'Team 1';
         const tnB = getTeam(1).name || 'Team 2';
+        if (sport === 'Darts') {
+            htmlParts.push(`<tr><td class="pr-2">Dart:</td><td><input type="number" class="border p-1 w-16" id="dart-val"><button id="dart-a" class="control-button btn-xs ml-1">${tnA}</button><button id="dart-b" class="control-button btn-xs ml-1">${tnB}</button><button id="new-leg" class="control-button btn-xs ml-1">New Leg</button></td></tr>`);
+            htmlParts.push(`<tr><td colspan="2"><div id="dart-stats" class="text-xs"></div></td></tr>`);
+        }
         htmlParts.push(`<tr><td class="pr-2 align-top">${tnA} scorers:</td><td><textarea id="sb-scorers-a" class="border p-1 w-full text-xs" rows="2">${(data.scorers?.[0] || []).join('\n')}</textarea></td></tr>`);
         htmlParts.push(`<tr><td class="pr-2 align-top">${tnB} scorers:</td><td><textarea id="sb-scorers-b" class="border p-1 w-full text-xs" rows="2">${(data.scorers?.[1] || []).join('\n')}</textarea></td></tr>`);
         if (cfg.scoreboard.breaks) {
@@ -255,6 +283,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         logDiv.innerHTML = `<h3 class='font-semibold mb-1'>Match Log</h3><table id='log-table' class='text-sm w-full mb-2'></table><div class='flex flex-wrap gap-1'><button id='add-goal-a' class='control-button btn-xs'>Goal ${tnA}</button><button id='add-goal-b' class='control-button btn-xs'>Goal ${tnB}</button><button id='add-sub-a' class='control-button btn-xs'>Sub ${tnA}</button><button id='add-sub-b' class='control-button btn-xs'>Sub ${tnB}</button><button id='add-pen-a' class='control-button btn-xs'>Pen ${tnA}</button><button id='add-pen-b' class='control-button btn-xs'>Pen ${tnB}</button><button id='show-log' class='control-button btn-xs ml-auto'>Show Log</button></div>`;
         table.parentNode.appendChild(logDiv);
         renderLog();
+        updateDartStats();
         (data.scores || []).forEach((_, i) => {
             const holder = container.querySelector(`#score-btns-${i}`);
             if (holder && cfg.scoringButtons) {
@@ -402,6 +431,37 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             logVisible = !logVisible;
             updateOverlayState(eventId,{matchLog:matchLog,matchLogVisible:logVisible});
         };
+        const dartVal = container.querySelector('#dart-val');
+        const dartBtnA = container.querySelector('#dart-a');
+        const dartBtnB = container.querySelector('#dart-b');
+        const newLegBtn = container.querySelector('#new-leg');
+
+        function addDart(team){
+            const val = parseInt(dartVal.value) || 0;
+            data.dartLogs[team].push(val);
+            data.dartStats[team].throws += 1;
+            data.scores[team] = Math.max(0, (data.scores[team]||0) - val);
+            if(val === 180) data.dartStats[team].count180 += 1;
+            if(val >= 140) data.dartStats[team].count140 += 1;
+            if(val >= 100) data.dartStats[team].count100 += 1;
+            if(data.scores[team] === 0){
+                const checkout = (cfg.scoreboard.start||0) - data.scores[team];
+                if(checkout > data.dartStats[team].highCheckout) data.dartStats[team].highCheckout = checkout;
+            }
+            updateDartStats();
+        }
+        function newLeg(){
+            const start = cfg.scoreboard.start || 0;
+            data.scores = data.scores.map(()=>start);
+            if(data.legs) data.legs = data.legs.map(l=>l+1);
+            data.dartLogs = data.dartLogs.map(()=>[]);
+            data.dartStats = data.dartStats.map(st=>({throws:0,highCheckout:st.highCheckout,count180:0,count140:0,count100:0}));
+            updateDartStats();
+            render(data);
+        }
+        if(dartBtnA) dartBtnA.onclick=()=>addDart(0);
+        if(dartBtnB) dartBtnB.onclick=()=>addDart(1);
+        if(newLegBtn) newLegBtn.onclick=newLeg;
 
         function renderLog(){
             const table = container.querySelector('#log-table');
@@ -411,6 +471,18 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                 return `<tr><td class='pr-2'>${entry.time}</td><td>${teamName}</td><td>${entry.type}</td><td>${entry.player||''}</td></tr>`;
             }).join('');
             table.innerHTML = `<thead><tr><th class='pr-2'>Time</th><th>Team</th><th>Type</th><th>Player</th></tr></thead><tbody>${rows}</tbody>`;
+        }
+
+        function updateDartStats(){
+            const statDiv = container.querySelector('#dart-stats');
+            if(!statDiv) return;
+            const start = data.start || cfg.scoreboard.start || 0;
+            const parts = data.dartStats.map((st,i)=>{
+                const avg = st.throws ? (((start - data.scores[i]) / st.throws) * 3).toFixed(1) : '0';
+                const teamName = getTeam(i).name || `Team ${i+1}`;
+                return `${teamName}: 3DA ${avg} | HC ${st.highCheckout} | 180s ${st.count180} | 140+ ${st.count140} | 100+ ${st.count100}`;
+            });
+            statDiv.textContent = parts.join(' \u00A0 ');
         }
 
         const turnSel = container.querySelector('#sb-turn');
@@ -440,6 +512,9 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             if (cfg.scoreboard.frames) obj.frames = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-frame-${i}`).value) || 0);
             if (cfg.scoreboard.legs) obj.legs = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-leg-${i}`).value) || 0);
             if (cfg.scoreboard.points) obj.points = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-point-${i}`).value) || 0);
+            if (cfg.scoreboard.overs) obj.overs = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-over-${i}`).value) || 0);
+            if (cfg.scoreboard.balls) obj.balls = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-ball-${i}`).value) || 0);
+            if (cfg.scoreboard.wickets) obj.wickets = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-wkt-${i}`).value) || 0);
             if (cfg.scoreboard.breaks) obj.currentBreak = parseInt(container.querySelector('#sb-break').value) || 0;
             if (cfg.scoreboard.highBreak) obj.highBreak = parseInt(container.querySelector('#sb-highbreak').value) || 0;
             if (cfg.scoreboard.turn) obj.turn = parseInt(container.querySelector('#sb-turn').value) || 0;
@@ -450,6 +525,8 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             if (sport === 'Darts' && data.checkoutText) {
                 obj.checkoutPlayer = data.checkoutPlayer;
                 obj.checkoutText = data.checkoutText;
+                obj.dartStats = data.dartStats || [];
+                obj.dartLogs = data.dartLogs || [];
             }
             obj.style = data.style || 'style1';
             obj.position = data.position || 'bottom-center';
@@ -539,7 +616,10 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             const textA = contrastColor(colA);
             const textB = contrastColor(colB);
             const textBrand = contrastColor(brand);
-            prevDiv.innerHTML = `
+            if(styleSel.value==='cricket'){
+                prevDiv.innerHTML = `<div class="sb-container sb-cricket" style="--sb-team-width:${longest}ch"><div class="sb-row"><span class="sb-team" style="background:${colA};color:${textA}">${nameA}</span><span class="sb-score" style="background:${brand};color:${textBrand}">0/0 (0.0)</span><span class="sb-team" style="background:${colB};color:${textB}">${nameB}</span></div></div>`;
+            }else{
+                prevDiv.innerHTML = `
                 <div class="sb-container sb-${styleSel.value}" style="--sb-team-width:${longest}ch">
                     <div class="sb-row">
                         <span class="sb-team" style="background:${colA};color:${textA}">${showLogo ? `<img src="${logoA}" class="sb-team-logo">` : ''}${nameA}</span>
@@ -547,6 +627,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                         <span class="sb-team" style="background:${colB};color:${textB}">${showLogo ? `<img src="${logoB}" class="sb-team-logo">` : ''}${nameB}</span>
                     </div>
                 </div>`;
+            }
         }
         if (styleSel) styleSel.onchange = updatePreview;
         if (posSel) posSel.onchange = updatePreview;
@@ -585,5 +666,6 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             setInterval(() => localStorage.setItem('sportsHeartbeat', Date.now().toString()), 5000);
             container.dataset.heartbeat = 'true';
         }
+        updateDartStats();
     }
 }

@@ -5,6 +5,7 @@ export const sportsData = {
     subs: 5,
     positions: ["GK","LB","CB","RB","LWB","RWB","DM","CM","AM","LW","RW","ST"],
     scoreboard: { periods: 2, periodLabel: "Half", time: true, timeDirection: 'up' },
+    scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }]
   },
   "Rugby": {
@@ -17,6 +18,7 @@ export const sportsData = {
       "Wing","Inside Centre","Outside Centre","Wing","Full-back"
     ],
     scoreboard: { periods: 2, periodLabel: "Half", time: true, timeDirection: 'up' },
+    scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
     scoringButtons: [
       { label: "Try", value: 5, color: "#ef4444" },
       { label: "Conv", value: 2, color: "#3b82f6" },
@@ -30,6 +32,7 @@ export const sportsData = {
     subs: 5,
     positions: ["Goalkeeper","Defender","Midfielder","Forward"],
     scoreboard: { periods: 4, periodLabel: "Quarter", time: true, timeDirection: 'up' },
+    scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }]
   },
   "Ice Hockey": {
@@ -38,6 +41,7 @@ export const sportsData = {
     subs: 6,
     positions: ["Goalie","Defense","Center","Winger"],
     scoreboard: { periods: 3, periodLabel: "Period", time: true, timeDirection: 'down' },
+    scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }]
   },
   "Boxing": {
@@ -46,6 +50,7 @@ export const sportsData = {
     subs: 0,
     positions: ["Fighter"],
     scoreboard: { round: true, time: true, timeDirection: 'down' },
+    scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }]
   },
   "Darts": {
@@ -54,6 +59,7 @@ export const sportsData = {
     subs: 0,
     positions: ["Player"],
     scoreboard: { sets: true, legs: true, turn: true, start: 501, checkout: true },
+    scoreboardStyles: ['style1','style2','style3','style4','style5'],
     scoringButtons: [
       { label: "-1", value: -1, color: "#10b981" },
       { label: "-5", value: -5, color: "#3b82f6" },
@@ -68,6 +74,7 @@ export const sportsData = {
     subs: 0,
     positions: ["Player"],
     scoreboard: { frames: true, breaks: true, highBreak: true, turn: true },
+    scoreboardStyles: ['style1','style2','style3','style4','style5'],
     scoringButtons: [
       { label: "Red", value: 1, color: "#b00000" },
       { label: "Yel", value: 2, color: "#ffd400", textColor: "#000" },
@@ -85,6 +92,7 @@ export const sportsData = {
     subs: 0,
     positions: ["Player"],
     scoreboard: { sets: true, games: true },
+    scoreboardStyles: ['style1','style2','style3','style4','style5'],
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }]
   },
   "Table Tennis": {
@@ -93,6 +101,7 @@ export const sportsData = {
     subs: 0,
     positions: ["Player"],
     scoreboard: { games: true, points: true },
+    scoreboardStyles: ['style1','style2','style3','style4','style5'],
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }]
   },
   "Pool": {
@@ -101,6 +110,7 @@ export const sportsData = {
     subs: 0,
     positions: ["Player"],
     scoreboard: { frames: true },
+    scoreboardStyles: ['style1','style2','style3','style4','style5'],
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }]
   },
   "Basketball": {
@@ -109,6 +119,7 @@ export const sportsData = {
     subs: 7,
     positions: ["PG","SG","SF","PF","C"],
     scoreboard: { periods: 4, periodLabel: "Quarter", time: true, timeDirection: 'down' },
+    scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
     scoringButtons: [
       { label: "+1", value: 1, color: "#3b82f6" },
       { label: "+2", value: 2, color: "#10b981" },
@@ -121,7 +132,20 @@ export const sportsData = {
     subs: 5,
     positions: ["GS","GA","WA","C","WD","GD","GK"],
     scoreboard: { periods: 4, periodLabel: "Quarter", time: true, timeDirection: 'down' },
+    scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }]
+  },
+  "Cricket": {
+    teamCount: 2,
+    playersPerTeam: 11,
+    subs: 5,
+    positions: ["Batter","Bowler","All-rounder","Wicketkeeper"],
+    scoreboard: { overs: true, wickets: true, balls: true, turn: true },
+    scoreboardStyles: ['cricket','style1','style2'],
+    scoringButtons: [
+      { label: "+1", value: 1, color: "#10b981" },
+      { label: "Wkt", value: "w", color: "#ef4444" }
+    ]
   },
   "Golf": {
     teamCount: 1,
@@ -129,6 +153,7 @@ export const sportsData = {
     subs: 0,
     positions: ["Player"],
     scoreboard: { golf: true },
+    scoreboardStyles: ['style1'],
     scoringButtons: []
   }
 };
