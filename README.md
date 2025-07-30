@@ -89,3 +89,10 @@ panel. Upload sponsors with names, colours and logos then assign them to
 placements such as above or below the scoreboard, the bottom of formation
 graphics or any screen corner. The app logs whenever a sponsor is shown or
 hidden so you can review exposure reports later.
+
+### Active & Favourite Graphics
+
+Each graphic in the control panel has a ★ button to mark it as a favourite.
+Favourites appear under the **Favourites** tab in the Active Graphics panel
+for quick access. The **Active** tab lists anything currently visible so you
+can hide them in one click.
