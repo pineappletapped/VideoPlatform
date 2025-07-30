@@ -1,5 +1,6 @@
 import { listenOverlayState, listenGraphicsData, listenBranding } from './firebase.js';
 import { getDatabaseInstance } from './firebaseApp.js';
+import { suggestAbbreviation } from './teamUtils.js';
 import { ref, onValue, set } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
 
 const params = new URLSearchParams(window.location.search);
@@ -458,10 +459,17 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         else if (pos === 'bottom-right') { scoreboardOverlay.style.bottom = '2rem'; scoreboardOverlay.style.right = '2rem'; }
         else if (pos === 'top-center') { scoreboardOverlay.style.top = '2rem'; scoreboardOverlay.style.left = '50%'; scoreboardOverlay.style.transform = 'translateX(-50%)'; }
         else { scoreboardOverlay.style.bottom = '2rem'; scoreboardOverlay.style.left = '50%'; scoreboardOverlay.style.transform = 'translateX(-50%)'; }
-        const names = teamsData ? [teamsData.teamA?.name, teamsData.teamB?.name] : [];
+        const nameAF = teamsData?.teamA?.name || 'Team 1';
+        const nameBF = teamsData?.teamB?.name || 'Team 2';
+        const abbrA = teamsData?.teamA?.abbrev || suggestAbbreviation(nameAF);
+        const abbrB = teamsData?.teamB?.abbrev || suggestAbbreviation(nameBF);
+        const useAbbrev = scoreboardData.abbreviate;
+        const names = [useAbbrev ? abbrA : nameAF, useAbbrev ? abbrB : nameBF];
         const colors = teamsData ? [teamsData.teamA?.color || '#333', teamsData.teamB?.color || '#333'] : ['#333','#333'];
-        const logos = teamsData && teamsData.teamA?.logo && teamsData.teamB?.logo ? [teamsData.teamA.logo, teamsData.teamB.logo] : [null, null];
+        const logos = teamsData && scoreboardData.showLogos !== false && teamsData.teamA?.logo && teamsData.teamB?.logo ? [teamsData.teamA.logo, teamsData.teamB.logo] : [null, null];
         const showLogos = logos[0] && logos[1];
+        const longest = Math.max(names[0].length, names[1].length);
+        scoreboardOverlay.style.setProperty('--sb-team-width', `${longest}ch`);
         const sA = scoreboardData.scores?.[0] ?? 0;
         const sB = scoreboardData.scores?.[1] ?? 0;
         const info = [];
@@ -479,7 +487,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         const textB = contrastColor(colors[1]);
         const textBrand = contrastColor(brand);
         const breakInd = breakVisible && scoreboardData.currentBreak !== undefined ? `<div class='sb-current-break ${breakPlayer === 1 ? 'right' : 'left'}'>${scoreboardData.currentBreak}</div>` : '';
-        const checkoutHtml = scoreboardData.checkoutText ? `<div class='sb-checkout'>${names[scoreboardData.checkoutPlayer || 0] || ''}: ${scoreboardData.checkoutText}</div>` : '';
+        const checkoutHtml = scoreboardData.checkoutText ? `<div class='sb-checkout'>${names[scoreboardData.checkoutPlayer || 0]}: ${scoreboardData.checkoutText}</div>` : '';
         const aClassA = scoreboardData.turn === 0 ? ' active' : '';
         const aClassB = scoreboardData.turn === 1 ? ' active' : '';
         const sbSponsors = branding.sponsors || [];
@@ -501,9 +509,9 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         scoreboardOverlay.innerHTML = `
             ${breakInd}
             <div class="sb-row">
-                <span class="sb-team${aClassA}" style="background:${colors[0]};color:${textA}">${showLogos ? `<img src='${logos[0]}' class='sb-team-logo'>` : ''}${names[0] || 'Team 1'}</span>
+                <span class="sb-team${aClassA}" style="background:${colors[0]};color:${textA}">${showLogos ? `<img src='${logos[0]}' class='sb-team-logo'>` : ''}${names[0]}</span>
                 <span class="sb-score" style="background:${brand};color:${textBrand}">${sA} | ${sB}</span>
-                <span class="sb-team${aClassB}" style="background:${colors[1]};color:${textB}">${showLogos ? `<img src='${logos[1]}' class='sb-team-logo'>` : ''}${names[1] || 'Team 2'}</span>
+                <span class="sb-team${aClassB}" style="background:${colors[1]};color:${textB}">${showLogos ? `<img src='${logos[1]}' class='sb-team-logo'>` : ''}${names[1]}</span>
             </div>
             ${infoHtml}
             ${checkoutHtml}

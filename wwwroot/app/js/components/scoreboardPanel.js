@@ -2,6 +2,7 @@ import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/fir
 import { getDatabaseInstance } from "../firebaseApp.js";
 import { sportsData } from "../sportsConfig.js";
 import { updateOverlayState, listenOverlayState } from "../firebase.js";
+import { suggestAbbreviation } from "../teamUtils.js";
 
 const scoreboardStyles = [
     { id: 'style1', label: 'Classic' },
@@ -105,7 +106,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
     function defaultData() {
         const startVal = cfg.scoreboard.start || 0;
         const scores = Array.from({ length: cfg.teamCount }).map(() => startVal);
-        const base = { scores, style: 'style1', position: 'bottom-center', transitionIn: 'fade', transitionOut: 'fade' };
+        const base = { scores, style: 'style1', position: 'bottom-center', transitionIn: 'fade', transitionOut: 'fade', abbreviate: false, showLogos: true };
         if (cfg.scoreboard.periods) base.period = 1;
         if (cfg.scoreboard.time) base.time = '00:00';
         if (cfg.scoreboard.round) base.round = 1;
@@ -161,6 +162,12 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                             <select id="sb-trans-out" class="border p-1 w-full">
                                 ${transitions.map(t=>`<option value="${t.value}">${t.label}</option>`).join('')}
                             </select>
+                        </div>
+                        <div class="mb-2">
+                            <label class="inline-flex items-center text-sm"><input type="checkbox" id="sb-abbrev" class="mr-1">Abbreviate names</label>
+                        </div>
+                        <div class="mb-2">
+                            <label class="inline-flex items-center text-sm"><input type="checkbox" id="sb-show-logos" class="mr-1" checked>Show logos</label>
                         </div>
                         <div id="sb-prev" class="mt-2 flex justify-center"></div>
                         <div class="flex gap-2 mt-4">
@@ -352,6 +359,8 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             obj.position = data.position || 'bottom-center';
             obj.transitionIn = data.transitionIn || 'fade';
             obj.transitionOut = data.transitionOut || 'fade';
+            obj.abbreviate = data.abbreviate || false;
+            obj.showLogos = data.showLogos !== false;
             return obj;
         }
 
@@ -410,22 +419,30 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         const posSel = container.querySelector('#sb-position');
         const transInSel = container.querySelector('#sb-trans-in');
         const transOutSel = container.querySelector('#sb-trans-out');
+        const abbrevChk = container.querySelector('#sb-abbrev');
+        const showLogoChk = container.querySelector('#sb-show-logos');
         const prevDiv = container.querySelector('#sb-prev');
         function updatePreview() {
             if (!prevDiv) return;
             const colA = teamsData?.teamA?.color || '#333';
             const colB = teamsData?.teamB?.color || '#333';
-            const nameA = teamsData?.teamA?.name || 'Team 1';
-            const nameB = teamsData?.teamB?.name || 'Team 2';
+            const nameAFull = teamsData?.teamA?.name || 'Team 1';
+            const nameBFull = teamsData?.teamB?.name || 'Team 2';
+            const abbrA = teamsData?.teamA?.abbrev || suggestAbbreviation(nameAFull);
+            const abbrB = teamsData?.teamB?.abbrev || suggestAbbreviation(nameBFull);
+            const useAbbrev = abbrevChk?.checked;
+            const nameA = useAbbrev ? abbrA : nameAFull;
+            const nameB = useAbbrev ? abbrB : nameBFull;
+            const longest = Math.max(nameA.length, nameB.length);
             const logoA = teamsData?.teamA?.logo || '';
             const logoB = teamsData?.teamB?.logo || '';
-            const showLogo = logoA && logoB;
+            const showLogo = (showLogoChk?.checked ?? true) && logoA && logoB;
             const brand = getComputedStyle(document.documentElement).getPropertyValue('--brand-primary') || '#e16316';
             const textA = contrastColor(colA);
             const textB = contrastColor(colB);
             const textBrand = contrastColor(brand);
             prevDiv.innerHTML = `
-                <div class="sb-container sb-${styleSel.value}">
+                <div class="sb-container sb-${styleSel.value}" style="--sb-team-width:${longest}ch">
                     <div class="sb-row">
                         <span class="sb-team" style="background:${colA};color:${textA}">${showLogo ? `<img src="${logoA}" class="sb-team-logo">` : ''}${nameA}</span>
                         <span class="sb-score" style="background:${brand};color:${textBrand}">0 | 0</span>
@@ -435,12 +452,16 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         }
         if (styleSel) styleSel.onchange = updatePreview;
         if (posSel) posSel.onchange = updatePreview;
+        if (abbrevChk) abbrevChk.onchange = updatePreview;
+        if (showLogoChk) showLogoChk.onchange = updatePreview;
         if (container.querySelector('#sb-edit')) {
             container.querySelector('#sb-edit').onclick = () => {
                 if (styleSel) styleSel.value = data.style || 'style1';
                 if (posSel) posSel.value = data.position || 'bottom-center';
                 if (transInSel) transInSel.value = data.transitionIn || 'fade';
                 if (transOutSel) transOutSel.value = data.transitionOut || 'fade';
+                if (abbrevChk) abbrevChk.checked = data.abbreviate || false;
+                if (showLogoChk) showLogoChk.checked = data.showLogos !== false;
                 updatePreview();
                 modal.style.display = 'flex';
             };
@@ -454,6 +475,8 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                 data.position = posSel.value;
                 data.transitionIn = transInSel ? transInSel.value : 'fade';
                 data.transitionOut = transOutSel ? transOutSel.value : 'fade';
+                data.abbreviate = abbrevChk ? abbrevChk.checked : false;
+                data.showLogos = showLogoChk ? showLogoChk.checked : true;
                 modal.style.display = 'none';
                 const newData = getFormData();
                 await saveData(newData);
