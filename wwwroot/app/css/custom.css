@@ -131,6 +131,14 @@ html,body { margin: 0; width:100%; height:100%; overflow:hidden; }
 }
 .sb-current-break.left { left: 40%; transform: translateX(-50%); }
 .sb-current-break.right { left: 60%; transform: translateX(-50%); }
+.sb-sponsor { position:absolute;height:40px;left:50%;transform:translateX(-50%); }
+.sb-sponsor.top { top:-2.5rem; }
+.sb-sponsor.bottom { bottom:-2.5rem; }
+.corner-sponsor{position:absolute;height:60px;}
+.corner-sponsor.tl{top:0.5rem;left:0.5rem;}
+.corner-sponsor.tr{top:0.5rem;right:0.5rem;}
+.corner-sponsor.bl{bottom:0.5rem;left:0.5rem;}
+.corner-sponsor.br{bottom:0.5rem;right:0.5rem;}
 
 /* Additional styles for column layouts */
 .col-cameras, .col-atem, .col-obs {

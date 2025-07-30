@@ -1,6 +1,6 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-import { getDatabase, ref, set, get, onValue, update, remove } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+import { getDatabase, ref, set, get, onValue, update, remove, push } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCXUd4iKZWHeiWe_2gblxWE9uFEXS4pHAI",
@@ -147,4 +147,44 @@ export function getUserBranding(userId) {
 }
 export function listenUserBranding(userId, cb) {
   return onValue(ref(db, `userBranding/${userId}`), snap => cb(snap.val()));
+}
+
+// Sponsors helpers
+export function getSponsors(eventId) {
+  return get(ref(db, `sponsors/${eventId}`)).then(snap => snap.val());
+}
+export function setSponsors(eventId, sponsors) {
+  return set(ref(db, `sponsors/${eventId}`), sponsors);
+}
+export function updateSponsors(eventId, sponsors) {
+  return update(ref(db, `sponsors/${eventId}`), sponsors);
+}
+export function listenSponsors(eventId, cb) {
+  return onValue(ref(db, `sponsors/${eventId}`), snap => cb(snap.val()));
+}
+
+// Sponsor placement helpers
+export function getSponsorPlacements(eventId) {
+  return get(ref(db, `sponsorPlacements/${eventId}`)).then(snap => snap.val());
+}
+export function setSponsorPlacements(eventId, data) {
+  return set(ref(db, `sponsorPlacements/${eventId}`), data);
+}
+export function updateSponsorPlacements(eventId, data) {
+  return update(ref(db, `sponsorPlacements/${eventId}`), data);
+}
+export function listenSponsorPlacements(eventId, cb) {
+  return onValue(ref(db, `sponsorPlacements/${eventId}`), snap => cb(snap.val()));
+}
+
+// Sponsor log helper
+export function addSponsorLog(eventId, entry) {
+  const r = ref(db, `sponsorLog/${eventId}`);
+  return push(r, entry);
+}
+export function getSponsorLog(eventId) {
+  return get(ref(db, `sponsorLog/${eventId}`)).then(snap => snap.val());
+}
+export function listenSponsorLog(eventId, cb) {
+  return onValue(ref(db, `sponsorLog/${eventId}`), snap => cb(snap.val()));
 }

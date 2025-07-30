@@ -81,3 +81,11 @@ opens a simple admin panel showing all users and their billing tier. Plans are:
 
 Regular users can manage their default branding from **Brand Settings** in the
 account menu. Uploaded logos are stored under `uploads/user_<id>/branding/`.
+
+### Sponsorship
+
+Events can manage sponsor logos from the **Sponsors** tab in the sports admin
+panel. Upload sponsors with names, colours and logos then assign them to
+placements such as above or below the scoreboard, the bottom of formation
+graphics or any screen corner. The app logs whenever a sponsor is shown or
+hidden so you can review exposure reports later.

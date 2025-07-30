@@ -1,4 +1,4 @@
-import { listenOverlayState, listenGraphicsData, listenBranding } from './firebase.js';
+import { listenOverlayState, listenGraphicsData, listenBranding, listenSponsors, listenSponsorPlacements, addSponsorLog } from './firebase.js';
 import { getDatabaseInstance } from './firebaseApp.js';
 import { suggestAbbreviation } from './teamUtils.js';
 import { ref, onValue, set } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
@@ -17,6 +17,7 @@ let prevScoreboardVisible = false;
 let prevScoreboardData = null;
 let prevLowerThirdId = null;
 let prevLowerThirdData = null;
+let prevFormationVisible = false;
 
 function contrastColor(hex) {
     let c = hex.replace('#', '');
@@ -506,7 +507,12 @@ function renderOverlayFromFirebase(state, graphics, branding) {
                 sbSponsorHtml = `<div style='display:flex;gap:1rem;justify-content:space-around;margin-top:0.25rem;'>${sbSponsors.slice(0,4).map(s=>`<img src='${s.logo}' alt='${s.name}' style='height:50px;'>`).join('')}</div>`;
             }
         }
+        const topSp = sponsorsData[sponsorPlacements.scoreboardTop];
+        const bottomSp = sponsorsData[sponsorPlacements.scoreboardBottom];
+        const topImg = topSp ? `<img src='${topSp.logo}' class='sb-sponsor top'>` : '';
+        const bottomImg = bottomSp ? `<img src='${bottomSp.logo}' class='sb-sponsor bottom'>` : '';
         scoreboardOverlay.innerHTML = `
+            ${topImg}
             ${breakInd}
             <div class="sb-row">
                 <span class="sb-team${aClassA}" style="background:${colors[0]};color:${textA}">${showLogos ? `<img src='${logos[0]}' class='sb-team-logo'>` : ''}${names[0]}</span>
@@ -515,7 +521,12 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             </div>
             ${infoHtml}
             ${checkoutHtml}
-            ${sbSponsorHtml}`;
+            ${sbSponsorHtml}
+            ${bottomImg}`;
+        if(!prevScoreboardVisible){
+            if(topSp) addSponsorLog(eventId,{ts:Date.now(),placement:'scoreboardTop',sponsor:sponsorPlacements.scoreboardTop,action:'show'});
+            if(bottomSp) addSponsorLog(eventId,{ts:Date.now(),placement:'scoreboardBottom',sponsor:sponsorPlacements.scoreboardBottom,action:'show'});
+        }
         if(highBreakVisible && scoreboardData.highBreak){
             let hb = overlayContainer.querySelector('#high-break');
             if(!hb){
@@ -529,11 +540,36 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         }
     } else if (scoreboardOverlay && prevScoreboardVisible) {
         playTransition(scoreboardOverlay,'out',prevScoreboardData?.transitionOut);
+        if(prevScoreboardVisible){
+            const topSp = sponsorsData[sponsorPlacements.scoreboardTop];
+            const bottomSp = sponsorsData[sponsorPlacements.scoreboardBottom];
+            if(topSp) addSponsorLog(eventId,{ts:Date.now(),placement:'scoreboardTop',sponsor:sponsorPlacements.scoreboardTop,action:'hide'});
+            if(bottomSp) addSponsorLog(eventId,{ts:Date.now(),placement:'scoreboardBottom',sponsor:sponsorPlacements.scoreboardBottom,action:'hide'});
+        }
         scoreboardOverlay = null;
         overlayContainer.querySelector('#high-break')?.remove();
     }
     prevScoreboardVisible = scoreboardShow;
     prevScoreboardData = scoreboardData;
+
+    // Corner Sponsors
+    ['tl','tr','bl','br'].forEach(pos=>{
+        const idx = sponsorPlacements['corner'+pos.toUpperCase()] || '';
+        const sponsor = sponsorsData[idx];
+        const id = `corner-sponsor-${pos}`;
+        let el = overlayContainer.querySelector('#'+id);
+        if(sponsor){
+            if(!el){
+                el = document.createElement('img');
+                el.id = id;
+                el.className = `corner-sponsor ${pos}`;
+                overlayContainer.appendChild(el);
+            }
+            el.src = sponsor.logo;
+        } else if(el){
+            el.remove();
+        }
+    });
 
     // Formation Overlay
     let formOverlay = overlayContainer.querySelector('#formation-overlay');
@@ -546,14 +582,24 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             overlayContainer.appendChild(formOverlay);
         }
         const showPhoto = teamsData && teamsData.showPhotosFormation;
+        const bottomSp = sponsorsData[sponsorPlacements.formationBottom];
+        const bottomImg = bottomSp ? `<img src='${bottomSp.logo}' class='sb-sponsor bottom'>` : '';
         formOverlay.innerHTML = `<div class='formation-pitch'></div>` +
             formData.players.map(p=>{
                 const photo = showPhoto && p.photo ? `<img src='${p.photo}' class='formation-photo'>` : '';
                 return `<div class='formation-player' style='top:${p.y}%;left:${p.x}%;font-family:${branding.font};'>${photo}<span>${p.name}</span></div>`;
-            }).join('');
+            }).join('') + bottomImg;
+        if(!prevFormationVisible){
+            if(bottomSp) addSponsorLog(eventId,{ts:Date.now(),placement:'formationBottom',sponsor:sponsorPlacements.formationBottom,action:'show'});
+        }
     } else if (formOverlay) {
+        if(prevFormationVisible){
+            const bottomSp = sponsorsData[sponsorPlacements.formationBottom];
+            if(bottomSp) addSponsorLog(eventId,{ts:Date.now(),placement:'formationBottom',sponsor:sponsorPlacements.formationBottom,action:'hide'});
+        }
         formOverlay.remove();
     }
+    prevFormationVisible = formShow;
 
     // Stats Overlay
     let statOverlay = overlayContainer.querySelector('#stat-overlay');
@@ -588,6 +634,8 @@ let lastGraphics = null;
 let lastBranding = DEFAULT_BRANDING;
 let teamsData = null;
 let scoreboardPersist = null;
+let sponsorsData = [];
+let sponsorPlacements = {};
 
 function updateOverlay() {
     const state = { ...(lastState || {}) };
@@ -623,6 +671,8 @@ onValue(ref(getDatabaseInstance(), `scoreboard/${eventId}`), snap => {
     scoreboardPersist = snap.val();
     updateOverlay();
 });
+listenSponsors(eventId, data => { sponsorsData = data || []; updateOverlay(); });
+listenSponsorPlacements(eventId, data => { sponsorPlacements = data || {}; updateOverlay(); });
 
 const db = getDatabaseInstance();
 onValue(ref(db, `status/${eventId}/vtCommand`), snap => {

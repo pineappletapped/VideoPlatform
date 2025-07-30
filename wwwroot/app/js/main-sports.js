@@ -8,6 +8,7 @@ import { renderSportPanel } from './components/sportPanel.js';
 import { renderGolfPanel } from './components/golfPanel.js';
 import { renderStatsPanel } from './components/statsPanel.js';
 import { renderBrandingModal } from './components/brandingModal.js';
+import { renderSponsorsPanel } from './components/sponsorsPanel.js';
 import { getEventMetadata, updateEventMetadata } from './firebase.js';
 
 const params = new URLSearchParams(window.location.search);
@@ -32,6 +33,7 @@ async function init() {
   const teamsTab = document.getElementById('teams');
   const lineupsTab = document.getElementById('lineups');
   const statsTab = document.getElementById('stats');
+  const sponsorsTab = document.getElementById('sponsors');
 
   const sportPanel = document.createElement('div');
   left.appendChild(sportPanel);
@@ -43,6 +45,8 @@ async function init() {
   lineupsTab.appendChild(lineupPanel);
   const statsPanel = document.createElement('div');
   statsTab.appendChild(statsPanel);
+  const sponsorsPanel = document.createElement('div');
+  sponsorsTab.appendChild(sponsorsPanel);
 
   function renderBySport(s){
     if(s === 'Golf') {
@@ -50,11 +54,13 @@ async function init() {
       teamsTab.classList.add('hidden');
       lineupsTab.classList.add('hidden');
       renderStatsPanel(statsPanel, eventId);
+      renderSponsorsPanel(sponsorsPanel, eventId);
     } else {
       renderScoreboardPanel(scoreboardPanel, s, eventId);
       renderTeamsPanel(teamsPanel, eventId, s);
       renderLineupPanel(lineupPanel, eventId, s);
       renderStatsPanel(statsPanel, eventId);
+      renderSponsorsPanel(sponsorsPanel, eventId);
       teamsTab.classList.remove('hidden');
       lineupsTab.classList.remove('hidden');
     }
