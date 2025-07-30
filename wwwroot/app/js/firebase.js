@@ -192,13 +192,24 @@ export function listenSponsorLog(eventId, cb) {
 // Match log helpers
 export function addMatchLog(eventId, entry) {
   const r = ref(db, `matchLog/${eventId}`);
-  return push(r, entry);
+  const newRef = push(r);
+  return set(newRef, entry).then(() => newRef.key);
+}
+export function updateMatchLogEntry(eventId, id, entry) {
+  return set(ref(db, `matchLog/${eventId}/${id}`), entry);
 }
 export function listenMatchLog(eventId, cb) {
-  return onValue(ref(db, `matchLog/${eventId}`), snap => cb(snap.val()));
+  return onValue(ref(db, `matchLog/${eventId}`), snap => {
+    const val = snap.val() || {};
+    const arr = Object.entries(val).map(([k,v])=>({ id:k, ...v }));
+    cb(arr);
+  });
 }
 export function getMatchLog(eventId) {
-  return get(ref(db, `matchLog/${eventId}`)).then(snap => snap.val());
+  return get(ref(db, `matchLog/${eventId}`)).then(snap => {
+    const val = snap.val() || {};
+    return Object.entries(val).map(([k,v])=>({ id:k, ...v }));
+  });
 }
 
 // Tournament helpers

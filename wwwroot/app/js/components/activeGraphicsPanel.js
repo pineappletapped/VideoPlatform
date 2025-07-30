@@ -1,14 +1,22 @@
-import { listenOverlayState, updateOverlayState, listenGraphicsData, updateGraphicsData } from '../firebase.js';
+import { listenOverlayState, updateOverlayState, listenGraphicsData, updateGraphicsData, listenMatchLog, updateMatchLogEntry } from '../firebase.js';
 import { listenFavorites, updateFavorites } from '../firebase.js';
+import { getDatabaseInstance } from '../firebaseApp.js';
+import { ref, onValue } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
 
 export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
     let overlayState = {};
     let graphicsData = {};
     let favorites = { lowerThirds: [], titleSlides: [] };
+    let matchLogs = [];
+    let teamsData = null;
+    let logVisible = false;
 
     listenOverlayState(eventId, (state) => { overlayState = state || {}; render(); });
     listenGraphicsData(eventId, (g) => { graphicsData = g || {}; render(); }, mode);
     listenFavorites(eventId, (fav) => { favorites = fav || { lowerThirds: [], titleSlides: [] }; renderFav(); });
+    listenMatchLog(eventId, data => { matchLogs = data || []; renderLog(); });
+    onValue(ref(getDatabaseInstance(), `teams/${eventId}`), snap => { teamsData = snap.val(); renderLog(); });
+    listenOverlayState(eventId, s => { logVisible = !!(s && s.matchLogVisible); renderLog(); });
 
     function render() {
         const items = [];
@@ -47,10 +55,25 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
         container.querySelector('#fav-list').innerHTML = favHtml || '<li class="text-gray-500">No favourites.</li>';
     }
 
+    function renderLog(){
+        const tbl = container.querySelector('#logs-table');
+        if(!tbl) return;
+        const rows = (matchLogs||[]).map(e=>{
+            const team = e.team==='a'?teamsData?.teamA?.name||'Team A':teamsData?.teamB?.name||'Team B';
+            const players = e.team==='a'?teamsData?.teamA?.players||[]:teamsData?.teamB?.players||[];
+            const opts = ['<option value="">-</option>', ...players.map(p=>`<option ${e.player===p.name?'selected':''} value="${p.name}">${p.name}</option>`)].join('');
+            return `<tr data-id="${e.id}"><td class='pr-2'>${e.time}</td><td>${team}</td><td>${e.type}</td><td><select data-player="${e.id}" class='border p-1'>${opts}</select></td></tr>`;
+        }).join('');
+        tbl.innerHTML = `<thead><tr><th class='pr-2'>Time</th><th>Team</th><th>Type</th><th>Player</th></tr></thead><tbody>${rows}</tbody>`;
+        const btn = container.querySelector('#logs-toggle');
+        if(btn) btn.textContent = logVisible ? 'Hide Overlay' : 'Show Overlay';
+    }
+
     container.innerHTML = `
         <div class="flex border-b mb-2">
             <button class="px-4 py-2 border-b-2 border-brand text-brand font-semibold" data-tab="active">Active</button>
             <button class="px-4 py-2" data-tab="favourites">Favourites</button>
+            <button class="px-4 py-2" data-tab="logs">Logs</button>
         </div>
         <div id="active-tab" class="tab-content">
             <ul id="active-list" class="space-y-1 text-sm"></ul>
@@ -59,14 +82,24 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
         <div id="fav-tab" class="tab-content hidden">
             <ul id="fav-list" class="space-y-1 text-sm"></ul>
             <button id="fav-live" class="control-button btn-sm mt-2">Live Selected</button>
+        </div>
+        <div id="logs-tab" class="tab-content hidden">
+            <table class="text-sm w-full mb-2" id="logs-table"></table>
+            <button id="logs-toggle" class="control-button btn-sm">Toggle Overlay</button>
         </div>`;
+    renderLog();
 
     function setTab(name){
-        ['active','favourites'].forEach(t=>{
-            container.querySelector(`[data-tab="${t}"]`).classList.toggle('border-b-2', t===name);
-            container.querySelector(`[data-tab="${t}"]`).classList.toggle('border-brand', t===name);
-            container.querySelector(`[data-tab="${t}"]`).classList.toggle('text-brand', t===name);
-            container.querySelector(`#${t==='active'?'active':'fav'}-tab`).classList.toggle('hidden', t!==name);
+        ['active','favourites','logs'].forEach(t=>{
+            const btn = container.querySelector(`[data-tab="${t}"]`);
+            if(btn){
+                btn.classList.toggle('border-b-2', t===name);
+                btn.classList.toggle('border-brand', t===name);
+                btn.classList.toggle('text-brand', t===name);
+            }
+            const panelId = t==='active'?'active':t==='favourites'?'fav':'logs';
+            const panel = container.querySelector(`#${panelId}-tab`);
+            if(panel) panel.classList.toggle('hidden', t!==name);
         });
     }
     container.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>setTab(btn.getAttribute('data-tab'))));
@@ -99,5 +132,18 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
         favorites.lowerThirds.forEach(id=>{ favItems.push({type:'lowerThird', id}); });
         favorites.titleSlides.forEach(id=>{ favItems.push({type:'titleSlide', id}); });
         favChecks.forEach((ch,i)=>{ if(ch.checked){ const item=favItems[i]; if(item.type==='lowerThird') updateGraphicsData(eventId,{liveLowerThirdId:item.id}, mode); else if(item.type==='titleSlide') updateGraphicsData(eventId,{liveTitleSlideId:item.id}, mode); }});
+    });
+
+    container.querySelector('#logs-toggle').addEventListener('click', ()=>{
+        logVisible = !logVisible;
+        updateOverlayState(eventId,{matchLogVisible:logVisible});
+        renderLog();
+    });
+    container.addEventListener('change', e=>{
+        const pid = e.target.getAttribute('data-player');
+        if(pid){
+            const entry = matchLogs.find(l=>l.id===pid);
+            if(entry){ entry.player = e.target.value; updateMatchLogEntry(eventId,pid,entry); }
+        }
     });
 }

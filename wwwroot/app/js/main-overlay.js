@@ -15,6 +15,7 @@ let vtVolume = 1;
 let musicVolume = 1;
 let prevScoreboardVisible = false;
 let prevScoreboardData = null;
+let prevStoppageVisible = false;
 let prevLowerThirdId = null;
 let prevLowerThirdData = null;
 let prevFormationVisible = false;
@@ -564,6 +565,17 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             ${checkoutHtml}
             ${sbSponsorHtml}
             ${bottomImg}`;
+        }
+        let stopEl = overlayContainer.querySelector('#stoppage-overlay');
+        if(scoreboardData.showStoppage && scoreboardData.stoppage){
+            if(!stopEl){
+                stopEl = document.createElement('div');
+                stopEl.id = 'stoppage-overlay';
+                overlayContainer.appendChild(stopEl);
+            }
+            stopEl.innerHTML = `<div class='lower-third-default' style='font-family:${branding.font};'>+${scoreboardData.stoppage}'</div>`;
+        } else if(stopEl){
+            stopEl.remove();
         }
         if(!prevScoreboardVisible){
             if(topSp) addSponsorLog(eventId,{ts:Date.now(),placement:'scoreboardTop',sponsor:sponsorPlacements.scoreboardTop,action:'show'});

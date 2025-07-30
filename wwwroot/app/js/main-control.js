@@ -180,7 +180,7 @@ async function initializeComponents(eventData) {
 
     // Initialize main content panels
     renderHoldslatePanel(document.getElementById('holdslate-panel'), onOverlayStateChange);
-    renderGraphicsPanel(document.getElementById('lower-thirds-panel'), eventData, graphicsMode);
+    renderGraphicsPanel(document.getElementById('events-panel'), eventData, graphicsMode);
 
     // Initialize AV panels
     renderVtsPanel(document.getElementById('vts-panel'), eventId, vt => { loadedVT = vt; window.loadedVT = vt; });
