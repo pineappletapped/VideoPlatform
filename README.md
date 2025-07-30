@@ -114,3 +114,10 @@ timestamp so overlay pages keep counting without constant database updates. The
 Scoreboard panel also includes **Match Log** buttons to record goals,
 substitutions and penalties with the current time. These entries can be shown as
 an overlay via the **Show Log** button.
+
+### Tournament Panel
+
+When an event is created in **Tournament Mode** an extra tab appears in the
+Graphics panel. The **Tournament** tab lets you list all the match-ups,
+configure scoring for wins, draws and losses and show individual match results
+as an overlay.

@@ -75,10 +75,11 @@ function setupTabs() {
     setActiveTab('vts','.av-panel');
 }
 
-function updateGraphicsTabs(type) {
+function updateGraphicsTabs(type, tournament) {
     const tabBar = document.getElementById('graphics-tabs');
     if (!tabBar) return;
     const sports = ['scoreboard','lineups','stats','teams'];
+    if (tournament) sports.push('tournament');
     sports.forEach(t=>{
         const btn = tabBar.querySelector(`[data-tab="${t}"]`);
         const panel = document.getElementById(`${t}-panel`);
@@ -150,12 +151,19 @@ async function initializeComponents(eventData) {
 
     document.getElementById('top-bar').appendChild(topBar);
     renderStatusBar(document.getElementById('status-bar'), eventData, {listener:false, atem:false, obs:false, sport:true, clock:true});
-    updateGraphicsTabs(eventData.eventType || 'corporate');
+    updateGraphicsTabs(eventData.eventType || 'corporate', !!eventData.tournament);
     if ((eventData.eventType || 'corporate') === 'sports') {
         renderScoreboardPanel(document.getElementById('scoreboard-panel'), eventData.sport, eventId);
         renderLineupPanel(document.getElementById('lineups-panel'), eventId, eventData.sport, 'view');
         renderStatsPanel(document.getElementById('stats-panel'), eventId);
         renderTeamsPanel(document.getElementById('teams-panel'), eventId, eventData.sport, !!eventData.tournament);
+        if(eventData.tournament){
+            const tnPanel = document.getElementById('tournament-panel');
+            if(tnPanel){
+                const { renderTournamentPanel } = await import('./components/tournamentPanel.js');
+                renderTournamentPanel(tnPanel, eventId, eventData.sport);
+            }
+        }
     } else {
         renderProgramPreview(document.getElementById('schedule-panel'), eventData, onOverlayStateChange);
     }

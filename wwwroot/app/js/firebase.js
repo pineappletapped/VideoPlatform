@@ -200,3 +200,17 @@ export function listenMatchLog(eventId, cb) {
 export function getMatchLog(eventId) {
   return get(ref(db, `matchLog/${eventId}`)).then(snap => snap.val());
 }
+
+// Tournament helpers
+export function getTournament(eventId) {
+  return get(ref(db, `tournament/${eventId}`)).then(snap => snap.val());
+}
+export function setTournament(eventId, data) {
+  return set(ref(db, `tournament/${eventId}`), data);
+}
+export function updateTournament(eventId, data) {
+  return update(ref(db, `tournament/${eventId}`), data);
+}
+export function listenTournament(eventId, cb) {
+  return onValue(ref(db, `tournament/${eventId}`), snap => cb(snap.val()));
+}
