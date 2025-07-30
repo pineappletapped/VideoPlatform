@@ -399,6 +399,10 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             };
         }
 
+        const stInput = container.querySelector('#sb-stoppage');
+        const stAddBtn = container.querySelector('#sb-add-st');
+        const stToggleBtn = container.querySelector('#sb-toggle-st');
+
         if(stAddBtn && stInput){
             stAddBtn.onclick = () => { stInput.value = (parseInt(stInput.value)||0) + 1; };
         }
@@ -411,10 +415,6 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                 render(obj);
             };
         }
-
-        const stInput = container.querySelector('#sb-stoppage');
-        const stAddBtn = container.querySelector('#sb-add-st');
-        const stToggleBtn = container.querySelector('#sb-toggle-st');
 
         const dartVal = container.querySelector('#dart-val');
         const dartBtnA = container.querySelector('#dart-a');

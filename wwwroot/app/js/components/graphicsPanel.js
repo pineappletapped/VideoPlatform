@@ -16,7 +16,7 @@ let liveLowerThirdId = null;
 let previewLowerThirdId = null;
 let liveTitleSlideId = null;
 let previewTitleSlideId = null;
-let graphicsData = null;
+let graphicsData = { lowerThirds: [], titleSlides: [], teams: {} };
 let favorites = { lowerThirds: [], titleSlides: [] };
 
 function saveLiveState(eventId, mode) {
