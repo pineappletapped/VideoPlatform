@@ -155,5 +155,92 @@ export const sportsData = {
     scoreboard: { golf: true },
     scoreboardStyles: ['style1'],
     scoringButtons: []
+  },
+  "Baseball": {
+    teamCount: 2,
+    playersPerTeam: 9,
+    subs: 5,
+    positions: [
+      "Pitcher","Catcher","First Base","Second Base","Shortstop",
+      "Third Base","Left Field","Center Field","Right Field"
+    ],
+    scoreboard: { periods: 9, periodLabel: "Inning" },
+    scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
+    scoringButtons: [{ label: "Run", value: 1, color: "#10b981" }]
+  },
+  "American Football": {
+    teamCount: 2,
+    playersPerTeam: 11,
+    subs: 5,
+    positions: ["QB","RB","WR","TE","OL","DL","LB","CB","S","K","P"],
+    scoreboard: { periods: 4, periodLabel: "Quarter", time: true, timeDirection: 'down' },
+    scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
+    scoringButtons: [
+      { label: "TD", value: 6, color: "#10b981" },
+      { label: "FG", value: 3, color: "#3b82f6" },
+      { label: "XP", value: 1, color: "#fbbf24" },
+      { label: "2P", value: 2, color: "#8b5cf6" }
+    ]
+  },
+  "Volleyball": {
+    teamCount: 2,
+    playersPerTeam: 6,
+    subs: 6,
+    positions: ["Setter","Opposite","Outside","Middle","Libero","Defensive Specialist"],
+    scoreboard: { games: true, points: true },
+    scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
+    scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }]
+  },
+  "Badminton": {
+    teamCount: 2,
+    playersPerTeam: 1,
+    subs: 0,
+    positions: ["Player"],
+    scoreboard: { games: true, points: true },
+    scoreboardStyles: ['style1','style2','style3','style4','style5'],
+    scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }]
+  },
+  "Squash": {
+    teamCount: 2,
+    playersPerTeam: 1,
+    subs: 0,
+    positions: ["Player"],
+    scoreboard: { games: true, points: true },
+    scoreboardStyles: ['style1','style2','style3','style4','style5'],
+    scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }]
+  },
+  "Gaelic Football": {
+    teamCount: 2,
+    playersPerTeam: 15,
+    subs: 5,
+    positions: [
+      "Goalkeeper","Corner Back","Full Back","Corner Back","Wing Back",
+      "Centre Back","Wing Back","Midfield","Midfield","Wing Forward",
+      "Centre Forward","Wing Forward","Corner Forward","Full Forward",
+      "Corner Forward"
+    ],
+    scoreboard: { periods: 2, periodLabel: "Half", time: true, timeDirection: 'up' },
+    scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
+    scoringButtons: [
+      { label: "Point", value: 1, color: "#10b981" },
+      { label: "Goal", value: 3, color: "#ef4444" }
+    ]
+  },
+  "Hurling": {
+    teamCount: 2,
+    playersPerTeam: 15,
+    subs: 5,
+    positions: [
+      "Goalkeeper","Corner Back","Full Back","Corner Back","Wing Back",
+      "Centre Back","Wing Back","Midfield","Midfield","Wing Forward",
+      "Centre Forward","Wing Forward","Corner Forward","Full Forward",
+      "Corner Forward"
+    ],
+    scoreboard: { periods: 2, periodLabel: "Half", time: true, timeDirection: 'up' },
+    scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
+    scoringButtons: [
+      { label: "Point", value: 1, color: "#10b981" },
+      { label: "Goal", value: 3, color: "#ef4444" }
+    ]
   }
 };

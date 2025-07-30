@@ -143,3 +143,21 @@ styles from the options modal.
 All events include a **Stinger** tab letting you quickly display a fullscreen
 logo for scene transitions. Choose from your event branding logos, the
 currently selected team logos or any uploaded sponsors.
+
+### Expanded Sports Offering
+
+The platform now includes presets for additional sports beyond the original
+set. Each one comes with sensible defaults for team sizes, positions and
+scoreboard layouts. Newly added sports are:
+
+- **Baseball** – nine innings with simple run tracking
+- **American Football** – four quarters with touchdown, field goal and extra
+  point buttons
+- **Volleyball** – best-of-five sets with point scoring
+- **Badminton** and **Squash** – games and points for singles matches
+- **Gaelic Football** and **Hurling** – standard GAA scoring with goals worth
+  three points
+
+These join football, rugby, hockey, cricket and many more so you can tailor
+graphics to most competitions. Motorsports and horse racing will be handled in
+a future update as they require external timing feeds.
