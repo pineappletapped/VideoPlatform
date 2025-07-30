@@ -247,6 +247,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 ${Object.keys(sportsData).map(s=>`<option value="${s}">${s}</option>`).join('')}
               </select>
             </div>
+            <div id="tournament-wrap" class="mb-2 hidden">
+              <label class="inline-flex items-center text-sm"><input type="checkbox" name="tournament" class="mr-1">Tournament mode</label>
+            </div>
             <div class="flex gap-2 mt-2">
               <button type="submit" class="control-button btn-sm">Create</button>
               <button type="button" id="create-cancel" class="control-button btn-sm bg-gray-400 hover:bg-gray-600">Cancel</button>
@@ -258,8 +261,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const form = createModal.querySelector('#create-form');
     const typeSel = createModal.querySelector('#create-type');
     const sportWrap = createModal.querySelector('#sport-wrap');
+    const tournamentWrap = createModal.querySelector('#tournament-wrap');
     typeSel.onchange = () => {
-      sportWrap.style.display = typeSel.value === 'sports' ? 'block' : 'none';
+      const show = typeSel.value === 'sports';
+      sportWrap.style.display = show ? 'block' : 'none';
+      tournamentWrap.style.display = show ? 'block' : 'none';
     };
     createModal.querySelector('#create-cancel').onclick = () => {
       createModal.classList.add('hidden');
@@ -269,7 +275,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       ev.preventDefault();
       const data = Object.fromEntries(new FormData(form));
       const meta = { title: data.title, eventType: data.eventType, owner: currentUserId };
-      if (data.eventType === 'sports') meta.sport = data.sport;
+      if (data.eventType === 'sports') {
+        meta.sport = data.sport;
+        if (data.tournament === 'on') meta.tournament = true;
+      }
       await setEventMetadata(data.id, meta);
       window.location.href = `graphics.html?event_id=${data.id}&setup=1`;
     };

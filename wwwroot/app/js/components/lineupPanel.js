@@ -112,7 +112,9 @@ export function renderLineupPanel(container, eventId = 'demo', sport = 'Football
             const showB = container.querySelector('#show-b');
             function buildFormation(teamKey){
                 const lu = teamKey==='a' ? lineupData.teamA : lineupData.teamB;
-                const team = teamKey==='a' ? teamsData.teamA : teamsData.teamB;
+                const team = teamKey==='a'
+                    ? (teamsData.teams ? teamsData.teams[teamsData.currentA||0] : teamsData.teamA)
+                    : (teamsData.teams ? teamsData.teams[teamsData.currentB||1] : teamsData.teamB);
                 const nums = (lu.formation || '4-4-2').split('-').map(n=>parseInt(n.trim())).filter(n=>n>0);
                 const players = lu.starters.map(i=>team.players[i]).filter(p=>p);
                 const rows = [1,...nums];
@@ -130,7 +132,9 @@ export function renderLineupPanel(container, eventId = 'demo', sport = 'Football
                 return {team:teamKey,players:res};
             }
             function buildTable(teamKey){
-                const team = teamKey==='a' ? teamsData.teamA : teamsData.teamB;
+                const team = teamKey==='a'
+                    ? (teamsData.teams ? teamsData.teams[teamsData.currentA||0] : teamsData.teamA)
+                    : (teamsData.teams ? teamsData.teams[teamsData.currentB||1] : teamsData.teamB);
                 return {team:teamKey, players: team.players.map(p=>({name:p.name,pos:p.pos,photo:p.photo}))};
             }
             function toggleFormation(teamKey){
@@ -151,9 +155,11 @@ export function renderLineupPanel(container, eventId = 'demo', sport = 'Football
                 if(resultsVisible){
                     updateOverlayState(eventId,{resultsVisible:false});
                 }else if(scoreboardData){
+                    const tA = teamsData.teams ? teamsData.teams[teamsData.currentA||0] : teamsData.teamA;
+                    const tB = teamsData.teams ? teamsData.teams[teamsData.currentB||1] : teamsData.teamB;
                     updateOverlayState(eventId,{results:{
-                        teamA:{name:teamsData.teamA.name,score:scoreboardData.scores?.[0]||0,scorers:scoreboardData.scorers?.[0]||[]},
-                        teamB:{name:teamsData.teamB.name,score:scoreboardData.scores?.[1]||0,scorers:scoreboardData.scorers?.[1]||[]}
+                        teamA:{name:tA.name,score:scoreboardData.scores?.[0]||0,scorers:scoreboardData.scorers?.[0]||[]},
+                        teamB:{name:tB.name,score:scoreboardData.scores?.[1]||0,scorers:scoreboardData.scorers?.[1]||[]}
                     },resultsVisible:true});
                 }
             }

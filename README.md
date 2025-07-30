@@ -22,6 +22,10 @@ the listener and the overlay page. Login sessions last for eight hours and are
 required for all control panels, but the overlay page itself stays public so it
 can be embedded in OBS without timing out.
 
+Sports events now support **Tournament Mode** when creating an event. Enable
+this to manage a pool of teams. The **Teams** tab in the graphics panel lets you
+select which two teams are playing via dropdowns and edit each team from a list.
+
 If Firebase registration isn't available you can log in using the built‑in admin
 account `ryanadmin` with password `password`.
 

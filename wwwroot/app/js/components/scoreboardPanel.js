@@ -190,9 +190,18 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             </div>`;
         const table = container.querySelector('#sb-table');
         const htmlParts = [];
+        const getTeam = idx => {
+            if (!teamsData) return { name: `Team ${idx+1}`, color: '#ffffff' };
+            if (teamsData.teams) {
+                const sel = idx===0 ? teamsData.currentA||0 : teamsData.currentB||1;
+                return teamsData.teams[sel] || { name:`Team ${idx+1}`, color:'#ffffff' };
+            }
+            return idx===0 ? teamsData.teamA : teamsData.teamB;
+        };
         (data.scores || []).forEach((sc, i) => {
-            const name = teamsData ? (i === 0 ? teamsData.teamA?.name : teamsData.teamB?.name) : `Team ${i + 1}`;
-            const color = teamsData ? (i === 0 ? teamsData.teamA?.color || '#ffffff' : teamsData.teamB?.color || '#ffffff') : '#ffffff';
+            const t = getTeam(i);
+            const name = t.name || `Team ${i + 1}`;
+            const color = t.color || '#ffffff';
             const textCol = contrastColor(color);
             const activeClass = cfg.scoreboard.turn && data.turn === i ? ' class="active-player"' : '';
             const checkout = sport === 'Darts' ? getCheckout(sc) : null;
@@ -225,8 +234,8 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         if (cfg.scoreboard.points) {
             htmlParts.push(`<tr><td class="pr-2">Points:</td><td>${Array.from({length:count}).map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-point-${i}" value="${(data.points && data.points[i]) || 0}">`).join('')}</td></tr>`);
         }
-        const tnA = teamsData ? teamsData.teamA?.name || 'Team 1' : 'Team 1';
-        const tnB = teamsData ? teamsData.teamB?.name || 'Team 2' : 'Team 2';
+        const tnA = getTeam(0).name || 'Team 1';
+        const tnB = getTeam(1).name || 'Team 2';
         htmlParts.push(`<tr><td class="pr-2 align-top">${tnA} scorers:</td><td><textarea id="sb-scorers-a" class="border p-1 w-full text-xs" rows="2">${(data.scorers?.[0] || []).join('\n')}</textarea></td></tr>`);
         htmlParts.push(`<tr><td class="pr-2 align-top">${tnB} scorers:</td><td><textarea id="sb-scorers-b" class="border p-1 w-full text-xs" rows="2">${(data.scorers?.[1] || []).join('\n')}</textarea></td></tr>`);
         if (cfg.scoreboard.breaks) {
@@ -236,8 +245,8 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             htmlParts.push(`<tr><td class="pr-2">High Break:</td><td><input type="number" class="border p-1 w-16" id="sb-highbreak" value="${data.highBreak || 0}" disabled></td></tr>`);
         }
         if (cfg.scoreboard.turn) {
-            const optA = teamsData ? teamsData.teamA?.name || 'Team 1' : 'Team 1';
-            const optB = teamsData ? teamsData.teamB?.name || 'Team 2' : 'Team 2';
+            const optA = getTeam(0).name || 'Team 1';
+            const optB = getTeam(1).name || 'Team 2';
             htmlParts.push(`<tr><td class="pr-2">In Play:</td><td><select id="sb-turn" class="border p-1"><option value="0">${optA}</option><option value="1">${optB}</option></select></td></tr>`);
         }
         table.innerHTML = htmlParts.join('');
@@ -511,18 +520,20 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         const prevDiv = container.querySelector('#sb-prev');
         function updatePreview() {
             if (!prevDiv) return;
-            const colA = teamsData?.teamA?.color || '#333';
-            const colB = teamsData?.teamB?.color || '#333';
-            const nameAFull = teamsData?.teamA?.name || 'Team 1';
-            const nameBFull = teamsData?.teamB?.name || 'Team 2';
-            const abbrA = teamsData?.teamA?.abbrev || suggestAbbreviation(nameAFull);
-            const abbrB = teamsData?.teamB?.abbrev || suggestAbbreviation(nameBFull);
+            const tA = teamsData?.teams ? teamsData.teams[teamsData.currentA||0] : teamsData?.teamA || {name:'Team 1',abbrev:'T1',color:'#333',logo:''};
+            const tB = teamsData?.teams ? teamsData.teams[teamsData.currentB||1] : teamsData?.teamB || {name:'Team 2',abbrev:'T2',color:'#333',logo:''};
+            const colA = tA.color || '#333';
+            const colB = tB.color || '#333';
+            const nameAFull = tA.name || 'Team 1';
+            const nameBFull = tB.name || 'Team 2';
+            const abbrA = tA.abbrev || suggestAbbreviation(nameAFull);
+            const abbrB = tB.abbrev || suggestAbbreviation(nameBFull);
             const useAbbrev = abbrevChk?.checked;
             const nameA = useAbbrev ? abbrA : nameAFull;
             const nameB = useAbbrev ? abbrB : nameBFull;
             const longest = Math.max(nameA.length, nameB.length);
-            const logoA = teamsData?.teamA?.logo || '';
-            const logoB = teamsData?.teamB?.logo || '';
+            const logoA = tA.logo || '';
+            const logoB = tB.logo || '';
             const showLogo = (showLogoChk?.checked ?? true) && logoA && logoB;
             const brand = getComputedStyle(document.documentElement).getPropertyValue('--brand-primary') || '#e16316';
             const textA = contrastColor(colA);

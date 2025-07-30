@@ -470,14 +470,16 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         else if (pos === 'bottom-right') { scoreboardOverlay.style.bottom = '2rem'; scoreboardOverlay.style.right = '2rem'; }
         else if (pos === 'top-center') { scoreboardOverlay.style.top = '2rem'; scoreboardOverlay.style.left = '50%'; scoreboardOverlay.style.transform = 'translateX(-50%)'; }
         else { scoreboardOverlay.style.bottom = '2rem'; scoreboardOverlay.style.left = '50%'; scoreboardOverlay.style.transform = 'translateX(-50%)'; }
-        const nameAF = teamsData?.teamA?.name || 'Team 1';
-        const nameBF = teamsData?.teamB?.name || 'Team 2';
-        const abbrA = teamsData?.teamA?.abbrev || suggestAbbreviation(nameAF);
-        const abbrB = teamsData?.teamB?.abbrev || suggestAbbreviation(nameBF);
+        const teamA = getTeam(0) || { name: 'Team 1', abbrev: 'T1', color: '#333', logo: '' };
+        const teamB = getTeam(1) || { name: 'Team 2', abbrev: 'T2', color: '#333', logo: '' };
+        const nameAF = teamA.name || 'Team 1';
+        const nameBF = teamB.name || 'Team 2';
+        const abbrA = teamA.abbrev || suggestAbbreviation(nameAF);
+        const abbrB = teamB.abbrev || suggestAbbreviation(nameBF);
         const useAbbrev = scoreboardData.abbreviate;
         const names = [useAbbrev ? abbrA : nameAF, useAbbrev ? abbrB : nameBF];
-        const colors = teamsData ? [teamsData.teamA?.color || '#333', teamsData.teamB?.color || '#333'] : ['#333','#333'];
-        const logos = teamsData && scoreboardData.showLogos !== false && teamsData.teamA?.logo && teamsData.teamB?.logo ? [teamsData.teamA.logo, teamsData.teamB.logo] : [null, null];
+        const colors = [teamA.color || '#333', teamB.color || '#333'];
+        const logos = scoreboardData.showLogos !== false ? [teamA.logo || null, teamB.logo || null] : [null,null];
         const showLogos = logos[0] && logos[1];
         const longest = Math.max(names[0].length, names[1].length);
         scoreboardOverlay.style.setProperty('--sb-team-width', `${longest}ch`);
@@ -671,7 +673,8 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             overlayContainer.appendChild(logOverlay);
         }
         const rows = logData.map(e=>{
-            const teamName = teamsData ? (e.team==='a'?teamsData.teamA?.name:teamsData.teamB?.name) : e.team;
+            const teamObj = e.team==='a'?getTeam(0):getTeam(1);
+            const teamName = teamObj ? teamObj.name : e.team;
             return `<div>${e.time} - ${teamName} ${e.type}${e.player?` - ${e.player}`:''}</div>`;
         }).join('');
         logOverlay.innerHTML = `<div class='results-box' style='font-family:${branding.font};max-height:80vh;overflow-y:auto;'>${rows}</div>`;
@@ -695,10 +698,15 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         statOverlay.style.transform = 'translateX(-50%)';
         statOverlay.style.fontFamily = branding.font;
         statOverlay.style.opacity = previewMode ? '0.6' : '1';
-        const teamName = statData.team && teamsData ? (teamsData[statData.team]?.name || '') : '';
+        let teamName = '';
+        if (statData.team) {
+            const tObj = statData.team==='a'?getTeam(0):statData.team==='b'?getTeam(1):null;
+            if (tObj) teamName = tObj.name || '';
+        }
         let photoHtml = '';
         if (teamsData && teamsData.showPhotosStats && statData.player && statData.team) {
-            const pl = teamsData[statData.team]?.players?.find(p=>p.name===statData.player);
+            const t = statData.team==='a'?getTeam(0):statData.team==='b'?getTeam(1):null;
+            const pl = t?.players?.find(p=>p.name===statData.player);
             if (pl && pl.photo) photoHtml = `<img src='${pl.photo}' class='stat-photo'>`;
         }
         statOverlay.innerHTML = `<div class='lower-third-default'>${photoHtml}${statData.fact}${statData.player ? ' - ' + statData.player : ''}${teamName ? ' (' + teamName + ')' : ''}</div>`;
@@ -714,6 +722,15 @@ let teamsData = null;
 let scoreboardPersist = null;
 let sponsorsData = [];
 let sponsorPlacements = {};
+
+function getTeam(idx){
+    if(!teamsData) return null;
+    if(teamsData.teams){
+        const sel = idx===0 ? teamsData.currentA||0 : teamsData.currentB||1;
+        return teamsData.teams[sel] || null;
+    }
+    return idx===0 ? teamsData.teamA : teamsData.teamB;
+}
 
 function updateOverlay() {
     const state = { ...(lastState || {}) };
