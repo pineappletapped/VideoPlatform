@@ -65,13 +65,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       const sportsLink = ev.eventType === 'sports'
         ? `<a class="control-button btn-sm" href="sports.html?event_id=${id}">Sports Admin</a>`
         : '';
-      const commLink = ev.eventType === 'sports'
-        ? `<a class="control-button btn-sm" href="commentator.html?event_id=${id}" target="_blank">Commentator</a>`
-        : `<a class="control-button btn-sm" href="speakers.html?event_id=${id}" target="_blank">Speakers</a>`;
+      const commBtn = `<a class="control-button btn-sm" href="commentator.html?event_id=${id}" target="_blank">Commentator</a>`;
+      const speakBtn = `<a class="control-button btn-sm" href="speakers.html?event_id=${id}" target="_blank">Speakers</a>`;
       const imgSrc = states[idx]?.holdslate?.image;
       const img = imgSrc ?
         `<img src="${imgSrc}" alt="thumb" class="w-24 h-16 object-cover rounded" />` :
         `<div class="w-24 h-16 bg-gray-300 flex items-center justify-center rounded text-xs text-gray-500">No image</div>`;
+      const actionLinks = ev.eventType === 'sports'
+        ? `${sportsLink} ${commBtn} ${speakBtn}`
+        : `${speakBtn}`;
       return `<li class="bg-white text-black p-3 rounded shadow flex items-center gap-3">
         ${img}
         <div class="flex-1">
@@ -81,8 +83,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           <div>
             <a class="control-button btn-sm" href="${gfx}">Graphics</a>
             <a class="control-button btn-sm" href="${ovl}" target="_blank">Overlay</a>
-            ${sportsLink}
-            ${commLink}
+            ${actionLinks}
             <button class="control-button btn-sm bg-red-600 hover:bg-red-700" data-del="${id}">Delete</button>
           </div>
         </div>
