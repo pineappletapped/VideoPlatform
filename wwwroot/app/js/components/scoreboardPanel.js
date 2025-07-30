@@ -118,6 +118,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         if (cfg.scoreboard.breaks) base.currentBreak = 0;
         if (cfg.scoreboard.highBreak) base.highBreak = 0;
         if (cfg.scoreboard.turn) base.turn = 0;
+        base.scorers = scores.map(() => []);
         return base;
     }
 
@@ -214,6 +215,10 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         if (cfg.scoreboard.points) {
             htmlParts.push(`<tr><td class="pr-2">Points:</td><td>${Array.from({length:count}).map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-point-${i}" value="${(data.points && data.points[i]) || 0}">`).join('')}</td></tr>`);
         }
+        const tnA = teamsData ? teamsData.teamA?.name || 'Team 1' : 'Team 1';
+        const tnB = teamsData ? teamsData.teamB?.name || 'Team 2' : 'Team 2';
+        htmlParts.push(`<tr><td class="pr-2 align-top">${tnA} scorers:</td><td><textarea id="sb-scorers-a" class="border p-1 w-full text-xs" rows="2">${(data.scorers?.[0] || []).join('\n')}</textarea></td></tr>`);
+        htmlParts.push(`<tr><td class="pr-2 align-top">${tnB} scorers:</td><td><textarea id="sb-scorers-b" class="border p-1 w-full text-xs" rows="2">${(data.scorers?.[1] || []).join('\n')}</textarea></td></tr>`);
         if (cfg.scoreboard.breaks) {
             htmlParts.push(`<tr><td class="pr-2">Current Break:</td><td><input type="number" class="border p-1 w-16" id="sb-break" value="${data.currentBreak || 0}"></td></tr>`);
         }
@@ -351,6 +356,10 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             if (cfg.scoreboard.breaks) obj.currentBreak = parseInt(container.querySelector('#sb-break').value) || 0;
             if (cfg.scoreboard.highBreak) obj.highBreak = parseInt(container.querySelector('#sb-highbreak').value) || 0;
             if (cfg.scoreboard.turn) obj.turn = parseInt(container.querySelector('#sb-turn').value) || 0;
+            obj.scorers = [
+                container.querySelector('#sb-scorers-a')?.value.split('\n').map(s=>s.trim()).filter(Boolean) || [],
+                container.querySelector('#sb-scorers-b')?.value.split('\n').map(s=>s.trim()).filter(Boolean) || []
+            ];
             if (sport === 'Darts' && data.checkoutText) {
                 obj.checkoutPlayer = data.checkoutPlayer;
                 obj.checkoutText = data.checkoutText;

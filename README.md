@@ -96,3 +96,9 @@ Each graphic in the control panel has a ★ button to mark it as a favourite.
 Favourites appear under the **Favourites** tab in the Active Graphics panel
 for quick access. The **Active** tab lists anything currently visible so you
 can hide them in one click.
+
+### Lineup Tables & Match Results
+
+The Lineups panel now offers **Table** buttons to show each team's roster in a
+simple list overlay. There's also a **Match Result** button that displays the
+final score along with goal scorers and times based on the scoreboard log.

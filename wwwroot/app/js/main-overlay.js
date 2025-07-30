@@ -18,6 +18,8 @@ let prevScoreboardData = null;
 let prevLowerThirdId = null;
 let prevLowerThirdData = null;
 let prevFormationVisible = false;
+let prevTableVisible = false;
+let prevResultsVisible = false;
 
 function contrastColor(hex) {
     let c = hex.replace('#', '');
@@ -600,6 +602,47 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         formOverlay.remove();
     }
     prevFormationVisible = formShow;
+
+    // Lineup Table Overlay
+    let tableOverlay = overlayContainer.querySelector('#lineup-table-overlay');
+    const tableData = state && state.lineupTable;
+    const tableShow = state && state.lineupTableVisible;
+    if(tableShow && tableData){
+        if(!tableOverlay){
+            tableOverlay = document.createElement('div');
+            tableOverlay.id = 'lineup-table-overlay';
+            overlayContainer.appendChild(tableOverlay);
+        }
+        const showPhoto = teamsData && teamsData.showPhotosFormation;
+        tableOverlay.innerHTML = `<div class='lineup-table' style='font-family:${branding.font};'>`+
+            tableData.players.map(p=>{
+                const photo = showPhoto && p.photo ? `<img src='${p.photo}' class='lineup-table-photo'>` : '';
+                return `<div class='lineup-row'>${photo}<span>${p.name}${p.pos?` (${p.pos})`:''}</span></div>`;
+            }).join('')+`</div>`;
+    } else if(tableOverlay){
+        tableOverlay.remove();
+    }
+    prevTableVisible = tableShow;
+
+    // Results Overlay
+    let resOverlay = overlayContainer.querySelector('#results-overlay');
+    const resData = state && state.results;
+    const resShow = state && state.resultsVisible;
+    if(resShow && resData){
+        if(!resOverlay){
+            resOverlay = document.createElement('div');
+            resOverlay.id = 'results-overlay';
+            overlayContainer.appendChild(resOverlay);
+        }
+        resOverlay.innerHTML = `<div class='results-box' style='font-family:${branding.font};'>`+
+            `<div class='results-teams'>${resData.teamA.name} ${resData.teamA.score} - ${resData.teamB.score} ${resData.teamB.name}</div>`+
+            `<div class='results-grid'><div><h3>${resData.teamA.name}</h3>${resData.teamA.scorers.map(s=>`<div>${s}</div>`).join('')}</div>`+
+            `<div><h3>${resData.teamB.name}</h3>${resData.teamB.scorers.map(s=>`<div>${s}</div>`).join('')}</div></div>`+
+            `</div>`;
+    } else if(resOverlay){
+        resOverlay.remove();
+    }
+    prevResultsVisible = resShow;
 
     // Stats Overlay
     let statOverlay = overlayContainer.querySelector('#stat-overlay');

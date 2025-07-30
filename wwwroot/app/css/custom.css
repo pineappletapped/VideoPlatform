@@ -294,3 +294,12 @@ html,body { margin: 0; width:100%; height:100%; overflow:hidden; }
 .formation-photo { width:60px; height:60px; border-radius:50%; object-fit:cover; margin-bottom:0.25rem; }
 .stat-photo { width:50px; height:50px; border-radius:50%; object-fit:cover; margin-right:0.5rem; vertical-align:middle; }
 
+#lineup-table-overlay { position:absolute; inset:0; z-index:55; pointer-events:none; display:flex; align-items:center; justify-content:center; }
+.lineup-table { background:rgba(0,0,0,0.7); padding:1rem 2rem; border-radius:0.5rem; color:#fff; }
+.lineup-row { display:flex; align-items:center; gap:0.5rem; margin-bottom:0.25rem; }
+.lineup-table-photo { width:40px; height:40px; border-radius:50%; object-fit:cover; }
+#results-overlay { position:absolute; inset:0; z-index:55; pointer-events:none; display:flex; align-items:center; justify-content:center; }
+.results-box { background:rgba(0,0,0,0.7); padding:1rem 2rem; border-radius:0.5rem; color:#fff; }
+.results-teams { font-size:1.5rem; font-weight:bold; margin-bottom:0.5rem; text-align:center; }
+.results-grid { display:flex; gap:2rem; }
+
