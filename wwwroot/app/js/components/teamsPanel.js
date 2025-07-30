@@ -64,9 +64,9 @@ export function renderTeamsPanel(container, eventId, sport = 'Football', tournam
             <tr>
                 <td><input class="border p-1 w-full" id="${prefix}-name-${idx}" value="${pl.name}"></td>
                 <td><select class="border p-1 w-full" id="${prefix}-pos-${idx}"><option value=""></option>${posOpts}</select></td>
-                <td>
+                <td class="photo-cell">
                     <div class="flex items-center gap-1 mb-1">
-                        <input type="file" id="${prefix}-photo-file-${idx}" accept="image/*" class="text-xs" />
+                        <input type="file" id="${prefix}-photo-file-${idx}" accept="image/*" class="text-xs max-w-[6rem]" />
                         <button type="button" id="${prefix}-upload-${idx}" class="control-button btn-xs">Upload</button>
                     </div>
                     <input class="border p-1 w-full" id="${prefix}-photo-${idx}" placeholder="Photo URL" value="${pl.photo || ''}" />
@@ -77,7 +77,7 @@ export function renderTeamsPanel(container, eventId, sport = 'Football', tournam
                 <div class='teams-panel'>
                     <h2 class="font-bold text-lg mb-2">Teams</h2>
                     <div class="flex gap-4 mb-4 text-sm">
-                        <div class="flex-1">
+                        <div class="flex-1 team-column min-w-0">
                             <input class="border p-1 w-full mb-2" id="team-a-name" value="${data.teamA.name}" />
                             <input class="border p-1 w-full mb-2" id="team-a-abbrev" value="${data.teamA.abbrev || suggestAbbreviation(data.teamA.name)}" placeholder="Abbrev" />
                             <div class="flex items-center gap-2 mb-1"><input type="file" id="team-a-logo-file" accept="image/*" /><button type="button" id="team-a-upload" class="control-button btn-xs">Upload</button></div>
@@ -85,7 +85,7 @@ export function renderTeamsPanel(container, eventId, sport = 'Football', tournam
                             <div class="mb-2"><label class="text-xs">Colour</label><input type="color" id="team-a-color" class="border p-1 w-full" value="${data.teamA.color || '#ffffff'}"></div>
                             <table class="w-full text-xs"><tbody>${playerRows('a', data.teamA)}</tbody></table>
                         </div>
-                        <div class="flex-1">
+                        <div class="flex-1 team-column min-w-0">
                             <input class="border p-1 w-full mb-2" id="team-b-name" value="${data.teamB.name}" />
                             <input class="border p-1 w-full mb-2" id="team-b-abbrev" value="${data.teamB.abbrev || suggestAbbreviation(data.teamB.name)}" placeholder="Abbrev" />
                             <div class="flex items-center gap-2 mb-1"><input type="file" id="team-b-logo-file" accept="image/*" /><button type="button" id="team-b-upload" class="control-button btn-xs">Upload</button></div>
