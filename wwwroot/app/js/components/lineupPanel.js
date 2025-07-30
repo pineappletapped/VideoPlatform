@@ -110,8 +110,8 @@ export function renderLineupPanel(container, eventId = 'demo', sport = 'Football
                     const y = teamKey==='a'? startY - r*step : startY + r*step;
                     for(let i=0;i<count;i++){
                         const x = (i+1)/(count+1)*100;
-                        const pl = players[idx++] || {name:'',pos:''};
-                        res.push({name:pl.name,pos:pl.pos,x,y});
+                        const pl = players[idx++] || {name:'',pos:'',photo:''};
+                        res.push({name:pl.name,pos:pl.pos,photo:pl.photo,x,y});
                     }
                 });
                 return {team:teamKey,players:res};

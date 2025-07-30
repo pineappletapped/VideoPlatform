@@ -34,16 +34,30 @@ export function renderTeamsPanel(container, eventId, sport = 'Football') {
 
     function defaultData() {
         const playerSlots = cfg.playersPerTeam + (cfg.subs || 0);
-        const players = Array.from({ length: playerSlots }).map(() => ({ name: '', pos: '' }));
+        const players = Array.from({ length: playerSlots }).map(() => ({ name: '', pos: '', photo: '' }));
         return {
             teamA: { name: 'Team A', abbrev: suggestAbbreviation('Team A'), logo: '', color: '#ffffff', players: players.slice() },
-            teamB: { name: 'Team B', abbrev: suggestAbbreviation('Team B'), logo: '', color: '#ffffff', players: players.slice() }
+            teamB: { name: 'Team B', abbrev: suggestAbbreviation('Team B'), logo: '', color: '#ffffff', players: players.slice() },
+            showPhotosFormation: false,
+            showPhotosStats: false,
+            showPhotosSubs: false
         };
     }
 
     function render(data) {
         const posOpts = cfg.positions.map(p=>`<option value="${p}">${p}</option>`).join('');
-        const playerRows = (teamKey, team) => team.players.map((pl,idx)=>`<tr><td><input class="border p-1 w-full" id="${teamKey}-name-${idx}" value="${pl.name}"></td><td><select class="border p-1 w-full" id="${teamKey}-pos-${idx}"><option value=""></option>${posOpts}</select></td></tr>`).join('');
+        const playerRows = (teamKey, team) => team.players.map((pl,idx)=>`
+            <tr>
+                <td><input class="border p-1 w-full" id="${teamKey}-name-${idx}" value="${pl.name}"></td>
+                <td><select class="border p-1 w-full" id="${teamKey}-pos-${idx}"><option value=""></option>${posOpts}</select></td>
+                <td>
+                    <div class="flex items-center gap-1 mb-1">
+                        <input type="file" id="${teamKey}-photo-file-${idx}" accept="image/*" class="text-xs" />
+                        <button type="button" id="${teamKey}-upload-${idx}" class="control-button btn-xs">Upload</button>
+                    </div>
+                    <input class="border p-1 w-full" id="${teamKey}-photo-${idx}" placeholder="Photo URL" value="${pl.photo || ''}" />
+                </td>
+            </tr>`).join('');
         container.innerHTML = `
             <div class='teams-panel'>
                 <h2 class="font-bold text-lg mb-2">Teams</h2>
@@ -54,7 +68,7 @@ export function renderTeamsPanel(container, eventId, sport = 'Football') {
                         <div class="flex items-center gap-2 mb-1"><input type="file" id="team-a-logo-file" accept="image/*" /><button type="button" id="team-a-upload" class="control-button btn-xs">Upload</button></div>
                         <input class="border p-1 w-full mb-2" id="team-a-logo" placeholder="Logo URL" value="${data.teamA.logo || ''}" />
                         <div class="mb-2"><label class="text-xs">Colour</label><input type="color" id="team-a-color" class="border p-1 w-full" value="${data.teamA.color || '#ffffff'}"></div>
-                        <table class="w-full"><tbody>${playerRows('a', data.teamA)}</tbody></table>
+                        <table class="w-full text-xs"><tbody>${playerRows('a', data.teamA)}</tbody></table>
                     </div>
                     <div class="flex-1">
                         <input class="border p-1 w-full mb-2" id="team-b-name" value="${data.teamB.name}" />
@@ -62,8 +76,13 @@ export function renderTeamsPanel(container, eventId, sport = 'Football') {
                         <div class="flex items-center gap-2 mb-1"><input type="file" id="team-b-logo-file" accept="image/*" /><button type="button" id="team-b-upload" class="control-button btn-xs">Upload</button></div>
                         <input class="border p-1 w-full mb-2" id="team-b-logo" placeholder="Logo URL" value="${data.teamB.logo || ''}" />
                         <div class="mb-2"><label class="text-xs">Colour</label><input type="color" id="team-b-color" class="border p-1 w-full" value="${data.teamB.color || '#ffffff'}"></div>
-                        <table class="w-full"><tbody>${playerRows('b', data.teamB)}</tbody></table>
+                        <table class="w-full text-xs"><tbody>${playerRows('b', data.teamB)}</tbody></table>
                     </div>
+                </div>
+                <div class="flex gap-4 text-sm mb-4">
+                    <label class="inline-flex items-center"><input type="checkbox" id="show-formation" class="mr-1" ${data.showPhotosFormation ? 'checked' : ''}>Photos on Formation</label>
+                    <label class="inline-flex items-center"><input type="checkbox" id="show-stats" class="mr-1" ${data.showPhotosStats ? 'checked' : ''}>Photos on Stats</label>
+                    <label class="inline-flex items-center"><input type="checkbox" id="show-subs" class="mr-1" ${data.showPhotosSubs ? 'checked' : ''}>Photos on Subs</label>
                 </div>
                 <button id="teams-save" class="control-button btn-sm">Save</button>
             </div>`;
@@ -104,12 +123,26 @@ export function renderTeamsPanel(container, eventId, sport = 'Football') {
                 if (url) container.querySelector('#team-b-logo').value = url;
             }
         };
+        container.querySelectorAll('button[id$="-upload-"]').forEach(btn => {
+            const parts = btn.id.split('-');
+            if (parts.length === 3) return; // team logo buttons
+            btn.onclick = async () => {
+                const [teamKey,,idx] = btn.id.split('-');
+                const file = container.querySelector(`#${teamKey}-photo-file-${idx}`).files[0];
+                if (file) {
+                    const path = `uploads/${eventId}/teams/${teamKey}_${idx}_${file.name}`;
+                    const url = await uploadToServer(file, path);
+                    if (url) container.querySelector(`#${teamKey}-photo-${idx}`).value = url;
+                }
+            };
+        });
         container.querySelector('#teams-save').onclick = async () => {
             const playerSlots = cfg.playersPerTeam + (cfg.subs || 0);
             const getPlayers = (teamKey) => {
                 return Array.from({length: playerSlots}).map((_,i)=>({
                     name: container.querySelector(`#${teamKey}-name-${i}`).value,
-                    pos: container.querySelector(`#${teamKey}-pos-${i}`).value
+                    pos: container.querySelector(`#${teamKey}-pos-${i}`).value,
+                    photo: container.querySelector(`#${teamKey}-photo-${i}`).value
                 }));
             };
             const newData = {
@@ -128,6 +161,9 @@ export function renderTeamsPanel(container, eventId, sport = 'Football') {
                     players: getPlayers('b')
                 }
             };
+            newData.showPhotosFormation = container.querySelector('#show-formation').checked;
+            newData.showPhotosStats = container.querySelector('#show-stats').checked;
+            newData.showPhotosSubs = container.querySelector('#show-subs').checked;
             await set(getTeamsRef(eventId), newData);
         };
     }

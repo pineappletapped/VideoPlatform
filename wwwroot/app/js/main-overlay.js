@@ -545,8 +545,12 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             formOverlay.id = 'formation-overlay';
             overlayContainer.appendChild(formOverlay);
         }
+        const showPhoto = teamsData && teamsData.showPhotosFormation;
         formOverlay.innerHTML = `<div class='formation-pitch'></div>` +
-            formData.players.map(p=>`<div class='formation-player' style='top:${p.y}%;left:${p.x}%;font-family:${branding.font};'>${p.name}</div>`).join('');
+            formData.players.map(p=>{
+                const photo = showPhoto && p.photo ? `<img src='${p.photo}' class='formation-photo'>` : '';
+                return `<div class='formation-player' style='top:${p.y}%;left:${p.x}%;font-family:${branding.font};'>${photo}<span>${p.name}</span></div>`;
+            }).join('');
     } else if (formOverlay) {
         formOverlay.remove();
     }
@@ -568,7 +572,12 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         statOverlay.style.fontFamily = branding.font;
         statOverlay.style.opacity = previewMode ? '0.6' : '1';
         const teamName = statData.team && teamsData ? (teamsData[statData.team]?.name || '') : '';
-        statOverlay.innerHTML = `<div class='lower-third-default'>${statData.fact}${statData.player ? ' - ' + statData.player : ''}${teamName ? ' (' + teamName + ')' : ''}</div>`;
+        let photoHtml = '';
+        if (teamsData && teamsData.showPhotosStats && statData.player && statData.team) {
+            const pl = teamsData[statData.team]?.players?.find(p=>p.name===statData.player);
+            if (pl && pl.photo) photoHtml = `<img src='${pl.photo}' class='stat-photo'>`;
+        }
+        statOverlay.innerHTML = `<div class='lower-third-default'>${photoHtml}${statData.fact}${statData.player ? ' - ' + statData.player : ''}${teamName ? ' (' + teamName + ')' : ''}</div>`;
     } else if (statOverlay) {
         statOverlay.remove();
     }
