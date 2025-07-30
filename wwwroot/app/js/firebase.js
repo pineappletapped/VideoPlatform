@@ -225,3 +225,17 @@ export function updateTournament(eventId, data) {
 export function listenTournament(eventId, cb) {
   return onValue(ref(db, `tournament/${eventId}`), snap => cb(snap.val()));
 }
+
+// Presentation helpers
+export function getPresentation(eventId) {
+  return get(ref(db, `presentation/${eventId}`)).then(snap => snap.val());
+}
+export function setPresentation(eventId, data) {
+  return set(ref(db, `presentation/${eventId}`), data);
+}
+export function updatePresentation(eventId, data) {
+  return update(ref(db, `presentation/${eventId}`), data);
+}
+export function listenPresentation(eventId, cb) {
+  return onValue(ref(db, `presentation/${eventId}`), snap => cb(snap.val()));
+}

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Speakers View</title>
+    <link rel="stylesheet" href="css/custom.css?v=20240610">
+    <script src="https://cdn.tailwindcss.com?v=20240610"></script>
+    <script>
+        tailwind.config = { theme: { extend: { colors: { brand: '#e16316' } } } };
+    </script>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col">
+    <div id="top-bar"></div>
+    <div id="status-bar"></div>
+    <div class="container mx-auto p-4 flex flex-col gap-4 flex-1 overflow-y-auto">
+        <div class="space-y-2">
+            <input type="file" id="file" accept=".pdf,.ppt,.pptx" class="text-sm">
+            <button id="upload-btn" class="control-button btn-sm">Upload</button>
+        </div>
+        <div class="flex gap-2">
+            <button id="prev" class="control-button btn-sm">Prev</button>
+            <button id="next" class="control-button btn-sm">Next</button>
+        </div>
+        <div class="flex gap-2">
+            <button id="show-full" class="control-button btn-sm">Show Full</button>
+            <button id="show-pip" class="control-button btn-sm">Show PiP</button>
+            <button id="hide" class="control-button btn-sm">Hide</button>
+        </div>
+        <div id="viewer" class="flex-1 border rounded bg-gray-800"></div>
+        <div>
+            <label class="block text-sm mb-1">Notes</label>
+            <textarea id="notes" class="border p-2 w-full text-black" rows="4"></textarea>
+        </div>
+    </div>
+    <script type="module" src="js/main-speakers.js?v=20240610"></script>
+</body>
+</html>

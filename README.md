@@ -161,3 +161,9 @@ scoreboard layouts. Newly added sports are:
 These join football, rugby, hockey, cricket and many more so you can tailor
 graphics to most competitions. Motorsports and horse racing will be handled in
 a future update as they require external timing feeds.
+
+### Commentator & Speakers Pages
+
+Sports events now provide a **Commentator** page from the dashboard. This read‑only view shows the current scoreboard, team lineups, live stats and a running match log so commentators have all the info in one place.
+
+Corporate events instead include a **Speakers** page. Presenters can upload a PDF or PowerPoint file, step through the slides and add notes. The graphics operator can show the presentation fullscreen or as a PiP overlay via the new Presentation panel.

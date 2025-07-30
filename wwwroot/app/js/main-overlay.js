@@ -23,6 +23,8 @@ let prevTableVisible = false;
 let prevResultsVisible = false;
 let prevStingerVisible = false;
 let prevStingerData = null;
+let prevPresentationVisible = false;
+let prevPresentationData = null;
 
 function contrastColor(hex) {
     let c = hex.replace('#', '');
@@ -763,6 +765,23 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         stingerOverlay.innerHTML = `<img src='${stingerData.logo}'>`;
     } else if(stingerOverlay){
         stingerOverlay.remove();
+    }
+
+    // Presentation Overlay
+    let presOverlay = overlayContainer.querySelector('#presentation-overlay');
+    const presData = state && state.presentation;
+    const presShow = previewMode ? state && state.presentationPreviewVisible : state && state.presentationVisible;
+    if(presShow && presData && presData.url){
+        if(!presOverlay){
+            presOverlay = document.createElement('div');
+            presOverlay.id = 'presentation-overlay';
+            overlayContainer.appendChild(presOverlay);
+        }
+        presOverlay.className = presData.mode === 'pip' ? 'presentation-overlay pip' : 'presentation-overlay full';
+        presOverlay.style.opacity = previewMode ? '0.6' : '1';
+        presOverlay.innerHTML = `<iframe src='${presData.url}#page=${presData.page||1}'></iframe>`;
+    } else if(presOverlay){
+        presOverlay.remove();
     }
 }
 

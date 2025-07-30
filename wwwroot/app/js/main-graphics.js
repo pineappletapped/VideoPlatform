@@ -92,6 +92,8 @@ function updateGraphicsTabs(type, tournament) {
     const schedulePanel = document.getElementById('schedule-panel');
     const brandingBtn = tabBar.querySelector('[data-tab="branding"]');
     const brandingPanel = document.getElementById('branding-panel');
+    const presBtn = tabBar.querySelector('[data-tab="presentation"]');
+    const presPanel = document.getElementById('presentation-panel');
     if (scheduleBtn && schedulePanel) {
         if (type === 'sports') {
             scheduleBtn.classList.add('hidden');
@@ -105,9 +107,13 @@ function updateGraphicsTabs(type, tournament) {
         if (type === 'sports') {
             brandingBtn.classList.add('hidden');
             brandingPanel.classList.add('hidden');
+            if(presBtn) presBtn.classList.add('hidden');
+            if(presPanel) presPanel.classList.add('hidden');
         } else {
             brandingBtn.classList.remove('hidden');
             brandingPanel.classList.remove('hidden');
+            if(presBtn) presBtn.classList.remove('hidden');
+            if(presPanel) presPanel.classList.add('hidden');
         }
     }
 }
@@ -172,6 +178,10 @@ async function initializeComponents(eventData) {
     renderHoldslatePanel(document.getElementById('holdslate-panel'), onOverlayStateChange);
     const { renderStingerPanel } = await import('./components/stingerPanel.js');
     renderStingerPanel(document.getElementById('stinger-panel'), eventId);
+    if((eventData.eventType || 'corporate') === 'corporate') {
+        const { renderPresentationPanel } = await import('./components/presentationPanel.js');
+        renderPresentationPanel(document.getElementById('presentation-panel'), eventId);
+    }
     renderGraphicsPanel(document.getElementById('events-panel'), eventData, graphicsMode);
 
     renderActiveGraphicsPanel(document.getElementById('active-graphics'), eventId, graphicsMode);

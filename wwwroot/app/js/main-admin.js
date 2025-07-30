@@ -1,6 +1,7 @@
 import { requireAuth, logout } from './auth.js';
 import { getAllUsers, updateUser, getAllEventsMetadata } from './firebase.js';
 import './components/topBar.js';
+import { renderStatusBar } from './components/statusBar.js';
 import { renderBrandingModal } from './components/brandingModal.js';
 
 const BILLING_PLANS = {
@@ -23,6 +24,7 @@ async function init() {
   topBar.addEventListener('admin-panel', () => {});
   topBar.addEventListener('edit-account', () => window.location.href = 'account.html');
   document.getElementById('top-bar').appendChild(topBar);
+  renderStatusBar(document.getElementById('status-bar'), { id:'admin', status:'Admin', firebaseStatus:'Connected' }, { overlay:false, listener:false, sport:false, clock:true, atem:false, obs:false });
 
   loadUsers();
   loadEvents();
