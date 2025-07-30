@@ -12,11 +12,11 @@ Use PHP's built‑in server:
 php -S localhost:8080 -t wwwroot
 ```
 
-Make sure the `wwwroot/uploads` directory exists and is writable (e.g. `chmod 777 wwwroot/uploads`). Then open `http://localhost:8080/index.html`.
+Make sure the `wwwroot/uploads` directory exists and is writable (e.g. `chmod 777 wwwroot/uploads`). After starting the server open `http://localhost:8080/app/index.html` to access the dashboard. The root `index.html` now shows a marketing page.
 
 ## Login & Events
 
-The landing page is an event dashboard. Sign up or log in and create events. Each
+The dashboard lives under `app/index.html`. Sign up or log in and create events. Each
 event row offers links to the main control panel, a simplified **Graphics** panel,
 the listener and the overlay page. Login sessions last for eight hours and are
 required for all control panels, but the overlay page itself stays public so it
