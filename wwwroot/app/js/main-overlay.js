@@ -20,6 +20,8 @@ let prevLowerThirdData = null;
 let prevFormationVisible = false;
 let prevTableVisible = false;
 let prevResultsVisible = false;
+let prevStingerVisible = false;
+let prevStingerData = null;
 
 function contrastColor(hex) {
     let c = hex.replace('#', '');
@@ -732,6 +734,23 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         statOverlay.innerHTML = `<div class='lower-third-default'>${photoHtml}${statData.fact}${statData.player ? ' - ' + statData.player : ''}${teamName ? ' (' + teamName + ')' : ''}</div>`;
     } else if (statOverlay) {
         statOverlay.remove();
+    }
+
+    // Stinger Overlay
+    let stingerOverlay = overlayContainer.querySelector('#stinger-overlay');
+    const stingerData = state && state.stinger;
+    const stingerShow = previewMode ? state && state.stingerPreviewVisible : state && state.stingerVisible;
+    if(stingerShow && stingerData && stingerData.logo){
+        if(!stingerOverlay){
+            stingerOverlay = document.createElement('div');
+            stingerOverlay.id = 'stinger-overlay';
+            overlayContainer.appendChild(stingerOverlay);
+        }
+        stingerOverlay.style.fontFamily = branding.font;
+        stingerOverlay.style.opacity = previewMode ? '0.6' : '1';
+        stingerOverlay.innerHTML = `<img src='${stingerData.logo}'>`;
+    } else if(stingerOverlay){
+        stingerOverlay.remove();
     }
 }
 

@@ -170,6 +170,8 @@ async function initializeComponents(eventData) {
     }
 
     renderHoldslatePanel(document.getElementById('holdslate-panel'), onOverlayStateChange);
+    const { renderStingerPanel } = await import('./components/stingerPanel.js');
+    renderStingerPanel(document.getElementById('stinger-panel'), eventId);
     renderGraphicsPanel(document.getElementById('lower-thirds-panel'), eventData, graphicsMode);
 
     renderActiveGraphicsPanel(document.getElementById('active-graphics'), eventId, graphicsMode);

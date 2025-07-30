@@ -137,3 +137,9 @@ configured.
 Cricket mode offers a dedicated scoreboard style showing runs, wickets and
 overs for both sides in a single bar. Choose between this and the regular
 styles from the options modal.
+
+### Logo Stingers
+
+All events include a **Stinger** tab letting you quickly display a fullscreen
+logo for scene transitions. Choose from your event branding logos, the
+currently selected team logos or any uploaded sponsors.
