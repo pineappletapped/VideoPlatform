@@ -10,7 +10,7 @@
         tailwind.config = { theme: { extend: { colors: { brand: '#e16316' } } } };
     </script>
 </head>
-<body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col">
+<body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col overflow-auto">
     <div id="top-bar"></div>
     <div class="container mx-auto p-8 flex flex-col items-center">
         <h1 class="text-3xl font-bold mb-8">Event Dashboard</h1>
@@ -48,7 +48,7 @@
             <div id="event-allowance" class="mb-2"></div>
             <button id="open-create" class="control-button mb-4">Create Event</button>
             <div id="create-modal" class="hidden"></div>
-            <ul id="events-list" class="space-y-4"></ul>
+            <ul id="events-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full"></ul>
         </div>
     </div>
     <div id="branding-modal" class="hidden"></div>

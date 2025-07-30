@@ -14,6 +14,10 @@ php -S localhost:8080 -t wwwroot
 
 Make sure the `wwwroot/uploads` directory exists and is writable (e.g. `chmod 777 wwwroot/uploads`). After starting the server open `http://localhost:8080/app/index.html` to access the dashboard. The root `index.html` now shows a marketing page.
 
+## Marketing Landing Page
+
+Visiting the site root displays a sales page highlighting what the graphics package can do. It outlines core features, pricing tiers and is styled with Tailwind CSS. Use the **Login** button on that page to access the dashboard.
+
 ## Login & Events
 
 The dashboard lives under `app/index.html`. Sign up or log in and create events. Each

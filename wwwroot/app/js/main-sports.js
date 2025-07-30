@@ -22,6 +22,7 @@ async function init() {
 
   const topBar = document.createElement('top-bar');
   if (user && user.email === 'ryanadmin') topBar.setAttribute('is-admin','true');
+  topBar.setAttribute('event-name', meta.title || eventId);
   topBar.addEventListener('logout', logout);
   topBar.addEventListener('brand-settings', () => { const modal=document.getElementById('branding-modal'); renderBrandingModal(modal,{ eventId }); modal.classList.remove('hidden'); });
   document.getElementById('top-bar').appendChild(topBar);
