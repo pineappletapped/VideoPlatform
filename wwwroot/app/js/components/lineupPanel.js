@@ -16,6 +16,10 @@ export function renderLineupPanel(container, eventId = 'demo', sport = 'Football
     let lineupsUpdated = 0;
     let formationVisible = false;
     let formationTeam = '';
+    let tableVisible = false;
+    let tableTeam = '';
+    let resultsVisible = false;
+    let scoreboardData = null;
 
     onValue(ref(db, `teams/${eventId}`), snap=>{ teamsData = snap.val(); if(lineupData) render(); });
     onValue(getLineupsRef(eventId), snap=>{ lineupData = snap.val() || defaultData(); render(); });
@@ -24,6 +28,10 @@ export function renderLineupPanel(container, eventId = 'demo', sport = 'Football
             lineupsUpdated = state && state.lineupsUpdated || 0;
             formationVisible = state && state.formationVisible || false;
             formationTeam = state && state.formation ? state.formation.team : '';
+            tableVisible = state && state.lineupTableVisible || false;
+            tableTeam = state && state.lineupTable ? state.lineupTable.team : '';
+            resultsVisible = state && state.resultsVisible || false;
+            scoreboardData = state && state.scoreboard || null;
             render();
         });
     }
@@ -86,20 +94,27 @@ export function renderLineupPanel(container, eventId = 'demo', sport = 'Football
                             <h3 class="font-semibold mb-1">${teamsData.teamA.name}</h3>
                             ${rowsView(teamsData.teamA, lineupData.teamA.starters)}
                             <button id="show-a" class="control-button btn-sm mt-1${formationVisible && formationTeam==='a' ? ' ring-2 ring-green-400' : ''}">Formation</button>
+                            <button id="table-a" class="control-button btn-sm mt-1${tableVisible && tableTeam==='a' ? ' ring-2 ring-green-400' : ''}">Table</button>
                         </div>
                         <div class="flex-1">
                             <h3 class="font-semibold mb-1">${teamsData.teamB.name}</h3>
                             ${rowsView(teamsData.teamB, lineupData.teamB.starters)}
                             <button id="show-b" class="control-button btn-sm mt-1${formationVisible && formationTeam==='b' ? ' ring-2 ring-green-400' : ''}">Formation</button>
+                            <button id="table-b" class="control-button btn-sm mt-1${tableVisible && tableTeam==='b' ? ' ring-2 ring-green-400' : ''}">Table</button>
                         </div>
+                    </div>
+                    <div class="mt-2">
+                        <button id="show-results" class="control-button btn-sm${resultsVisible ? ' ring-2 ring-green-400' : ''}">Match Result</button>
                     </div>
                 </div>`;
             localStorage.setItem(`lineupsSeen-${eventId}`, String(lineupsUpdated));
             const showA = container.querySelector('#show-a');
             const showB = container.querySelector('#show-b');
-            function build(teamKey){
+            function buildFormation(teamKey){
                 const lu = teamKey==='a' ? lineupData.teamA : lineupData.teamB;
-                const team = teamKey==='a' ? teamsData.teamA : teamsData.teamB;
+                const team = teamKey==='a'
+                    ? (teamsData.teams ? teamsData.teams[teamsData.currentA||0] : teamsData.teamA)
+                    : (teamsData.teams ? teamsData.teams[teamsData.currentB||1] : teamsData.teamB);
                 const nums = (lu.formation || '4-4-2').split('-').map(n=>parseInt(n.trim())).filter(n=>n>0);
                 const players = lu.starters.map(i=>team.players[i]).filter(p=>p);
                 const rows = [1,...nums];
@@ -110,21 +125,52 @@ export function renderLineupPanel(container, eventId = 'demo', sport = 'Football
                     const y = teamKey==='a'? startY - r*step : startY + r*step;
                     for(let i=0;i<count;i++){
                         const x = (i+1)/(count+1)*100;
-                        const pl = players[idx++] || {name:'',pos:''};
-                        res.push({name:pl.name,pos:pl.pos,x,y});
+                        const pl = players[idx++] || {name:'',pos:'',photo:''};
+                        res.push({name:pl.name,pos:pl.pos,photo:pl.photo,x,y});
                     }
                 });
                 return {team:teamKey,players:res};
             }
-            function toggle(teamKey){
+            function buildTable(teamKey){
+                const team = teamKey==='a'
+                    ? (teamsData.teams ? teamsData.teams[teamsData.currentA||0] : teamsData.teamA)
+                    : (teamsData.teams ? teamsData.teams[teamsData.currentB||1] : teamsData.teamB);
+                return {team:teamKey, players: team.players.map(p=>({name:p.name,pos:p.pos,photo:p.photo}))};
+            }
+            function toggleFormation(teamKey){
                 if(formationVisible && formationTeam===teamKey){
                     updateOverlayState(eventId,{formationVisible:false});
                 }else{
-                    updateOverlayState(eventId,{formation:build(teamKey),formationVisible:true});
+                    updateOverlayState(eventId,{formation:buildFormation(teamKey),formationVisible:true});
                 }
             }
-            if(showA) showA.onclick=()=>toggle('a');
-            if(showB) showB.onclick=()=>toggle('b');
+            function toggleTableDisplay(teamKey){
+                if(tableVisible && tableTeam===teamKey){
+                    updateOverlayState(eventId,{lineupTableVisible:false});
+                }else{
+                    updateOverlayState(eventId,{lineupTable:buildTable(teamKey),lineupTableVisible:true});
+                }
+            }
+            function toggleResults(){
+                if(resultsVisible){
+                    updateOverlayState(eventId,{resultsVisible:false});
+                }else if(scoreboardData){
+                    const tA = teamsData.teams ? teamsData.teams[teamsData.currentA||0] : teamsData.teamA;
+                    const tB = teamsData.teams ? teamsData.teams[teamsData.currentB||1] : teamsData.teamB;
+                    updateOverlayState(eventId,{results:{
+                        teamA:{name:tA.name,score:scoreboardData.scores?.[0]||0,scorers:scoreboardData.scorers?.[0]||[]},
+                        teamB:{name:tB.name,score:scoreboardData.scores?.[1]||0,scorers:scoreboardData.scorers?.[1]||[]}
+                    },resultsVisible:true});
+                }
+            }
+            if(showA) showA.onclick=()=>toggleFormation('a');
+            if(showB) showB.onclick=()=>toggleFormation('b');
+            const tableA = container.querySelector('#table-a');
+            const tableB = container.querySelector('#table-b');
+            const resBtn = container.querySelector('#show-results');
+            if(tableA) tableA.onclick=()=>toggleTableDisplay('a');
+            if(tableB) tableB.onclick=()=>toggleTableDisplay('b');
+            if(resBtn) resBtn.onclick=toggleResults;
         }
     }
 }

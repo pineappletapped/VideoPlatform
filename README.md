@@ -12,15 +12,23 @@ Use PHP's built‑in server:
 php -S localhost:8080 -t wwwroot
 ```
 
-Make sure the `wwwroot/uploads` directory exists and is writable (e.g. `chmod 777 wwwroot/uploads`). Then open `http://localhost:8080/index.html`.
+Make sure the `wwwroot/uploads` directory exists and is writable (e.g. `chmod 777 wwwroot/uploads`). After starting the server open `http://localhost:8080/app/index.html` to access the dashboard. The root `index.html` now shows a marketing page.
+
+## Marketing Landing Page
+
+Visiting the site root displays a sales page highlighting what the graphics package can do. It outlines core features, pricing tiers and is styled with Tailwind CSS. Use the **Login** button on that page to access the dashboard.
 
 ## Login & Events
 
-The landing page is an event dashboard. Sign up or log in and create events. Each
+The dashboard lives under `app/index.html`. Sign up or log in and create events. Each
 event row offers links to the main control panel, a simplified **Graphics** panel,
 the listener and the overlay page. Login sessions last for eight hours and are
 required for all control panels, but the overlay page itself stays public so it
 can be embedded in OBS without timing out.
+
+Sports events now support **Tournament Mode** when creating an event. Enable
+this to manage a pool of teams. The **Teams** tab in the graphics panel lets you
+select which two teams are playing via dropdowns and edit each team from a list.
 
 If Firebase registration isn't available you can log in using the built‑in admin
 account `ryanadmin` with password `password`.
@@ -81,3 +89,82 @@ opens a simple admin panel showing all users and their billing tier. Plans are:
 
 Regular users can manage their default branding from **Brand Settings** in the
 account menu. Uploaded logos are stored under `uploads/user_<id>/branding/`.
+
+### Sponsorship
+
+Events can manage sponsor logos from the **Sponsors** tab in either the sports
+admin page or the graphics control panel. Upload sponsors with names, colours
+and logos then assign them to placements such as above or below the scoreboard,
+the bottom of formation graphics or any screen corner. The app logs whenever a
+sponsor is shown or hidden so you can review exposure reports later.
+
+### Active & Favourite Graphics
+
+Each graphic in the control panel has a ★ button to mark it as a favourite.
+Favourites appear under the **Favourites** tab in the Active Graphics panel
+for quick access. The **Active** tab lists anything currently visible so you
+can hide them in one click.
+
+### Lineup Tables & Match Results
+
+The Lineups panel now offers **Table** buttons to show each team's roster in a
+simple list overlay. There's also a **Match Result** button that displays the
+final score along with goal scorers and times based on the scoreboard log.
+
+### Match Logs & Real-time Clocks
+
+The scoreboard timer now runs client-side. Starting the clock records a start
+timestamp so overlay pages keep counting without constant database updates. The
+Scoreboard panel also includes **Match Log** buttons to record goals,
+substitutions and penalties with the current time. These entries can be shown as
+an overlay via the **Show Log** button.
+
+### Tournament Panel
+
+When an event is created in **Tournament Mode** an extra tab appears in the
+Graphics panel. The **Tournament** tab lets you list all the match-ups,
+configure scoring for wins, draws and losses and show individual match results
+as an overlay.
+
+### Sport-specific Scoreboards
+
+Each sport can now define its own scoreboard styles. Darts scoreboards track
+every throw and automatically deduct scores. The panel keeps a running 3‑dart
+average, counts 180s, 140s and 100+ scores and records the highest checkout of
+the match. Use the **New Leg** button to reset both players to 301 or 501 as
+configured.
+
+Cricket mode offers a dedicated scoreboard style showing runs, wickets and
+overs for both sides in a single bar. Choose between this and the regular
+styles from the options modal.
+
+### Logo Stingers
+
+All events include a **Stinger** tab letting you quickly display a fullscreen
+logo for scene transitions. Choose from your event branding logos, the
+currently selected team logos or any uploaded sponsors.
+
+### Expanded Sports Offering
+
+The platform now includes presets for additional sports beyond the original
+set. Each one comes with sensible defaults for team sizes, positions and
+scoreboard layouts. Newly added sports are:
+
+- **Baseball** – nine innings with simple run tracking
+- **American Football** – four quarters with touchdown, field goal and extra
+  point buttons
+- **Volleyball** – best-of-five sets with point scoring
+- **Badminton** and **Squash** – games and points for singles matches
+- **Gaelic Football** and **Hurling** – standard GAA scoring with goals worth
+  three points
+
+These join football, rugby, hockey, cricket and many more so you can tailor
+graphics to most competitions. Motorsports and horse racing will be handled in
+a future update as they require external timing feeds.
+
+### Commentator & Speakers Pages
+
+Sports events now provide a **Commentator** page from the dashboard. A scoreboard and game clock sit at the top of the page with two columns below – one for each team.  Each column has tabs for **Players**, **Formation**, **Stats** and **Log** so commentators can quickly reference line‑ups, formations, player stats and a filtered match log.
+
+Corporate events instead include a **Speakers** page. Presenters can upload a PDF or PowerPoint file, step through the slides and add notes. The graphics operator can show the presentation fullscreen or as a PiP overlay via the new Presentation panel.
+Each event row on the dashboard now includes buttons linking directly to the Commentator or Speakers page as appropriate so staff can open them quickly.

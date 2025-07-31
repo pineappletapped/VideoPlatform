@@ -5,7 +5,6 @@ import { renderProgramPreview } from './components/programPreview.js';
 import { renderInputSourcesBar } from './components/inputSourcesBar.js';
 import { renderGraphicsPanel } from './components/graphicsPanel.js';
 import { renderScoreboardPanel } from './components/scoreboardPanel.js';
-import { renderLineupPanel } from './components/lineupPanel.js';
 import { renderStatsPanel } from './components/statsPanel.js';
 import { renderTeamsPanel } from './components/teamsPanel.js';
 import { renderSportPanel } from './components/sportPanel.js';
@@ -20,7 +19,6 @@ import { updateOverlayState, getOverlayState, getEventMetadata, updateEventMetad
 import { renderVtsPanel } from './components/vtsPanel.js';
 import { renderMusicPanel } from './components/musicPanel.js';
 import { renderActiveGraphicsPanel } from './components/activeGraphicsPanel.js';
-import { renderBrandingPanel } from './components/brandingPanel.js';
 import { requireAuth, logout } from './auth.js';
 
 // Get event ID from URL params
@@ -105,7 +103,7 @@ function setupTabs() {
 function updateGraphicsTabs(type) {
     const tabBar = document.getElementById('graphics-tabs');
     if (!tabBar) return;
-    const sports = ['scoreboard','lineups','stats','teams','sport'];
+    const sports = ['scoreboard','stats','teams','sport'];
     sports.forEach(t => {
         const btn = tabBar.querySelector(`[data-tab="${t}"]`);
         const panel = document.getElementById(`${t}-panel`);
@@ -121,8 +119,6 @@ function updateGraphicsTabs(type) {
     });
     const scheduleBtn = tabBar.querySelector('[data-tab="schedule"]');
     const schedulePanel = document.getElementById('schedule-panel');
-    const brandingBtn = tabBar.querySelector('[data-tab="branding"]');
-    const brandingPanel = document.getElementById('branding-panel');
     if (scheduleBtn && schedulePanel) {
         if (type === 'sports') {
             scheduleBtn.classList.add('hidden');
@@ -132,14 +128,20 @@ function updateGraphicsTabs(type) {
             schedulePanel.classList.remove('hidden');
         }
     }
-    if (brandingBtn && brandingPanel) {
-        if (type === 'sports') {
-            brandingBtn.classList.add('hidden');
-            brandingPanel.classList.add('hidden');
-        } else {
-            brandingBtn.classList.remove('hidden');
-            brandingPanel.classList.remove('hidden');
+    const presBtn = tabBar.querySelector('[data-tab="presentation"]');
+    const presPanel = document.getElementById('presentation-panel');
+    if(presBtn && presPanel){
+        if(type === 'sports'){
+            presBtn.classList.add('hidden');
+            presPanel.classList.add('hidden');
+        }else{
+            presBtn.classList.remove('hidden');
+            presPanel.classList.add('hidden');
         }
+    }
+    const eventsLabel = document.getElementById('events-tab-label');
+    if(eventsLabel){
+        eventsLabel.textContent = type === 'sports' ? 'In Game Events' : 'Lower Thirds';
     }
 }
 
@@ -154,6 +156,7 @@ async function initializeComponents(eventData) {
     // Top bar
     const topBar = document.createElement('top-bar');
     if (currentUserId === 'ryanadmin') topBar.setAttribute('is-admin','true');
+    topBar.setAttribute('event-name', eventData.title || eventId);
     topBar.addEventListener('logout', logout);
     topBar.addEventListener('edit-account', () => { window.location.href = 'account.html'; });
     topBar.addEventListener('brand-settings', () => { const modal=document.getElementById('branding-modal'); renderBrandingModal(modal,{ userId: currentUserId }); modal.classList.remove('hidden'); });
@@ -170,7 +173,6 @@ async function initializeComponents(eventData) {
             renderScoreboardPanel(document.getElementById('scoreboard-panel'), sport, eventId);
         });
         renderScoreboardPanel(document.getElementById('scoreboard-panel'), eventData.sport, eventId);
-        renderLineupPanel(document.getElementById('lineups-panel'));
         renderStatsPanel(document.getElementById('stats-panel'), eventId);
         renderTeamsPanel(document.getElementById('teams-panel'), eventId, eventData.sport);
     } else {
@@ -179,13 +181,12 @@ async function initializeComponents(eventData) {
 
     // Initialize main content panels
     renderHoldslatePanel(document.getElementById('holdslate-panel'), onOverlayStateChange);
-    renderGraphicsPanel(document.getElementById('lower-thirds-panel'), eventData, graphicsMode);
+    renderGraphicsPanel(document.getElementById('events-panel'), eventData, graphicsMode);
 
     // Initialize AV panels
     renderVtsPanel(document.getElementById('vts-panel'), eventId, vt => { loadedVT = vt; window.loadedVT = vt; });
     renderMusicPanel(document.getElementById('music-panel'), eventId);
     renderActiveGraphicsPanel(document.getElementById('active-graphics'), eventId, graphicsMode);
-    renderBrandingPanel(document.getElementById('branding-panel'), eventId);
 
     setupAudioControls();
     

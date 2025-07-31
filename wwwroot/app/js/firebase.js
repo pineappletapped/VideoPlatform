@@ -1,6 +1,6 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-import { getDatabase, ref, set, get, onValue, update, remove } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+import { getDatabase, ref, set, get, onValue, update, remove, push } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCXUd4iKZWHeiWe_2gblxWE9uFEXS4pHAI",
@@ -147,4 +147,95 @@ export function getUserBranding(userId) {
 }
 export function listenUserBranding(userId, cb) {
   return onValue(ref(db, `userBranding/${userId}`), snap => cb(snap.val()));
+}
+
+// Sponsors helpers
+export function getSponsors(eventId) {
+  return get(ref(db, `sponsors/${eventId}`)).then(snap => snap.val());
+}
+export function setSponsors(eventId, sponsors) {
+  return set(ref(db, `sponsors/${eventId}`), sponsors);
+}
+export function updateSponsors(eventId, sponsors) {
+  return update(ref(db, `sponsors/${eventId}`), sponsors);
+}
+export function listenSponsors(eventId, cb) {
+  return onValue(ref(db, `sponsors/${eventId}`), snap => cb(snap.val()));
+}
+
+// Sponsor placement helpers
+export function getSponsorPlacements(eventId) {
+  return get(ref(db, `sponsorPlacements/${eventId}`)).then(snap => snap.val());
+}
+export function setSponsorPlacements(eventId, data) {
+  return set(ref(db, `sponsorPlacements/${eventId}`), data);
+}
+export function updateSponsorPlacements(eventId, data) {
+  return update(ref(db, `sponsorPlacements/${eventId}`), data);
+}
+export function listenSponsorPlacements(eventId, cb) {
+  return onValue(ref(db, `sponsorPlacements/${eventId}`), snap => cb(snap.val()));
+}
+
+// Sponsor log helper
+export function addSponsorLog(eventId, entry) {
+  const r = ref(db, `sponsorLog/${eventId}`);
+  return push(r, entry);
+}
+export function getSponsorLog(eventId) {
+  return get(ref(db, `sponsorLog/${eventId}`)).then(snap => snap.val());
+}
+export function listenSponsorLog(eventId, cb) {
+  return onValue(ref(db, `sponsorLog/${eventId}`), snap => cb(snap.val()));
+}
+
+// Match log helpers
+export function addMatchLog(eventId, entry) {
+  const r = ref(db, `matchLog/${eventId}`);
+  const newRef = push(r);
+  return set(newRef, entry).then(() => newRef.key);
+}
+export function updateMatchLogEntry(eventId, id, entry) {
+  return set(ref(db, `matchLog/${eventId}/${id}`), entry);
+}
+export function listenMatchLog(eventId, cb) {
+  return onValue(ref(db, `matchLog/${eventId}`), snap => {
+    const val = snap.val() || {};
+    const arr = Object.entries(val).map(([k,v])=>({ id:k, ...v }));
+    cb(arr);
+  });
+}
+export function getMatchLog(eventId) {
+  return get(ref(db, `matchLog/${eventId}`)).then(snap => {
+    const val = snap.val() || {};
+    return Object.entries(val).map(([k,v])=>({ id:k, ...v }));
+  });
+}
+
+// Tournament helpers
+export function getTournament(eventId) {
+  return get(ref(db, `tournament/${eventId}`)).then(snap => snap.val());
+}
+export function setTournament(eventId, data) {
+  return set(ref(db, `tournament/${eventId}`), data);
+}
+export function updateTournament(eventId, data) {
+  return update(ref(db, `tournament/${eventId}`), data);
+}
+export function listenTournament(eventId, cb) {
+  return onValue(ref(db, `tournament/${eventId}`), snap => cb(snap.val()));
+}
+
+// Presentation helpers
+export function getPresentation(eventId) {
+  return get(ref(db, `presentation/${eventId}`)).then(snap => snap.val());
+}
+export function setPresentation(eventId, data) {
+  return set(ref(db, `presentation/${eventId}`), data);
+}
+export function updatePresentation(eventId, data) {
+  return update(ref(db, `presentation/${eventId}`), data);
+}
+export function listenPresentation(eventId, cb) {
+  return onValue(ref(db, `presentation/${eventId}`), snap => cb(snap.val()));
 }

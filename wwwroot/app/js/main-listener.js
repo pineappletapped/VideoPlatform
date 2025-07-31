@@ -513,6 +513,7 @@ async function initializeListener(user) {
     const eventData = await eventStorage.loadEvent(eventId);
     const topBar = document.createElement('top-bar');
     if (currentUserId === 'ryanadmin') topBar.setAttribute('is-admin','true');
+    topBar.setAttribute('event-name', eventData.title || eventId);
     topBar.addEventListener('logout', logout);
     topBar.addEventListener('edit-account', () => { window.location.href = 'account.html'; });
     topBar.addEventListener('brand-settings', () => { const modal=document.getElementById('branding-modal'); renderBrandingModal(modal,{ userId: currentUserId }); modal.classList.remove('hidden'); });

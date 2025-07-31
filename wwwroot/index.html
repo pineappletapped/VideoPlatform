@@ -2,57 +2,67 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Event Dashboard</title>
-    <link rel="stylesheet" href="css/custom.css?v=20240610">
-    <script src="https://cdn.tailwindcss.com?v=20240610"></script>
-    <script>
-        tailwind.config = { theme: { extend: { colors: { brand: '#e16316' } } } };
-    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>VideoPlatform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col">
-    <div id="top-bar"></div>
-    <div class="container mx-auto p-8 flex flex-col items-center">
-        <h1 class="text-3xl font-bold mb-8">Event Dashboard</h1>
-        <div id="auth" class="w-full max-w-sm text-gray-900">
-            <div class="bg-white rounded-lg shadow p-6">
-                <h2 class="text-center text-xl font-bold mb-4">Welcome</h2>
-                <form id="login-form" class="space-y-3" method="post" autocomplete="off">
-                    <input name="email" type="text" placeholder="Email or username" class="border p-2 w-full" required>
-                    <input name="password" type="password" placeholder="Password" class="border p-2 w-full" required>
-                    <div id="login-error" class="text-red-600 text-center hidden"></div>
-                    <button class="control-button w-full">Login</button>
-                </form>
-                <button id="show-register" class="w-full text-center text-brand mt-4">Create account</button>
-                <form id="register-form" class="space-y-3 mt-4 hidden" method="post">
-                    <input name="email" type="text" placeholder="Email" class="border p-2 w-full" required>
-                    <input name="password" type="password" placeholder="Password" class="border p-2 w-full" required>
-                    <select name="tier" class="border p-2 w-full">
-                        <option value="single">Single Event £3.75/month</option>
-                        <option value="three">3 Events £6/month</option>
-                        <option value="eight">8 Events £15/month</option>
-                    </select>
-                    <div id="card-container" class="border p-2"></div>
-                    <div id="payment-msg" class="text-center text-xs text-gray-500"></div>
-                    <div id="register-error" class="text-red-600 text-center hidden"></div>
-                    <button class="control-button w-full">Register &amp; Subscribe</button>
-                    <button type="button" id="hide-register" class="w-full text-center text-brand">Back to login</button>
-                </form>
-            </div>
+    <header class="bg-brand-600 text-white p-4 flex justify-between items-center">
+        <h1 class="text-2xl font-bold">VideoPlatform</h1>
+        <div>
+            <a href="app/index.html" class="bg-white text-gray-900 font-bold px-4 py-2 rounded hover:bg-gray-200">Login</a>
         </div>
-        <div id="dashboard" class="hidden">
-            <div class="flex gap-2 mb-4">
-                <button id="signout-btn" class="control-button">Sign Out</button>
-                <button id="admin-btn" class="control-button hidden">Admin</button>
+    </header>
+    <main class="flex-grow text-center p-8 space-y-20">
+        <section class="max-w-3xl mx-auto">
+            <h2 class="text-4xl font-extrabold mb-4">Elevate Your Live Productions</h2>
+            <p class="mb-8">Manage graphics, video playback and more from one intuitive dashboard. Perfect for corporate presentations and sporting events.</p>
+            <a href="app/index.html" class="bg-brand-600 hover:bg-brand-500 text-white font-bold px-6 py-3 rounded">Get Started</a>
+        </section>
+        <section class="max-w-5xl mx-auto" id="features">
+            <h2 class="text-3xl font-bold mb-6">Key Features</h2>
+            <div class="grid gap-6 md:grid-cols-3 text-left">
+                <div class="bg-gray-800 p-4 rounded">
+                    <h3 class="font-semibold text-xl mb-2">Dynamic Scoreboards</h3>
+                    <p class="text-sm">Multiple sport layouts with real-time clocks, player photos and full stat tracking.</p>
+                </div>
+                <div class="bg-gray-800 p-4 rounded">
+                    <h3 class="font-semibold text-xl mb-2">Sponsorship & Branding</h3>
+                    <p class="text-sm">Upload logos and assign placements with automated exposure reporting.</p>
+                </div>
+                <div class="bg-gray-800 p-4 rounded">
+                    <h3 class="font-semibold text-xl mb-2">Tournament Mode</h3>
+                    <p class="text-sm">Organise matchups, manage teams and display results graphics effortlessly.</p>
+                </div>
             </div>
-            <div id="event-allowance" class="mb-2"></div>
-            <button id="open-create" class="control-button mb-4">Create Event</button>
-            <div id="create-modal" class="hidden"></div>
-            <ul id="events-list" class="space-y-4"></ul>
-        </div>
-    </div>
-    <div id="branding-modal" class="hidden"></div>
-    <script src="https://sandbox.web.squarecdn.com/v1/square.js"></script>
-    <script type="module" src="js/main-index.js?v=20240610"></script>
+        </section>
+        <section class="max-w-5xl mx-auto" id="pricing">
+            <h2 class="text-3xl font-bold mb-6">Pricing</h2>
+            <div class="grid gap-6 md:grid-cols-3">
+                <div class="bg-gray-800 p-6 rounded flex flex-col items-center">
+                    <h3 class="font-bold text-xl mb-2">Single Event</h3>
+                    <p class="text-4xl font-extrabold mb-2">£3.75</p>
+                    <p class="text-sm mb-4">Ideal for one-off shows and small tournaments.</p>
+                </div>
+                <div class="bg-gray-800 p-6 rounded flex flex-col items-center">
+                    <h3 class="font-bold text-xl mb-2">3 Events</h3>
+                    <p class="text-4xl font-extrabold mb-2">£6</p>
+                    <p class="text-sm mb-4">Run up to three events simultaneously.</p>
+                </div>
+                <div class="bg-gray-800 p-6 rounded flex flex-col items-center">
+                    <h3 class="font-bold text-xl mb-2">8 Events</h3>
+                    <p class="text-4xl font-extrabold mb-2">£15</p>
+                    <p class="text-sm mb-4">Best for busy production teams and leagues.</p>
+                </div>
+            </div>
+            <a href="app/index.html" class="inline-block mt-8 bg-brand-600 hover:bg-brand-500 text-white font-bold px-6 py-3 rounded">Create Your Account</a>
+        </section>
+    </main>
+    <footer class="text-center text-gray-500 p-4">
+        &copy; 2024 VideoPlatform
+    </footer>
+    <script>
+        tailwind.config = { theme: { extend: { colors: { brand: { '600': '#e16316', '500': '#ff864e' } } } } };
+    </script>
 </body>
 </html>

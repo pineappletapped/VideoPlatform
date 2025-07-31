@@ -1,5 +1,6 @@
-import { listenOverlayState, listenGraphicsData, listenBranding } from './firebase.js';
+import { listenOverlayState, listenGraphicsData, listenBranding, listenSponsors, listenSponsorPlacements, addSponsorLog } from './firebase.js';
 import { getDatabaseInstance } from './firebaseApp.js';
+import { suggestAbbreviation } from './teamUtils.js';
 import { ref, onValue, set } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
 
 const params = new URLSearchParams(window.location.search);
@@ -14,8 +15,16 @@ let vtVolume = 1;
 let musicVolume = 1;
 let prevScoreboardVisible = false;
 let prevScoreboardData = null;
+let prevStoppageVisible = false;
 let prevLowerThirdId = null;
 let prevLowerThirdData = null;
+let prevFormationVisible = false;
+let prevTableVisible = false;
+let prevResultsVisible = false;
+let prevStingerVisible = false;
+let prevStingerData = null;
+let prevPresentationVisible = false;
+let prevPresentationData = null;
 
 function contrastColor(hex) {
     let c = hex.replace('#', '');
@@ -25,6 +34,14 @@ function contrastColor(hex) {
     const b = parseInt(c.substr(4,2),16);
     const lum = (0.299*r + 0.587*g + 0.114*b)/255;
     return lum > 0.6 ? '#000' : '#fff';
+}
+
+function parseTime(str){
+    const [m='0',s='0'] = str.split(':');
+    return parseInt(m)*60 + parseInt(s);
+}
+function formatTime(secs){
+    return `${Math.floor(secs/60)}:${(Math.abs(secs)%60).toString().padStart(2,'0')}`;
 }
 
 function playTransition(el, type, name) {
@@ -458,14 +475,31 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         else if (pos === 'bottom-right') { scoreboardOverlay.style.bottom = '2rem'; scoreboardOverlay.style.right = '2rem'; }
         else if (pos === 'top-center') { scoreboardOverlay.style.top = '2rem'; scoreboardOverlay.style.left = '50%'; scoreboardOverlay.style.transform = 'translateX(-50%)'; }
         else { scoreboardOverlay.style.bottom = '2rem'; scoreboardOverlay.style.left = '50%'; scoreboardOverlay.style.transform = 'translateX(-50%)'; }
-        const names = teamsData ? [teamsData.teamA?.name, teamsData.teamB?.name] : [];
-        const colors = teamsData ? [teamsData.teamA?.color || '#333', teamsData.teamB?.color || '#333'] : ['#333','#333'];
-        const logos = teamsData && teamsData.teamA?.logo && teamsData.teamB?.logo ? [teamsData.teamA.logo, teamsData.teamB.logo] : [null, null];
+        const teamA = getTeam(0) || { name: 'Team 1', abbrev: 'T1', color: '#333', logo: '' };
+        const teamB = getTeam(1) || { name: 'Team 2', abbrev: 'T2', color: '#333', logo: '' };
+        const nameAF = teamA.name || 'Team 1';
+        const nameBF = teamB.name || 'Team 2';
+        const abbrA = teamA.abbrev || suggestAbbreviation(nameAF);
+        const abbrB = teamB.abbrev || suggestAbbreviation(nameBF);
+        const useAbbrev = scoreboardData.abbreviate;
+        const names = [useAbbrev ? abbrA : nameAF, useAbbrev ? abbrB : nameBF];
+        const colors = [teamA.color || '#333', teamB.color || '#333'];
+        const logos = scoreboardData.showLogos !== false ? [teamA.logo || null, teamB.logo || null] : [null,null];
         const showLogos = logos[0] && logos[1];
+        const longest = Math.max(names[0].length, names[1].length);
+        scoreboardOverlay.style.setProperty('--sb-team-width', `${longest}ch`);
         const sA = scoreboardData.scores?.[0] ?? 0;
         const sB = scoreboardData.scores?.[1] ?? 0;
+        let timeStr = scoreboardData.time || '';
+        if(scoreboardData.timerRunning && scoreboardData.timerStart){
+            const elapsed = Math.floor((Date.now() - scoreboardData.timerStart)/1000);
+            const base = scoreboardData.timerBase || parseTime(timeStr || '0:00');
+            const countDown = (scoreboardData.timeDirection || 'up') === 'down';
+            const secs = countDown ? Math.max(0, base - elapsed) : base + elapsed;
+            timeStr = formatTime(secs);
+        }
         const info = [];
-        if (scoreboardData.time) info.push(scoreboardData.time);
+        if (timeStr) info.push(timeStr);
         if (scoreboardData.period) info.push('P' + scoreboardData.period);
         if (scoreboardData.round) info.push('R' + scoreboardData.round);
         if (scoreboardData.sets) info.push('Sets ' + scoreboardData.sets.join('-'));
@@ -473,13 +507,15 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         if (scoreboardData.frames) info.push('Frames ' + scoreboardData.frames.join('-'));
         if (scoreboardData.legs) info.push('Legs ' + scoreboardData.legs.join('-'));
         if (scoreboardData.points) info.push('Pts ' + scoreboardData.points.join('-'));
+        if (scoreboardData.overs) info.push('Ov ' + scoreboardData.overs.join('-'));
+        if (scoreboardData.wickets) info.push('Wk ' + scoreboardData.wickets.join('-'));
         const infoHtml = info.length ? `<div class='sb-info'>${info.join(' | ')}</div>` : '';
         const brand = branding.primaryColor || '#e16316';
         const textA = contrastColor(colors[0]);
         const textB = contrastColor(colors[1]);
         const textBrand = contrastColor(brand);
         const breakInd = breakVisible && scoreboardData.currentBreak !== undefined ? `<div class='sb-current-break ${breakPlayer === 1 ? 'right' : 'left'}'>${scoreboardData.currentBreak}</div>` : '';
-        const checkoutHtml = scoreboardData.checkoutText ? `<div class='sb-checkout'>${names[scoreboardData.checkoutPlayer || 0] || ''}: ${scoreboardData.checkoutText}</div>` : '';
+        const checkoutHtml = scoreboardData.checkoutText ? `<div class='sb-checkout'>${names[scoreboardData.checkoutPlayer || 0]}: ${scoreboardData.checkoutText}</div>` : '';
         const aClassA = scoreboardData.turn === 0 ? ' active' : '';
         const aClassB = scoreboardData.turn === 1 ? ' active' : '';
         const sbSponsors = branding.sponsors || [];
@@ -498,16 +534,55 @@ function renderOverlayFromFirebase(state, graphics, branding) {
                 sbSponsorHtml = `<div style='display:flex;gap:1rem;justify-content:space-around;margin-top:0.25rem;'>${sbSponsors.slice(0,4).map(s=>`<img src='${s.logo}' alt='${s.name}' style='height:50px;'>`).join('')}</div>`;
             }
         }
-        scoreboardOverlay.innerHTML = `
+        const topSp = sponsorsData[sponsorPlacements.scoreboardTop];
+        const bottomSp = sponsorsData[sponsorPlacements.scoreboardBottom];
+        const topImg = topSp ? `<img src='${topSp.logo}' class='sb-sponsor top'>` : '';
+        const bottomImg = bottomSp ? `<img src='${bottomSp.logo}' class='sb-sponsor bottom'>` : '';
+        if(style==='cricket'){
+            const oA = scoreboardData.overs?.[0] ?? 0;
+            const bA = scoreboardData.balls?.[0] ?? 0;
+            const wA = scoreboardData.wickets?.[0] ?? 0;
+            const oB = scoreboardData.overs?.[1] ?? 0;
+            const bB = scoreboardData.balls?.[1] ?? 0;
+            const wB = scoreboardData.wickets?.[1] ?? 0;
+            scoreboardOverlay.innerHTML = `
+            ${topImg}
+            <div class="sb-row">
+                <span class="sb-team${aClassA}" style="background:${colors[0]};color:${textA}">${names[0]}</span>
+                <span class="sb-score" style="background:${brand};color:${textBrand}">${sA}/${wA} (${oA}.${bA})</span>
+                <span class="sb-team${aClassB}" style="background:${colors[1]};color:${textB}">${names[1]}</span>
+            </div>
+            ${sbSponsorHtml}
+            ${bottomImg}`;
+        } else {
+            scoreboardOverlay.innerHTML = `
+            ${topImg}
             ${breakInd}
             <div class="sb-row">
-                <span class="sb-team${aClassA}" style="background:${colors[0]};color:${textA}">${showLogos ? `<img src='${logos[0]}' class='sb-team-logo'>` : ''}${names[0] || 'Team 1'}</span>
+                <span class="sb-team${aClassA}" style="background:${colors[0]};color:${textA}">${showLogos ? `<img src='${logos[0]}' class='sb-team-logo'>` : ''}${names[0]}</span>
                 <span class="sb-score" style="background:${brand};color:${textBrand}">${sA} | ${sB}</span>
-                <span class="sb-team${aClassB}" style="background:${colors[1]};color:${textB}">${showLogos ? `<img src='${logos[1]}' class='sb-team-logo'>` : ''}${names[1] || 'Team 2'}</span>
+                <span class="sb-team${aClassB}" style="background:${colors[1]};color:${textB}">${showLogos ? `<img src='${logos[1]}' class='sb-team-logo'>` : ''}${names[1]}</span>
             </div>
             ${infoHtml}
             ${checkoutHtml}
-            ${sbSponsorHtml}`;
+            ${sbSponsorHtml}
+            ${bottomImg}`;
+        }
+        let stopEl = overlayContainer.querySelector('#stoppage-overlay');
+        if(scoreboardData.showStoppage && scoreboardData.stoppage){
+            if(!stopEl){
+                stopEl = document.createElement('div');
+                stopEl.id = 'stoppage-overlay';
+                overlayContainer.appendChild(stopEl);
+            }
+            stopEl.innerHTML = `<div class='lower-third-default' style='font-family:${branding.font};'>+${scoreboardData.stoppage}'</div>`;
+        } else if(stopEl){
+            stopEl.remove();
+        }
+        if(!prevScoreboardVisible){
+            if(topSp) addSponsorLog(eventId,{ts:Date.now(),placement:'scoreboardTop',sponsor:sponsorPlacements.scoreboardTop,action:'show'});
+            if(bottomSp) addSponsorLog(eventId,{ts:Date.now(),placement:'scoreboardBottom',sponsor:sponsorPlacements.scoreboardBottom,action:'show'});
+        }
         if(highBreakVisible && scoreboardData.highBreak){
             let hb = overlayContainer.querySelector('#high-break');
             if(!hb){
@@ -521,11 +596,36 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         }
     } else if (scoreboardOverlay && prevScoreboardVisible) {
         playTransition(scoreboardOverlay,'out',prevScoreboardData?.transitionOut);
+        if(prevScoreboardVisible){
+            const topSp = sponsorsData[sponsorPlacements.scoreboardTop];
+            const bottomSp = sponsorsData[sponsorPlacements.scoreboardBottom];
+            if(topSp) addSponsorLog(eventId,{ts:Date.now(),placement:'scoreboardTop',sponsor:sponsorPlacements.scoreboardTop,action:'hide'});
+            if(bottomSp) addSponsorLog(eventId,{ts:Date.now(),placement:'scoreboardBottom',sponsor:sponsorPlacements.scoreboardBottom,action:'hide'});
+        }
         scoreboardOverlay = null;
         overlayContainer.querySelector('#high-break')?.remove();
     }
     prevScoreboardVisible = scoreboardShow;
     prevScoreboardData = scoreboardData;
+
+    // Corner Sponsors
+    ['tl','tr','bl','br'].forEach(pos=>{
+        const idx = sponsorPlacements['corner'+pos.toUpperCase()] || '';
+        const sponsor = sponsorsData[idx];
+        const id = `corner-sponsor-${pos}`;
+        let el = overlayContainer.querySelector('#'+id);
+        if(sponsor){
+            if(!el){
+                el = document.createElement('img');
+                el.id = id;
+                el.className = `corner-sponsor ${pos}`;
+                overlayContainer.appendChild(el);
+            }
+            el.src = sponsor.logo;
+        } else if(el){
+            el.remove();
+        }
+    });
 
     // Formation Overlay
     let formOverlay = overlayContainer.querySelector('#formation-overlay');
@@ -537,10 +637,85 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             formOverlay.id = 'formation-overlay';
             overlayContainer.appendChild(formOverlay);
         }
+        const showPhoto = teamsData && teamsData.showPhotosFormation;
+        const bottomSp = sponsorsData[sponsorPlacements.formationBottom];
+        const bottomImg = bottomSp ? `<img src='${bottomSp.logo}' class='sb-sponsor bottom'>` : '';
         formOverlay.innerHTML = `<div class='formation-pitch'></div>` +
-            formData.players.map(p=>`<div class='formation-player' style='top:${p.y}%;left:${p.x}%;font-family:${branding.font};'>${p.name}</div>`).join('');
+            formData.players.map(p=>{
+                const photo = showPhoto && p.photo ? `<img src='${p.photo}' class='formation-photo'>` : '';
+                return `<div class='formation-player' style='top:${p.y}%;left:${p.x}%;font-family:${branding.font};'>${photo}<span>${p.name}</span></div>`;
+            }).join('') + bottomImg;
+        if(!prevFormationVisible){
+            if(bottomSp) addSponsorLog(eventId,{ts:Date.now(),placement:'formationBottom',sponsor:sponsorPlacements.formationBottom,action:'show'});
+        }
     } else if (formOverlay) {
+        if(prevFormationVisible){
+            const bottomSp = sponsorsData[sponsorPlacements.formationBottom];
+            if(bottomSp) addSponsorLog(eventId,{ts:Date.now(),placement:'formationBottom',sponsor:sponsorPlacements.formationBottom,action:'hide'});
+        }
         formOverlay.remove();
+    }
+    prevFormationVisible = formShow;
+
+    // Lineup Table Overlay
+    let tableOverlay = overlayContainer.querySelector('#lineup-table-overlay');
+    const tableData = state && state.lineupTable;
+    const tableShow = state && state.lineupTableVisible;
+    if(tableShow && tableData){
+        if(!tableOverlay){
+            tableOverlay = document.createElement('div');
+            tableOverlay.id = 'lineup-table-overlay';
+            overlayContainer.appendChild(tableOverlay);
+        }
+        const showPhoto = teamsData && teamsData.showPhotosFormation;
+        tableOverlay.innerHTML = `<div class='lineup-table' style='font-family:${branding.font};'>`+
+            tableData.players.map(p=>{
+                const photo = showPhoto && p.photo ? `<img src='${p.photo}' class='lineup-table-photo'>` : '';
+                return `<div class='lineup-row'>${photo}<span>${p.name}${p.pos?` (${p.pos})`:''}</span></div>`;
+            }).join('')+`</div>`;
+    } else if(tableOverlay){
+        tableOverlay.remove();
+    }
+    prevTableVisible = tableShow;
+
+    // Results Overlay
+    let resOverlay = overlayContainer.querySelector('#results-overlay');
+    const resData = state && state.results;
+    const resShow = state && state.resultsVisible;
+    if(resShow && resData){
+        if(!resOverlay){
+            resOverlay = document.createElement('div');
+            resOverlay.id = 'results-overlay';
+            overlayContainer.appendChild(resOverlay);
+        }
+        resOverlay.innerHTML = `<div class='results-box' style='font-family:${branding.font};'>`+
+            `<div class='results-teams'>${resData.teamA.name} ${resData.teamA.score} - ${resData.teamB.score} ${resData.teamB.name}</div>`+
+            `<div class='results-grid'><div><h3>${resData.teamA.name}</h3>${resData.teamA.scorers.map(s=>`<div>${s}</div>`).join('')}</div>`+
+            `<div><h3>${resData.teamB.name}</h3>${resData.teamB.scorers.map(s=>`<div>${s}</div>`).join('')}</div></div>`+
+            `</div>`;
+    } else if(resOverlay){
+        resOverlay.remove();
+    }
+    prevResultsVisible = resShow;
+
+    // Match Log Overlay
+    let logOverlay = overlayContainer.querySelector('#log-overlay');
+    const logData = state && state.matchLog;
+    const logShow = state && state.matchLogVisible;
+    if(logShow && logData && logData.length){
+        if(!logOverlay){
+            logOverlay = document.createElement('div');
+            logOverlay.id = 'log-overlay';
+            overlayContainer.appendChild(logOverlay);
+        }
+        const rows = logData.map(e=>{
+            const teamObj = e.team==='a'?getTeam(0):getTeam(1);
+            const teamName = teamObj ? teamObj.name : e.team;
+            return `<div>${e.time} - ${teamName} ${e.type}${e.player?` - ${e.player}`:''}</div>`;
+        }).join('');
+        logOverlay.innerHTML = `<div class='results-box' style='font-family:${branding.font};max-height:80vh;overflow-y:auto;'>${rows}</div>`;
+    } else if(logOverlay){
+        logOverlay.remove();
     }
 
     // Stats Overlay
@@ -559,10 +734,54 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         statOverlay.style.transform = 'translateX(-50%)';
         statOverlay.style.fontFamily = branding.font;
         statOverlay.style.opacity = previewMode ? '0.6' : '1';
-        const teamName = statData.team && teamsData ? (teamsData[statData.team]?.name || '') : '';
-        statOverlay.innerHTML = `<div class='lower-third-default'>${statData.fact}${statData.player ? ' - ' + statData.player : ''}${teamName ? ' (' + teamName + ')' : ''}</div>`;
+        let teamName = '';
+        if (statData.team) {
+            const tObj = statData.team==='a'?getTeam(0):statData.team==='b'?getTeam(1):null;
+            if (tObj) teamName = tObj.name || '';
+        }
+        let photoHtml = '';
+        if (teamsData && teamsData.showPhotosStats && statData.player && statData.team) {
+            const t = statData.team==='a'?getTeam(0):statData.team==='b'?getTeam(1):null;
+            const pl = t?.players?.find(p=>p.name===statData.player);
+            if (pl && pl.photo) photoHtml = `<img src='${pl.photo}' class='stat-photo'>`;
+        }
+        statOverlay.innerHTML = `<div class='lower-third-default'>${photoHtml}${statData.fact}${statData.player ? ' - ' + statData.player : ''}${teamName ? ' (' + teamName + ')' : ''}</div>`;
     } else if (statOverlay) {
         statOverlay.remove();
+    }
+
+    // Stinger Overlay
+    let stingerOverlay = overlayContainer.querySelector('#stinger-overlay');
+    const stingerData = state && state.stinger;
+    const stingerShow = previewMode ? state && state.stingerPreviewVisible : state && state.stingerVisible;
+    if(stingerShow && stingerData && stingerData.logo){
+        if(!stingerOverlay){
+            stingerOverlay = document.createElement('div');
+            stingerOverlay.id = 'stinger-overlay';
+            overlayContainer.appendChild(stingerOverlay);
+        }
+        stingerOverlay.style.fontFamily = branding.font;
+        stingerOverlay.style.opacity = previewMode ? '0.6' : '1';
+        stingerOverlay.innerHTML = `<img src='${stingerData.logo}'>`;
+    } else if(stingerOverlay){
+        stingerOverlay.remove();
+    }
+
+    // Presentation Overlay
+    let presOverlay = overlayContainer.querySelector('#presentation-overlay');
+    const presData = state && state.presentation;
+    const presShow = previewMode ? state && state.presentationPreviewVisible : state && state.presentationVisible;
+    if(presShow && presData && presData.url){
+        if(!presOverlay){
+            presOverlay = document.createElement('div');
+            presOverlay.id = 'presentation-overlay';
+            overlayContainer.appendChild(presOverlay);
+        }
+        presOverlay.className = presData.mode === 'pip' ? 'presentation-overlay pip' : 'presentation-overlay full';
+        presOverlay.style.opacity = previewMode ? '0.6' : '1';
+        presOverlay.innerHTML = `<iframe src='${presData.url}#page=${presData.page||1}'></iframe>`;
+    } else if(presOverlay){
+        presOverlay.remove();
     }
 }
 
@@ -571,6 +790,17 @@ let lastGraphics = null;
 let lastBranding = DEFAULT_BRANDING;
 let teamsData = null;
 let scoreboardPersist = null;
+let sponsorsData = [];
+let sponsorPlacements = {};
+
+function getTeam(idx){
+    if(!teamsData) return null;
+    if(teamsData.teams){
+        const sel = idx===0 ? teamsData.currentA||0 : teamsData.currentB||1;
+        return teamsData.teams[sel] || null;
+    }
+    return idx===0 ? teamsData.teamA : teamsData.teamB;
+}
 
 function updateOverlay() {
     const state = { ...(lastState || {}) };
@@ -606,6 +836,14 @@ onValue(ref(getDatabaseInstance(), `scoreboard/${eventId}`), snap => {
     scoreboardPersist = snap.val();
     updateOverlay();
 });
+listenSponsors(eventId, data => { sponsorsData = data || []; updateOverlay(); });
+listenSponsorPlacements(eventId, data => { sponsorPlacements = data || {}; updateOverlay(); });
+
+setInterval(()=>{
+    if(lastState && lastState.scoreboard && lastState.scoreboard.timerRunning){
+        updateOverlay();
+    }
+},1000);
 
 const db = getDatabaseInstance();
 onValue(ref(db, `status/${eventId}/vtCommand`), snap => {

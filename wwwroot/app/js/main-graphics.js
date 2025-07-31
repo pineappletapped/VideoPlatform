@@ -4,10 +4,8 @@ import { renderStatusBar } from './components/statusBar.js';
 import { renderProgramPreview } from './components/programPreview.js';
 import { renderGraphicsPanel } from './components/graphicsPanel.js';
 import { renderScoreboardPanel } from './components/scoreboardPanel.js';
-import { renderLineupPanel } from './components/lineupPanel.js';
 import { renderStatsPanel } from './components/statsPanel.js';
 import { renderTeamsPanel } from './components/teamsPanel.js';
-import { renderSportPanel } from './components/sportPanel.js';
 import { renderBrandingModal } from './components/brandingModal.js';
 import { renderProfileWizard } from './components/profileWizard.js';
 import { renderCalendarDrawer } from './components/calendarDrawer.js';
@@ -76,10 +74,11 @@ function setupTabs() {
     setActiveTab('vts','.av-panel');
 }
 
-function updateGraphicsTabs(type) {
+function updateGraphicsTabs(type, tournament) {
     const tabBar = document.getElementById('graphics-tabs');
     if (!tabBar) return;
-    const sports = ['scoreboard','lineups','stats','teams','sport'];
+    const sports = ['scoreboard','stats','teams'];
+    if (tournament) sports.push('tournament');
     sports.forEach(t=>{
         const btn = tabBar.querySelector(`[data-tab="${t}"]`);
         const panel = document.getElementById(`${t}-panel`);
@@ -90,8 +89,8 @@ function updateGraphicsTabs(type) {
     });
     const scheduleBtn = tabBar.querySelector('[data-tab="schedule"]');
     const schedulePanel = document.getElementById('schedule-panel');
-    const brandingBtn = tabBar.querySelector('[data-tab="branding"]');
-    const brandingPanel = document.getElementById('branding-panel');
+    const presBtn = tabBar.querySelector('[data-tab="presentation"]');
+    const presPanel = document.getElementById('presentation-panel');
     if (scheduleBtn && schedulePanel) {
         if (type === 'sports') {
             scheduleBtn.classList.add('hidden');
@@ -101,14 +100,18 @@ function updateGraphicsTabs(type) {
             schedulePanel.classList.remove('hidden');
         }
     }
-    if (brandingBtn && brandingPanel) {
-        if (type === 'sports') {
-            brandingBtn.classList.add('hidden');
-            brandingPanel.classList.add('hidden');
-        } else {
-            brandingBtn.classList.remove('hidden');
-            brandingPanel.classList.remove('hidden');
+    if(presBtn && presPanel){
+        if(type === 'sports'){
+            presBtn.classList.add('hidden');
+            presPanel.classList.add('hidden');
+        }else{
+            presBtn.classList.remove('hidden');
+            presPanel.classList.add('hidden');
         }
+    }
+    const eventsLabel = document.getElementById('events-tab-label');
+    if(eventsLabel){
+        eventsLabel.textContent = type === 'sports' ? 'In Game Events' : 'Lower Thirds';
     }
 }
 
@@ -145,33 +148,39 @@ async function initializeComponents(eventData) {
     if (cutBtn) cutBtn.onclick = () => { cutToProgram(); };
     const topBar = document.createElement('top-bar');
     if (currentUserId === 'ryanadmin') topBar.setAttribute('is-admin','true');
+    topBar.setAttribute('event-name', eventData.title || eventId);
     topBar.addEventListener('logout', logout);
     topBar.addEventListener('edit-account', () => { window.location.href = 'account.html'; });
     topBar.addEventListener('brand-settings', () => { const modal=document.getElementById('branding-modal'); renderBrandingModal(modal,{ userId: currentUserId }); modal.classList.remove('hidden'); });
 
     document.getElementById('top-bar').appendChild(topBar);
     renderStatusBar(document.getElementById('status-bar'), eventData, {listener:false, atem:false, obs:false, sport:true, clock:true});
-    updateGraphicsTabs(eventData.eventType || 'corporate');
+    updateGraphicsTabs(eventData.eventType || 'corporate', !!eventData.tournament);
     if ((eventData.eventType || 'corporate') === 'sports') {
-        renderSportPanel(document.getElementById('sport-panel'), eventData, async (id,sport)=>{
-            await updateEventMetadata(eventId,{...eventData,sport});
-            eventData.sport = sport;
-            renderScoreboardPanel(document.getElementById('scoreboard-panel'), sport, eventId);
-            renderLineupPanel(document.getElementById('lineups-panel'), eventId, sport, 'view');
-        });
         renderScoreboardPanel(document.getElementById('scoreboard-panel'), eventData.sport, eventId);
-        renderLineupPanel(document.getElementById('lineups-panel'), eventId, eventData.sport, 'view');
         renderStatsPanel(document.getElementById('stats-panel'), eventId);
-        renderTeamsPanel(document.getElementById('teams-panel'), eventId, eventData.sport);
+        renderTeamsPanel(document.getElementById('teams-panel'), eventId, eventData.sport, !!eventData.tournament);
+        if(eventData.tournament){
+            const tnPanel = document.getElementById('tournament-panel');
+            if(tnPanel){
+                const { renderTournamentPanel } = await import('./components/tournamentPanel.js');
+                renderTournamentPanel(tnPanel, eventId, eventData.sport);
+            }
+        }
     } else {
         renderProgramPreview(document.getElementById('schedule-panel'), eventData, onOverlayStateChange);
     }
 
     renderHoldslatePanel(document.getElementById('holdslate-panel'), onOverlayStateChange);
-    renderGraphicsPanel(document.getElementById('lower-thirds-panel'), eventData, graphicsMode);
+    const { renderStingerPanel } = await import('./components/stingerPanel.js');
+    renderStingerPanel(document.getElementById('stinger-panel'), eventId);
+    if((eventData.eventType || 'corporate') === 'corporate') {
+        const { renderPresentationPanel } = await import('./components/presentationPanel.js');
+        renderPresentationPanel(document.getElementById('presentation-panel'), eventId);
+    }
+    renderGraphicsPanel(document.getElementById('events-panel'), eventData, graphicsMode);
 
     renderActiveGraphicsPanel(document.getElementById('active-graphics'), eventId, graphicsMode);
-    renderBrandingPanel(document.getElementById('branding-panel'), eventId);
 
 
     const brandingModal = document.getElementById('branding-modal');

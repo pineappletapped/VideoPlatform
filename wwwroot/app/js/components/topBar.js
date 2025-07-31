@@ -6,6 +6,7 @@ export class TopBar extends HTMLElement {
 
     connectedCallback() {
         this.isAdmin = this.getAttribute('is-admin') === 'true';
+        this.eventName = this.getAttribute('event-name') || '';
         this.render();
     }
 
@@ -71,7 +72,7 @@ export class TopBar extends HTMLElement {
             <div class="container">
                 <div class="left">
                     <a id="back" href="index.html" style="text-decoration:none;color:white">&larr; Back</a>
-                    <div class="title">Event Control</div>
+                    <div class="title">Event Control${this.eventName ? ` for ${this.eventName}` : ''}</div>
                 </div>
                 <div class="controls">
                     <div class="menu">
