@@ -7,7 +7,7 @@ import { ref, onValue } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase
 export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
     let overlayState = {};
     let graphicsData = {};
-    let favorites = { lowerThirds: [], titleSlides: [] };
+    let favorites = { lowerThirds: [], titleSlides: [], scoreboard: false };
     let matchLogs = [];
     let teamsData = null;
     let logVisible = false;
@@ -70,20 +70,22 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
         if(remType && id){
             if(remType==='lowerThird'){ favorites.lowerThirds=favorites.lowerThirds.filter(x=>x!==id); }
             else if(remType==='titleSlide'){ favorites.titleSlides=favorites.titleSlides.filter(x=>x!==id); }
+            else if(remType==='scoreboard'){ favorites.scoreboard=false; }
             updateFavorites(eventId,favorites);
         }
     });
 
     container.querySelector('#hide-selected').addEventListener('click', ()=>{
         const checks = container.querySelectorAll('#active-list input[type="checkbox"]');
-        checks.forEach((ch,i)=>{ if(ch.checked){ const itemIndex=i; const items=[]; if(overlayState.holdslateVisible) items.push({type:'holdslate'}); if(overlayState.stingerVisible) items.push({type:'stinger'}); if(overlayState.liveProgramVisible) items.push({type:'program'}); if(graphicsData.liveLowerThirdId) items.push({type:'lowerThird'}); if(graphicsData.liveTitleSlideId) items.push({type:'titleSlide'}); if(overlayState.statVisible) items.push({type:'stat'}); const item=items[itemIndex]; if(item) hideItem(item.type); }});
+        checks.forEach((ch,i)=>{ if(ch.checked){ const itemIndex=i; const items=[]; if(overlayState.holdslateVisible) items.push({type:'holdslate'}); if(overlayState.stingerVisible) items.push({type:'stinger'}); if(overlayState.liveProgramVisible) items.push({type:'program'}); if(overlayState.scoreboardVisible||overlayState.scoreboardPreviewVisible) items.push({type:'scoreboard'}); if(graphicsData.liveLowerThirdId) items.push({type:'lowerThird'}); if(graphicsData.liveTitleSlideId) items.push({type:'titleSlide'}); if(overlayState.statVisible) items.push({type:'stat'}); const item=items[itemIndex]; if(item) hideItem(item.type); }});
     });
     container.querySelector('#fav-live').addEventListener('click', ()=>{
         const favChecks = container.querySelectorAll('#fav-list input[type="checkbox"]');
         const favItems = [];
         favorites.lowerThirds.forEach(id=>{ favItems.push({type:'lowerThird', id}); });
         favorites.titleSlides.forEach(id=>{ favItems.push({type:'titleSlide', id}); });
-        favChecks.forEach((ch,i)=>{ if(ch.checked){ const item=favItems[i]; if(item.type==='lowerThird') updateGraphicsData(eventId,{liveLowerThirdId:item.id}, mode); else if(item.type==='titleSlide') updateGraphicsData(eventId,{liveTitleSlideId:item.id}, mode); }});
+        if(favorites.scoreboard) favItems.push({type:'scoreboard', id:'scoreboard'});
+        favChecks.forEach((ch,i)=>{ if(ch.checked){ const item=favItems[i]; if(item.type==='lowerThird') updateGraphicsData(eventId,{liveLowerThirdId:item.id}, mode); else if(item.type==='titleSlide') updateGraphicsData(eventId,{liveTitleSlideId:item.id}, mode); else if(item.type==='scoreboard') updateOverlayState(eventId,{scoreboardVisible:true,scoreboardPreviewVisible:false}); }});
     });
 
     container.querySelector('#logs-toggle').addEventListener('click', ()=>{
@@ -105,7 +107,7 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
         render();
     }, mode);
     listenFavorites(eventId, (fav) => {
-        favorites = { lowerThirds: [], titleSlides: [], ...(fav || {}) };
+        favorites = { lowerThirds: [], titleSlides: [], scoreboard: false, ...(fav || {}) };
         renderFav();
     });
     listenMatchLog(eventId, data => { matchLogs = data || []; renderLog(); });
@@ -118,6 +120,7 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
         if (overlayState.stingerVisible) items.push({ key:'stinger', label:'Stinger', type:'stinger' });
         if (overlayState.liveProgramVisible) items.push({ key:'program', label:'Program', type:'program' });
         if (overlayState.statVisible) items.push({ key:'stat', label:'Stat', type:'stat' });
+        if (overlayState.scoreboardVisible || overlayState.scoreboardPreviewVisible) items.push({ key:'scoreboard', label:'Scoreboard', type:'scoreboard' });
         if (graphicsData.liveLowerThirdId && graphicsData.lowerThirds) {
             const lt = graphicsData.lowerThirds.find(l=>l.id===graphicsData.liveLowerThirdId);
             if (lt) items.push({ key:'lt', label:`Lower Third: ${lt.title}`, type:'lowerThird' });
@@ -137,6 +140,7 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
         else if(type==='titleSlide') updateGraphicsData(eventId,{liveTitleSlideId:null}, mode);
         else if(type==='stat') updateOverlayState(eventId,{statVisible:false,statPreviewVisible:false});
         else if(type==='stinger') updateOverlayState(eventId,{stingerVisible:false,stingerPreviewVisible:false});
+        else if(type==='scoreboard') updateOverlayState(eventId,{scoreboardVisible:false,scoreboardPreviewVisible:false});
     }
 
     function renderFav() {
@@ -145,6 +149,7 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
         const favItems = [];
         favorites.lowerThirds.forEach(id=>{ const lt=lts.find(l=>l.id===id); if(lt) favItems.push({id, label:`LT: ${lt.title}`, type:'lowerThird'}); });
         favorites.titleSlides.forEach(id=>{ const t=ts.find(t=>t.id===id); if(t) favItems.push({id, label:`TS: ${t.title}`, type:'titleSlide'}); });
+        if(favorites.scoreboard) favItems.push({id:'scoreboard', label:'Scoreboard', type:'scoreboard'});
         const favHtml = favItems.map((f,i)=>`<li class="flex items-center gap-2"><input type="checkbox" data-fidx="${i}"><span class="flex-1">${f.label}</span><button class="control-button btn-xs" data-live="${f.type}" data-id="${f.id}">Live</button><button class="control-button btn-xs" data-remove="${f.type}" data-id="${f.id}">Remove</button></li>`).join('');
         container.querySelector('#fav-list').innerHTML = favHtml || '<li class="text-gray-500">No favourites.</li>';
     }
@@ -192,20 +197,22 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
         if(remType && id){
             if(remType==='lowerThird'){ favorites.lowerThirds=favorites.lowerThirds.filter(x=>x!==id); }
             else if(remType==='titleSlide'){ favorites.titleSlides=favorites.titleSlides.filter(x=>x!==id); }
+            else if(remType==='scoreboard'){ favorites.scoreboard=false; }
             updateFavorites(eventId,favorites);
         }
     });
 
     container.querySelector('#hide-selected').addEventListener('click', ()=>{
         const checks = container.querySelectorAll('#active-list input[type="checkbox"]');
-        checks.forEach((ch,i)=>{ if(ch.checked){ const itemIndex=i; const items=[]; if(overlayState.holdslateVisible) items.push({type:'holdslate'}); if(overlayState.stingerVisible) items.push({type:'stinger'}); if(overlayState.liveProgramVisible) items.push({type:'program'}); if(graphicsData.liveLowerThirdId) items.push({type:'lowerThird'}); if(graphicsData.liveTitleSlideId) items.push({type:'titleSlide'}); if(overlayState.statVisible) items.push({type:'stat'}); const item=items[itemIndex]; if(item) hideItem(item.type); }});
+        checks.forEach((ch,i)=>{ if(ch.checked){ const itemIndex=i; const items=[]; if(overlayState.holdslateVisible) items.push({type:'holdslate'}); if(overlayState.stingerVisible) items.push({type:'stinger'}); if(overlayState.liveProgramVisible) items.push({type:'program'}); if(overlayState.scoreboardVisible||overlayState.scoreboardPreviewVisible) items.push({type:'scoreboard'}); if(graphicsData.liveLowerThirdId) items.push({type:'lowerThird'}); if(graphicsData.liveTitleSlideId) items.push({type:'titleSlide'}); if(overlayState.statVisible) items.push({type:'stat'}); const item=items[itemIndex]; if(item) hideItem(item.type); }});
     });
     container.querySelector('#fav-live').addEventListener('click', ()=>{
         const favChecks = container.querySelectorAll('#fav-list input[type="checkbox"]');
         const favItems = [];
         favorites.lowerThirds.forEach(id=>{ favItems.push({type:'lowerThird', id}); });
         favorites.titleSlides.forEach(id=>{ favItems.push({type:'titleSlide', id}); });
-        favChecks.forEach((ch,i)=>{ if(ch.checked){ const item=favItems[i]; if(item.type==='lowerThird') updateGraphicsData(eventId,{liveLowerThirdId:item.id}, mode); else if(item.type==='titleSlide') updateGraphicsData(eventId,{liveTitleSlideId:item.id}, mode); }});
+        if(favorites.scoreboard) favItems.push({type:'scoreboard', id:'scoreboard'});
+        favChecks.forEach((ch,i)=>{ if(ch.checked){ const item=favItems[i]; if(item.type==='lowerThird') updateGraphicsData(eventId,{liveLowerThirdId:item.id}, mode); else if(item.type==='titleSlide') updateGraphicsData(eventId,{liveTitleSlideId:item.id}, mode); else if(item.type==='scoreboard') updateOverlayState(eventId,{scoreboardVisible:true,scoreboardPreviewVisible:false}); }});
     });
 
     container.querySelector('#logs-toggle').addEventListener('click', ()=>{

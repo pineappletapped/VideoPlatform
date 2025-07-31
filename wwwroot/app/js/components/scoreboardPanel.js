@@ -1,7 +1,7 @@
 import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 import { getDatabaseInstance } from "../firebaseApp.js";
 import { sportsData } from "../sportsConfig.js";
-import { updateOverlayState, listenOverlayState, addMatchLog, listenMatchLog } from "../firebase.js";
+import { updateOverlayState, listenOverlayState, addMatchLog, listenMatchLog, listenFavorites, updateFavorites } from "../firebase.js";
 import { suggestAbbreviation } from "../teamUtils.js";
 
 const DEFAULT_STYLES = [
@@ -89,6 +89,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
     let currentData = null;
     let timerInterval = null;
     let matchLog = [];
+    let favorites = { scoreboard: false };
 
     const teamsRef = ref(db, `teams/${eventId}`);
     onValue(teamsRef, snap => { teamsData = snap.val(); if(currentData) render(currentData); });
@@ -105,6 +106,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         highBreakVisible = (state && state.highBreakVisible) || false;
         if (currentData) render(currentData);
     });
+    listenFavorites(eventId, fav => { favorites = { scoreboard: false, ...(fav || {}) }; if(currentData) render(currentData); });
 
     onValue(getScoreboardRef(eventId), snap => {
         currentData = snap.val() || defaultData();
@@ -158,6 +160,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                     ${cfg.scoreboard.highBreak ? `<button id="sb-show-high" class="control-button btn-sm${highBreakVisible ? ' ring-2 ring-green-400' : ''}">Show High Break</button>` : ''}
                     <button id="sb-save" class="control-button btn-sm ml-auto">Save</button>
                     <button id="sb-edit" class="control-button btn-sm">Edit</button>
+                    <button id="sb-fav" class="control-button btn-sm">${favorites.scoreboard ? '★' : '☆'}</button>
                 </div>
                 <table id="sb-table" class="w-full text-sm"></table>
                 <div id="sb-modal" class="modal-overlay" style="display:none;">
@@ -627,6 +630,14 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                 if (showLogoChk) showLogoChk.checked = data.showLogos !== false;
                 updatePreview();
                 modal.style.display = 'flex';
+            };
+        }
+        const favBtn = container.querySelector('#sb-fav');
+        if(favBtn){
+            favBtn.onclick = () => {
+                favorites.scoreboard = !favorites.scoreboard;
+                updateFavorites(eventId, favorites);
+                render(data);
             };
         }
         if (container.querySelector('#sb-modal-cancel')) {

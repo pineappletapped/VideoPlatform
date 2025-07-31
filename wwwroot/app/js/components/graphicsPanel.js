@@ -17,7 +17,7 @@ let previewLowerThirdId = null;
 let liveTitleSlideId = null;
 let previewTitleSlideId = null;
 let graphicsData = { lowerThirds: [], titleSlides: [], teams: {} };
-let favorites = { lowerThirds: [], titleSlides: [] };
+let favorites = { lowerThirds: [], titleSlides: [], scoreboard: false };
 
 function saveLiveState(eventId, mode) {
     // Only update visibility IDs so preview actions don't overwrite graphics data
@@ -65,7 +65,7 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
         previewTitleSlideId = graphicsData.previewTitleSlideId || null;
         renderPanel();
     }, mode);
-    listenFavorites(eventId, (fav) => { favorites = { lowerThirds: [], titleSlides: [], ...(fav || {}) }; renderPanel(); });
+    listenFavorites(eventId, (fav) => { favorites = { lowerThirds: [], titleSlides: [], scoreboard: false, ...(fav || {}) }; renderPanel(); });
 
     function renderPanel() {
         const lowerThirds = graphicsData.lowerThirds || [];
