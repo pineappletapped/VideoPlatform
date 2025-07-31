@@ -9,6 +9,7 @@ const BILLING_PLANS = {
   three: '3 Events \u00a36/month',
   eight: '8 Events \u00a315/month'
 };
+const PLAN_PRICING = { single: 3.75, three: 6, eight: 15 };
 
 async function init() {
   const user = await requireAuth('admin.html');
@@ -28,6 +29,7 @@ async function init() {
 
   loadUsers();
   loadEvents();
+  loadReporting();
   setupTabs();
 }
 
@@ -142,6 +144,49 @@ async function loadEvents() {
   searchEl.oninput = renderList;
   userSel.onchange = renderList;
   renderList();
+}
+
+async function loadReporting() {
+  const div = document.getElementById('reporting');
+  if (!div) return;
+  const [users, events] = await Promise.all([
+    getAllUsers().catch(()=>({})),
+    getAllEventsMetadata().catch(()=>({}))
+  ]);
+
+  const eventCounts = {};
+  Object.keys(events || {}).forEach(id => {
+    const owner = events[id].owner;
+    if (!eventCounts[owner]) eventCounts[owner] = 0;
+    eventCounts[owner]++;
+  });
+
+  const stats = {};
+  Object.keys(users || {}).forEach(uid => {
+    if (users[uid].email === 'ryanadmin') return;
+    const tier = users[uid].tier || 'single';
+    if (!stats[tier]) stats[tier] = { count:0, cancelled:0, events:0 };
+    stats[tier].count++;
+    if (!users[uid].subscription_id) stats[tier].cancelled++;
+    stats[tier].events += eventCounts[uid] || 0;
+  });
+
+  const totalUsers = Object.keys(users || {}).filter(id => users[id].email !== 'ryanadmin').length;
+
+  let html = `<p>Total users: <strong>${totalUsers}</strong></p>`;
+  html += '<div class="space-y-2">';
+  Object.keys(BILLING_PLANS).forEach(tier => {
+    const s = stats[tier] || { count:0, cancelled:0, events:0 };
+    const paying = s.count - s.cancelled;
+    const revenue = paying * (PLAN_PRICING[tier] || 0);
+    const avg = s.count ? (s.events / s.count).toFixed(1) : '0';
+    html += `<div class="bg-white text-black p-3 rounded shadow">
+      <div class="font-semibold">${BILLING_PLANS[tier]}</div>
+      <div class="text-sm">Users: ${s.count} &bull; Cancelled: ${s.cancelled} &bull; Revenue: \u00a3${revenue.toFixed(2)} &bull; Avg dashboards: ${avg}</div>
+    </div>`;
+  });
+  html += '</div>';
+  div.innerHTML = html;
 }
 
 function setupTabs() {
