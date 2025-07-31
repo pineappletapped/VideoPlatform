@@ -48,7 +48,7 @@ export function renderStatsPanel(container, eventId = 'demo', mode = 'edit') {
                             <span class="flex-1">${st.fact}${st.player?` - ${st.player}`:''}${st.team?` (${teamsData[st.team]?.name||st.team})`:''}</span>
                             <button class="control-button btn-sm" data-action="preview" data-idx="${i}">Preview</button>
                             <button class="control-button btn-sm" data-action="live" data-idx="${i}">Live</button>
-                            ${mode==='edit'?`<button class="control-button btn-sm" data-action="edit" data-idx="${i}">Edit</button><button class="control-button btn-sm" data-action="remove" data-idx="${i}">Remove</button>`:''}
+                            ${mode==='edit'?`<button class="control-button btn-sm" data-action="edit" data-idx="${i}">Edit</button><button class="control-button btn-sm btn-remove" data-action="remove" data-idx="${i}">Remove</button>`:''}
                         </li>
                     `).join('')}
                 </ul>

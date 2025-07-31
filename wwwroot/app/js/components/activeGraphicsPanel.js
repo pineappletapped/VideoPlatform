@@ -150,7 +150,7 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
         favorites.lowerThirds.forEach(id=>{ const lt=lts.find(l=>l.id===id); if(lt) favItems.push({id, label:`LT: ${lt.title}`, type:'lowerThird'}); });
         favorites.titleSlides.forEach(id=>{ const t=ts.find(t=>t.id===id); if(t) favItems.push({id, label:`TS: ${t.title}`, type:'titleSlide'}); });
         if(favorites.scoreboard) favItems.push({id:'scoreboard', label:'Scoreboard', type:'scoreboard'});
-        const favHtml = favItems.map((f,i)=>`<li class="flex items-center gap-2"><input type="checkbox" data-fidx="${i}"><span class="flex-1">${f.label}</span><button class="control-button btn-xs" data-live="${f.type}" data-id="${f.id}">Live</button><button class="control-button btn-xs" data-remove="${f.type}" data-id="${f.id}">Remove</button></li>`).join('');
+        const favHtml = favItems.map((f,i)=>`<li class="flex items-center gap-2"><input type="checkbox" data-fidx="${i}"><span class="flex-1">${f.label}</span><button class="control-button btn-xs" data-live="${f.type}" data-id="${f.id}">Live</button><button class="control-button btn-xs btn-remove" data-remove="${f.type}" data-id="${f.id}">Remove</button></li>`).join('');
         container.querySelector('#fav-list').innerHTML = favHtml || '<li class="text-gray-500">No favourites.</li>';
     }
 

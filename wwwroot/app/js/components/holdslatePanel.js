@@ -47,7 +47,7 @@ export function renderHoldslatePanel(container, onOverlayStateChange) {
                             <button class="control-button btn-sm" data-action="preview" data-idx="${i}">Preview</button>
                             <button class="control-button btn-sm" data-action="live" data-idx="${i}">Live</button>
                             <button class="control-button btn-sm" data-action="edit" data-idx="${i}">Edit</button>
-                            <button class="control-button btn-sm" data-action="remove" data-idx="${i}">Remove</button>
+                            <button class="control-button btn-sm btn-remove" data-action="remove" data-idx="${i}">Remove</button>
                         </li>
                     `).join('')}
                 </ul>

@@ -145,10 +145,9 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                                     <td class="pr-2 py-1">${lt.title} <span class="text-xs text-gray-500">(${lt.subtitle})</span></td>
                                     <td class="py-1"><button class="control-button btn-sm btn-preview" data-action="preview-lt" data-id="${lt.id}">Preview</button></td>
                                     <td class="py-1"><button class="control-button btn-sm btn-live" data-action="take-lt" data-id="${lt.id}">Live</button></td>
-                                    <td class="py-1"><button class="control-button btn-sm" data-action="hide-lt" data-id="${lt.id}">Hide</button></td>
                                     <td class="py-1"><button class="control-button btn-sm" data-action="edit-lt" data-id="${lt.id}">Edit</button></td>
                                     <td class="py-1"><button class="control-button btn-sm" data-action="favorite-lt" data-id="${lt.id}">${favorites.lowerThirds.includes(lt.id) ? '★' : '☆'}</button></td>
-                                    <td class="py-1"><button class="control-button btn-sm" data-action="remove-lt" data-id="${lt.id}">Remove</button></td>
+                                    <td class="py-1"><button class="control-button btn-sm btn-remove" data-action="remove-lt" data-id="${lt.id}">Remove</button></td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -166,10 +165,9 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                                     <td class="pr-2 py-1">${ts.title} <span class="text-xs text-gray-500">(${ts.subtitle})</span></td>
                                     <td class="py-1"><button class="control-button btn-sm btn-preview" data-action="preview-ts" data-id="${ts.id}">Preview</button></td>
                                     <td class="py-1"><button class="control-button btn-sm btn-live" data-action="take-ts" data-id="${ts.id}">Live</button></td>
-                                    <td class="py-1"><button class="control-button btn-sm" data-action="hide-ts" data-id="${ts.id}">Hide</button></td>
                                     <td class="py-1"><button class="control-button btn-sm" data-action="edit-ts" data-id="${ts.id}">Edit</button></td>
                                     <td class="py-1"><button class="control-button btn-sm" data-action="favorite-ts" data-id="${ts.id}">${favorites.titleSlides.includes(ts.id) ? '★' : '☆'}</button></td>
-                                    <td class="py-1"><button class="control-button btn-sm" data-action="remove-ts" data-id="${ts.id}">Remove</button></td>
+                                    <td class="py-1"><button class="control-button btn-sm btn-remove" data-action="remove-ts" data-id="${ts.id}">Remove</button></td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -298,26 +296,34 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                 const action = btn.getAttribute('data-action');
                 const id = btn.getAttribute('data-id');
                 if (action === 'preview-lt') {
-                    previewLowerThirdId = id;
+                    if (previewLowerThirdId === id) {
+                        previewLowerThirdId = null;
+                    } else {
+                        previewLowerThirdId = id;
+                    }
                     saveLiveState(eventId, mode);
                 } else if (action === 'take-lt') {
-                    liveLowerThirdId = id;
-                    previewLowerThirdId = null;
-                    saveLiveState(eventId, mode);
-                } else if (action === 'hide-lt') {
-                    liveLowerThirdId = null;
-                    previewLowerThirdId = null;
+                    if (liveLowerThirdId === id) {
+                        liveLowerThirdId = null;
+                    } else {
+                        liveLowerThirdId = id;
+                        previewLowerThirdId = null;
+                    }
                     saveLiveState(eventId, mode);
                 } else if (action === 'preview-ts') {
-                    previewTitleSlideId = id;
+                    if (previewTitleSlideId === id) {
+                        previewTitleSlideId = null;
+                    } else {
+                        previewTitleSlideId = id;
+                    }
                     saveLiveState(eventId, mode);
                 } else if (action === 'take-ts') {
-                    liveTitleSlideId = id;
-                    previewTitleSlideId = null;
-                    saveLiveState(eventId, mode);
-                } else if (action === 'hide-ts') {
-                    liveTitleSlideId = null;
-                    previewTitleSlideId = null;
+                    if (liveTitleSlideId === id) {
+                        liveTitleSlideId = null;
+                    } else {
+                        liveTitleSlideId = id;
+                        previewTitleSlideId = null;
+                    }
                     saveLiveState(eventId, mode);
                 } else if (action === 'edit-lt' || action === 'edit-ts') {
                 const item = (action === 'edit-lt' ? lowerThirds : titleSlides).find(x => x.id === id);

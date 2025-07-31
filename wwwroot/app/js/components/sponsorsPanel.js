@@ -55,7 +55,7 @@ export function renderSponsorsPanel(container, eventId){
                 </div>
             </div>`;
         const list = container.querySelector('#sponsor-list');
-        list.innerHTML = sponsors.map((s,i)=>`<li class="flex items-center gap-2"><span class="flex-1">${s.name}</span><button class="control-button btn-xs" data-edit="${i}">Edit</button><button class="control-button btn-xs" data-remove="${i}">Remove</button></li>`).join('') || '<li class="text-gray-500">None</li>';
+        list.innerHTML = sponsors.map((s,i)=>`<li class="flex items-center gap-2"><span class="flex-1">${s.name}</span><button class="control-button btn-xs" data-edit="${i}">Edit</button><button class="control-button btn-xs btn-remove" data-remove="${i}">Remove</button></li>`).join('') || '<li class="text-gray-500">None</li>';
         const rows = [
             ['scoreboardTop','Above Scoreboard'],
             ['scoreboardBottom','Below Scoreboard'],

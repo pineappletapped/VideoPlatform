@@ -155,7 +155,6 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                 <div class="mb-2 flex gap-2">
                     <button id="sb-preview" class="control-button btn-sm btn-preview${sbPreview ? ' ring-2 ring-brand' : ''}">Preview</button>
                     <button id="sb-live" class="control-button btn-sm btn-live${sbVisible ? ' ring-2 ring-green-400' : ''}">Live</button>
-                    <button id="sb-hide" class="control-button btn-sm${!sbVisible && !sbPreview ? ' ring-2 ring-red-400' : ''}">Hide</button>
                     ${cfg.scoreboard.breaks ? `<button id="sb-show-break" class="control-button btn-sm${breakVisible ? ' ring-2 ring-green-400' : ''}">Show Break</button>` : ''}
                     ${cfg.scoreboard.highBreak ? `<button id="sb-show-high" class="control-button btn-sm${highBreakVisible ? ' ring-2 ring-green-400' : ''}">Show High Break</button>` : ''}
                     <button id="sb-save" class="control-button btn-sm ml-auto">Save</button>
@@ -536,15 +535,14 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         container.querySelector('#sb-preview').onclick = async () => {
             const newData = getFormData();
             await saveData(newData);
-            await updateOverlayState(eventId, { scoreboardPreviewVisible: true });
+            const show = !sbPreview;
+            await updateOverlayState(eventId, { scoreboardPreviewVisible: show });
         };
         container.querySelector('#sb-live').onclick = async () => {
             const newData = getFormData();
             await saveData(newData);
-            await updateOverlayState(eventId, { scoreboardVisible: true, scoreboardPreviewVisible: false });
-        };
-        container.querySelector('#sb-hide').onclick = async () => {
-            await updateOverlayState(eventId, { scoreboardVisible: false, scoreboardPreviewVisible: false, breakVisible: false, highBreakVisible: false });
+            const show = !sbVisible;
+            await updateOverlayState(eventId, { scoreboardVisible: show, scoreboardPreviewVisible: false });
         };
 
         const breakBtn = container.querySelector('#sb-show-break');
