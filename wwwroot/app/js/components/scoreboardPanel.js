@@ -38,6 +38,19 @@ const transitions = [
     { value: 'slide-down', label: 'Slide Down' }
 ];
 
+const BASE_LOG_EVENTS = ['goal','substitution'];
+const SPORT_LOG_EVENTS = {
+    'Football': ['corner','throw in','yellow card','red card','free kick'],
+    'Rugby': ['try','conversion','penalty','drop goal','yellow card','red card'],
+    'Hockey': ['green card','yellow card','red card'],
+    'Basketball': ['foul','timeout'],
+    'Cricket': ['wicket','four','six']
+};
+function getLogEventsForSport(sp){
+    const evs = SPORT_LOG_EVENTS[sp] || [];
+    return [...BASE_LOG_EVENTS, ...evs];
+}
+
 function contrastColor(hex) {
     let c = hex.replace('#', '');
     if (c.length === 3) c = c.split('').map(x => x + x).join('');
@@ -84,6 +97,7 @@ function getScoreboardRef(eventId) {
 export function renderScoreboardPanel(container, sport = 'Football', eventId = 'demo') {
     const cfg = sportsData[sport] || sportsData['Football'];
     const scoreboardStyles = getStylesForSport(sport);
+    const logEvents = getLogEventsForSport(sport);
 
     let teamsData = null;
     let currentData = null;
@@ -162,6 +176,18 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                     <button id="sb-fav" class="control-button btn-sm">${favorites.scoreboard ? '★' : '☆'}</button>
                 </div>
                 <table id="sb-table" class="w-full text-sm"></table>
+                <div id="sb-log" class="mt-4">
+                    <h3 class="font-bold text-md mb-1">Match Log</h3>
+                    <div class="flex gap-2 mb-2">
+                        <select id="log-type" class="border p-1 flex-1">
+                            ${logEvents.map(e=>`<option value="${e}">${e}</option>`).join('')}
+                        </select>
+                        <select id="log-team" class="border p-1"></select>
+                        <select id="log-player" class="border p-1 flex-1"></select>
+                        <button id="log-add" class="control-button btn-sm">Add</button>
+                    </div>
+                    <table id="log-table" class="text-sm w-full"></table>
+                </div>
                 <div id="sb-modal" class="modal-overlay" style="display:none;">
                     <div class="modal-window">
                         <h3 class="font-bold text-lg mb-2">Scoreboard Options</h3>
@@ -221,7 +247,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             const activeClass = cfg.scoreboard.turn && data.turn === i ? ' class="active-player"' : '';
             const checkout = sport === 'Darts' ? getCheckout(sc) : null;
             const checkoutHtml = checkout ? `<span id="checkout-${i}" class="text-xs ml-2">${checkout}</span><button id="checkout-btn-${i}" class="control-button btn-xs ml-1">Show</button>` : '';
-            htmlParts.push(`<tr${activeClass}><td class="pr-2 whitespace-nowrap" style="background:${color};color:${textCol};min-width:6rem;text-align:center;">${name}</td><td><div class="flex items-center"><input type="number" class="border p-1 w-16" id="team-score-${i}" value="${sc}"><span id="score-btns-${i}" class="ml-1"></span>${checkoutHtml}</div></td></tr>`);
+            htmlParts.push(`<tr${activeClass}><td class="pr-2 whitespace-nowrap" style="background:${color};color:${textCol};min-width:6rem;text-align:center;">${name}</td><td><div class="flex items-center"><span id="team-score-${i}" class="px-2">${sc}</span><span id="score-btns-${i}" class="ml-1"></span>${checkoutHtml}</div></td></tr>`);
         });
         if (cfg.scoreboard.periods) {
             htmlParts.push(`<tr><td class="pr-2">${cfg.scoreboard.periodLabel || 'Period'}:</td><td><input type="number" class="border p-1 w-16" id="sb-period" value="${data.period || 1}"></td></tr>`);
@@ -290,9 +316,13 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                     btn.style.background = btnCfg.color || '#666';
                     if (btnCfg.textColor) btn.style.color = btnCfg.textColor;
                     btn.addEventListener('click', () => {
-                        const inp = container.querySelector(`#team-score-${i}`);
-                        const val = parseInt(inp.value) || 0;
-                        inp.value = val + btnCfg.value;
+                        const span = container.querySelector(`#team-score-${i}`);
+                        const val = parseInt(span.textContent) || 0;
+                        const newVal = val + btnCfg.value;
+                        span.textContent = newVal;
+                        data.scores[i] = newVal;
+                        const cSpan = container.querySelector(`#checkout-${i}`);
+                        if (cSpan) cSpan.textContent = getCheckout(newVal) || '';
                         if (cfg.scoreboard.breaks && data.turn === i) {
                             const br = container.querySelector('#sb-break');
                             const hb = container.querySelector('#sb-highbreak');
@@ -308,7 +338,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             const cBtn = container.querySelector(`#checkout-btn-${i}`);
             if (cBtn) {
                 cBtn.addEventListener('click', async () => {
-                    const val = parseInt(container.querySelector(`#team-score-${i}`).value) || 0;
+                    const val = parseInt(container.querySelector(`#team-score-${i}`).textContent) || 0;
                     const checkout = getCheckout(val);
                     if (checkout) {
                         data.checkoutPlayer = i;
@@ -318,15 +348,9 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                     }
                 });
             }
-            const inp = container.querySelector(`#team-score-${i}`);
-            const cSpan = container.querySelector(`#checkout-${i}`);
-            if (inp && cSpan) {
-                inp.addEventListener('input', () => {
-                    const ch = getCheckout(parseInt(inp.value) || 0);
-                    cSpan.textContent = ch || '';
-                });
-            }
         });
+
+        renderLogSection();
 
         const timeInput = container.querySelector('#sb-time');
         const startBtn = container.querySelector('#sb-start');
@@ -474,7 +498,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         }
 
         function getFormData() {
-            const obj = { scores: (data.scores || []).map((_,i)=> parseInt(container.querySelector(`#team-score-${i}`).value) || 0) };
+            const obj = { scores: (data.scores || []).map((_,i)=> parseInt(container.querySelector(`#team-score-${i}`).textContent) || 0) };
             if (cfg.scoreboard.periods) obj.period = parseInt(container.querySelector('#sb-period').value) || 1;
             if (cfg.scoreboard.time) {
                 obj.time = container.querySelector('#sb-time').value;
@@ -660,5 +684,49 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             container.dataset.heartbeat = 'true';
         }
         updateDartStats();
+        renderLogTable();
+    }
+
+    function renderLogSection(){
+        const teamSel = container.querySelector('#log-team');
+        const playerSel = container.querySelector('#log-player');
+        if(teamSel){
+            teamSel.innerHTML = `<option value="a">${getTeam(0).name}</option><option value="b">${getTeam(1).name}</option>`;
+            teamSel.onchange = updatePlayers;
+        }
+        function updatePlayers(){
+            const team = teamSel.value;
+            const players = team==='a'? (getTeam(0).players||[]) : (getTeam(1).players||[]);
+            if(playerSel){
+                playerSel.innerHTML = ['<option value="">-</option>', ...players.map(p=>`<option value="${p.name}">${p.name}</option>`)].join('');
+            }
+        }
+        updatePlayers();
+        const addBtn = container.querySelector('#log-add');
+        if(addBtn){
+            addBtn.onclick = async ()=>{
+                const type = container.querySelector('#log-type').value;
+                const team = teamSel.value;
+                const player = playerSel.value;
+                const timeVal = container.querySelector('#sb-time')?.value || '';
+                await addMatchLog(eventId,{ts:Date.now(),type,team,player,time:timeVal});
+                if(type==='goal'){
+                    const idx = team==='a'?0:1;
+                    data.scores[idx] = (data.scores[idx]||0)+1;
+                    await saveData(getFormData());
+                }
+            };
+        }
+        renderLogTable();
+    }
+
+    function renderLogTable(){
+        const tbl = container.querySelector('#log-table');
+        if(!tbl) return;
+        const rows = (matchLog||[]).map(e=>{
+            const teamName = e.team==='a'?getTeam(0).name:getTeam(1).name;
+            return `<tr><td class='pr-2'>${e.time||''}</td><td>${teamName}</td><td>${e.type}</td><td>${e.player||''}</td></tr>`;
+        }).join('');
+        tbl.innerHTML = `<thead><tr><th class='pr-2'>Time</th><th>Team</th><th>Type</th><th>Player</th></tr></thead><tbody>${rows}</tbody>`;
     }
 }
