@@ -41,7 +41,7 @@ export function renderHoldslatePanel(container, onOverlayStateChange) {
                 </div>
                 <ul class="space-y-2 mb-4">
                     ${holdslates.length===0 ? `<li class='text-gray-400'>No holdslates yet.</li>` : holdslates.map((hs,i)=>`
-                        <li class="flex items-center gap-4 bg-gray-50 rounded p-2">
+                        <li class="flex items-center gap-4 bg-gray-50 rounded p-2 text-gray-900">
                             <img src="${hs.image || ''}" alt="thumb" class="w-16 h-9 object-cover rounded border" />
                             <div class="flex-1">${hs.name || 'Holdslate '+(i+1)}</div>
                             <button class="control-button btn-sm" data-action="preview" data-idx="${i}">Preview</button>
