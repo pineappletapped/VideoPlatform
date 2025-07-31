@@ -1,4 +1,4 @@
-import { listenOverlayState, listenGraphicsData, listenBranding, listenSponsors, listenSponsorPlacements, addSponsorLog } from './firebase.js';
+import { listenOverlayState, listenGraphicsData, listenBranding, listenSponsors, listenSponsorPlacements, addSponsorLog, updateEventMetadata } from './firebase.js';
 import { getDatabaseInstance } from './firebaseApp.js';
 import { suggestAbbreviation } from './teamUtils.js';
 import { ref, onValue, set } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
@@ -6,6 +6,7 @@ import { ref, onValue, set } from 'https://www.gstatic.com/firebasejs/9.22.2/fir
 const params = new URLSearchParams(window.location.search);
 const eventId = params.get('event_id') || 'demo';
 const previewMode = params.get('mode') === 'preview';
+updateEventMetadata(eventId, { lastOpened: Date.now() }).catch(()=>{});
 
 let countdownInterval = null;
 let vtVideo = null;

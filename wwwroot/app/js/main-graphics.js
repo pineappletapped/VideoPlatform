@@ -35,6 +35,7 @@ async function initializeApp(user) {
         const eventData = await eventStorage.loadEvent(eventId);
         let eventMeta = await getEventMetadata(eventId);
         if (eventMeta) Object.assign(eventData, eventMeta);
+        updateEventMetadata(eventId, { lastOpened: Date.now() }).catch(()=>{});
         eventData.firebaseStatus = firebaseStatus;
         initializeComponents(eventData);
     } catch (error) {

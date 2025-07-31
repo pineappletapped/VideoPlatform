@@ -18,6 +18,7 @@ async function init() {
   const meta = await getEventMetadata(eventId) || { eventType: 'sports', sport: 'Football' };
   if (!meta.eventType) meta.eventType = 'sports';
   if (!meta.sport) meta.sport = 'Football';
+  updateEventMetadata(eventId, { lastOpened: Date.now() }).catch(()=>{});
 
   const topBar = document.createElement('top-bar');
   if (user && user.email === 'ryanadmin') topBar.setAttribute('is-admin','true');

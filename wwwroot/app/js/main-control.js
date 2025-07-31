@@ -48,6 +48,7 @@ async function initializeApp(user) {
         if (eventMeta) {
             Object.assign(eventData, eventMeta);
         }
+        updateEventMetadata(eventId, { lastOpened: Date.now() }).catch(()=>{});
         eventData.firebaseStatus = firebaseStatus;
         console.log('Event loaded:', eventData);
 

@@ -33,19 +33,39 @@ async function init() {
 
 async function loadUsers() {
   const usersDiv = document.getElementById('users');
-  const users = await getAllUsers() || {};
+  const [users, events] = await Promise.all([
+    getAllUsers().catch(()=>({})),
+    getAllEventsMetadata().catch(()=>({}))
+  ]);
+  const eventsByOwner = {};
+  Object.keys(events || {}).forEach(eid => {
+    const ev = events[eid];
+    if (!eventsByOwner[ev.owner]) eventsByOwner[ev.owner] = [];
+    eventsByOwner[ev.owner].push({ id:eid, title: ev.title });
+  });
   usersDiv.innerHTML = Object.keys(users).map(id => {
     const u = users[id];
     const tier = u.tier || 'single';
-    return `<div class="bg-white text-black p-3 rounded shadow flex items-center gap-2">
-      <span class="flex-1">${u.email || id}</span>
-      <select data-id="${id}" class="border p-1">${Object.keys(BILLING_PLANS).map(t => `<option value="${t}"${t===tier?' selected':''}>${BILLING_PLANS[t]}</option>`).join('')}</select>
+    const evList = (eventsByOwner[id]||[]).map(ev=>`<li>${ev.title || ev.id}</li>`).join('');
+    return `<div class="bg-white text-black p-3 rounded shadow space-y-2">
+      <div class="flex items-center gap-2 user-header" data-id="${id}">
+        <span class="flex-1">${u.email || id}</span>
+        <select data-id="${id}" class="border p-1">${Object.keys(BILLING_PLANS).map(t => `<option value="${t}"${t===tier?' selected':''}>${BILLING_PLANS[t]}</option>`).join('')}</select>
+      </div>
+      <ul class="user-events hidden text-sm pl-4 list-disc">${evList || '<li class="text-gray-500">No events</li>'}</ul>
     </div>`;
   }).join('');
   usersDiv.querySelectorAll('select').forEach(sel => {
     sel.onchange = async () => {
       const id = sel.getAttribute('data-id');
       await updateUser(id, { tier: sel.value });
+    };
+  });
+  usersDiv.querySelectorAll('.user-header').forEach(h => {
+    h.onclick = ev => {
+      if (ev.target.tagName === 'SELECT') return;
+      const list = h.parentElement.querySelector('.user-events');
+      if (list) list.classList.toggle('hidden');
     };
   });
 }
@@ -99,13 +119,22 @@ async function loadEvents() {
     }).map(id => {
       const ev = events[id];
       const ownerEmail = users[ev.owner]?.email || ev.owner || '';
-      return `<div class="bg-white text-black p-3 rounded shadow flex items-center gap-2">
-        <div class="flex-1">
-          <div>${ev.title || id}</div>
-          <div class="text-xs text-gray-600">${ownerEmail}</div>
+      const typeInfo = ev.eventType === 'sports' ? `Sports > ${ev.sport || ''}` : 'Corporate';
+      const last = ev.lastOpened ? new Date(ev.lastOpened).toLocaleString() : 'N/A';
+      const sportsBtn = ev.eventType === 'sports' ? `<a class="control-button btn-sm" href="sports.html?event_id=${id}">Sports Admin</a>` : '';
+      const commBtn = ev.eventType === 'sports' ? `<a class="control-button btn-sm" href="commentator.html?event_id=${id}" target="_blank">Commentator</a>` : '';
+      const speakBtn = `<a class="control-button btn-sm" href="speakers.html?event_id=${id}" target="_blank">Speakers</a>`;
+      return `<div class="bg-white text-black p-3 rounded shadow space-y-1">
+        <div class="flex items-center gap-2">
+          <div class="flex-1">
+            <div>${ev.title || id}</div>
+            <div class="text-xs text-gray-600">${ownerEmail} &bull; ${typeInfo}</div>
+            <div class="text-xs text-gray-500">Last opened: ${last}</div>
+          </div>
+          <a class="control-button btn-sm" href="graphics.html?event_id=${id}">Graphics</a>
+          <a class="control-button btn-sm" href="overlay.html?event_id=${id}" target="_blank">Overlay</a>
+          ${sportsBtn} ${commBtn} ${speakBtn}
         </div>
-        <a class="control-button btn-sm" href="graphics.html?event_id=${id}">Graphics</a>
-        <a class="control-button btn-sm" href="overlay.html?event_id=${id}" target="_blank">Overlay</a>
       </div>`;
     }).join('');
   }

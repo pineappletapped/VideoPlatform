@@ -1,7 +1,7 @@
 import { requireAuth, logout } from './auth.js';
 import './components/topBar.js';
 import { renderStatusBar } from './components/statusBar.js';
-import { getEventMetadata, listenOverlayState, listenMatchLog } from './firebase.js';
+import { getEventMetadata, updateEventMetadata, listenOverlayState, listenMatchLog } from './firebase.js';
 import { getDatabaseInstance } from './firebaseApp.js';
 import { ref, onValue } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
 
@@ -152,6 +152,7 @@ function renderAll(){
 
 async function init(user){
     const ev = await getEventMetadata(eventId) || {};
+    updateEventMetadata(eventId, { lastOpened: Date.now() }).catch(()=>{});
     const tb = document.createElement('top-bar');
     tb.setAttribute('event-name', ev.title || eventId);
     tb.addEventListener('logout', logout);
