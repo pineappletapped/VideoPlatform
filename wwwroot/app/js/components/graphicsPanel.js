@@ -57,7 +57,7 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
             graphicsData = { ...eventData.graphics };
             setGraphicsData(eventId, graphicsData, mode);
         } else {
-            graphicsData = data || { lowerThirds: [], titleSlides: [], teams: {} };
+            graphicsData = { lowerThirds: [], titleSlides: [], teams: {}, ...(data || {}) };
         }
         liveLowerThirdId = graphicsData.liveLowerThirdId || null;
         previewLowerThirdId = graphicsData.previewLowerThirdId || null;
@@ -65,7 +65,7 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
         previewTitleSlideId = graphicsData.previewTitleSlideId || null;
         renderPanel();
     }, mode);
-    listenFavorites(eventId, (fav) => { favorites = fav || { lowerThirds: [], titleSlides: [] }; renderPanel(); });
+    listenFavorites(eventId, (fav) => { favorites = { lowerThirds: [], titleSlides: [], ...(fav || {}) }; renderPanel(); });
 
     function renderPanel() {
         const lowerThirds = graphicsData.lowerThirds || [];

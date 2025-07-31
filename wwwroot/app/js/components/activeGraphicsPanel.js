@@ -100,8 +100,14 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
     });
 
     listenOverlayState(eventId, (state) => { overlayState = state || {}; render(); });
-    listenGraphicsData(eventId, (g) => { graphicsData = g || {}; render(); }, mode);
-    listenFavorites(eventId, (fav) => { favorites = fav || { lowerThirds: [], titleSlides: [] }; renderFav(); });
+    listenGraphicsData(eventId, (g) => {
+        graphicsData = { lowerThirds: [], titleSlides: [], teams: {}, ...(g || {}) };
+        render();
+    }, mode);
+    listenFavorites(eventId, (fav) => {
+        favorites = { lowerThirds: [], titleSlides: [], ...(fav || {}) };
+        renderFav();
+    });
     listenMatchLog(eventId, data => { matchLogs = data || []; renderLog(); });
     onValue(ref(getDatabaseInstance(), `teams/${eventId}`), snap => { teamsData = snap.val(); renderLog(); });
     listenOverlayState(eventId, s => { logVisible = !!(s && s.matchLogVisible); renderLog(); });
