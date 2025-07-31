@@ -14,18 +14,20 @@
     <div id="top-bar"></div>
     <div id="status-bar"></div>
     <div class="container mx-auto p-4 flex flex-col md:flex-row gap-4 flex-1">
-        <div id="left" class="flex-1"></div>
-        <div id="right" class="flex-1 flex flex-col">
-            <div id="right-tabs" class="flex border-b mb-2">
+        <div id="left" class="flex-1 flex flex-col gap-4 min-w-[320px]"></div>
+        <div id="right" class="flex-1 flex flex-col gap-4 min-w-[320px]">
+            <div class="bg-gray-800 text-gray-100 rounded-lg shadow flex-1 flex flex-col">
+                <div id="right-tabs" class="flex border-b mb-2">
                 <button data-tab="teams" class="px-4 py-2 border-b-2 border-brand text-brand font-semibold">Teams</button>
                 <button data-tab="lineups" class="px-4 py-2">Lineups</button>
                 <button data-tab="stats" class="px-4 py-2">Stats</button>
                 <button data-tab="sponsors" class="px-4 py-2">Sponsors</button>
+                </div>
+                <div id="teams" class="tab-content flex-1 overflow-y-auto"></div>
+                <div id="lineups" class="tab-content flex-1 overflow-y-auto hidden"></div>
+                <div id="stats" class="tab-content flex-1 overflow-y-auto hidden"></div>
+                <div id="sponsors" class="tab-content flex-1 overflow-y-auto hidden"></div>
             </div>
-            <div id="teams" class="tab-content flex-1 overflow-y-auto"></div>
-            <div id="lineups" class="tab-content flex-1 overflow-y-auto hidden"></div>
-            <div id="stats" class="tab-content flex-1 overflow-y-auto hidden"></div>
-            <div id="sponsors" class="tab-content flex-1 overflow-y-auto hidden"></div>
         </div>
     </div>
     <div id="branding-modal" class="hidden"></div>
