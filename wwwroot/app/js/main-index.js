@@ -5,7 +5,7 @@ import { renderBrandingModal } from './components/brandingModal.js';
 let SQUARE_APP_ID = '';
 let SQUARE_LOCATION_ID = '';
 let SQUARE_PLANS = {};
-const PLAN_LIMITS = { single: 1, three: 3, eight: 8 };
+const PLAN_LIMITS = { bronze: 1, silver: 3, gold: 8 };
 import { sportsData } from './sportsConfig.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const allowanceDiv = document.getElementById('event-allowance');
   let card, payments;
   let currentUserId = '';
-  let currentUserTier = 'single';
+  let currentUserTier = 'bronze';
   function showBrandModal(uid) {
     const modal = document.getElementById('branding-modal');
     renderBrandingModal(modal, { userId: uid });
@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const uData = await getUser(currentUserId) || {};
       const locals = JSON.parse(localStorage.getItem('localUsers') || '{}');
       const localInfo = locals[user.email] || {};
-      currentUserTier = uData.tier || localInfo.tier || 'single';
+      currentUserTier = uData.tier || localInfo.tier || 'bronze';
       if (!uData.subscription_id && user.email !== 'ryanadmin') {
         alert('No active subscription found for this account.');
         await logout();

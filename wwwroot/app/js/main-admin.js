@@ -1,15 +1,20 @@
 import { requireAuth, logout } from './auth.js';
-import { getAllUsers, updateUser, getAllEventsMetadata } from './firebase.js';
+import { getAllUsers, updateUser, getAllEventsMetadata, getPlanFeatures, updatePlanFeature } from './firebase.js';
 import './components/topBar.js';
 import { renderStatusBar } from './components/statusBar.js';
 import { renderBrandingModal } from './components/brandingModal.js';
 
 const BILLING_PLANS = {
-  single: 'Single Event \u00a33.75/month',
-  three: '3 Events \u00a36/month',
-  eight: '8 Events \u00a315/month'
+  bronze: 'Bronze \u00a33.75/month',
+  silver: 'Silver \u00a36/month',
+  gold: 'Gold \u00a315/month'
 };
-const PLAN_PRICING = { single: 3.75, three: 6, eight: 15 };
+const PLAN_PRICING = { bronze: 3.75, silver: 6, gold: 15 };
+const PLAN_FEATURES = {
+  commentator: 'Commentator Panel',
+  speaker: 'Speaker Panel',
+  tournament: 'Tournament Mode'
+};
 
 async function init() {
   const user = await requireAuth('admin.html');
@@ -30,6 +35,7 @@ async function init() {
   loadUsers();
   loadEvents();
   loadReporting();
+  loadTiers();
   setupTabs();
 }
 
@@ -47,7 +53,7 @@ async function loadUsers() {
   });
   usersDiv.innerHTML = Object.keys(users).map(id => {
     const u = users[id];
-    const tier = u.tier || 'single';
+    const tier = u.tier || 'bronze';
     const evList = (eventsByOwner[id]||[]).map(ev=>`<li>${ev.title || ev.id}</li>`).join('');
     return `<div class="bg-white text-black p-3 rounded shadow space-y-2">
       <div class="flex items-center gap-2 user-header" data-id="${id}">
@@ -164,7 +170,7 @@ async function loadReporting() {
   const stats = {};
   Object.keys(users || {}).forEach(uid => {
     if (users[uid].email === 'ryanadmin') return;
-    const tier = users[uid].tier || 'single';
+    const tier = users[uid].tier || 'bronze';
     if (!stats[tier]) stats[tier] = { count:0, cancelled:0, events:0 };
     stats[tier].count++;
     if (!users[uid].subscription_id) stats[tier].cancelled++;
@@ -187,6 +193,33 @@ async function loadReporting() {
   });
   html += '</div>';
   div.innerHTML = html;
+}
+
+async function loadTiers() {
+  const div = document.getElementById('tiers');
+  if (!div) return;
+  const data = await getPlanFeatures().catch(()=>({}));
+  const plans = Object.keys(BILLING_PLANS);
+  let html = '<table class="min-w-full bg-white text-black rounded"><thead><tr><th class="p-2 border"></th>';
+  plans.forEach(p=>{ html += `<th class="p-2 border capitalize">${p}</th>`; });
+  html += '</tr></thead><tbody>';
+  Object.keys(PLAN_FEATURES).forEach(feat => {
+    html += `<tr><td class="p-2 border font-semibold">${PLAN_FEATURES[feat]}</td>`;
+    plans.forEach(p => {
+      const checked = data?.[p]?.[feat] ? 'checked' : '';
+      html += `<td class="p-2 border text-center"><input type="checkbox" data-plan="${p}" data-feature="${feat}" ${checked}></td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  div.innerHTML = html;
+  div.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    cb.onchange = () => {
+      const plan = cb.getAttribute('data-plan');
+      const feat = cb.getAttribute('data-feature');
+      updatePlanFeature(plan, feat, cb.checked);
+    };
+  });
 }
 
 function setupTabs() {

@@ -16,7 +16,7 @@ async function init() {
   const remoteInfo = await getUser(uid) || {};
   const locals = JSON.parse(localStorage.getItem('localUsers') || '{}');
   const localInfo = locals[user.email] || {};
-  let tier = remoteInfo.tier || localInfo.tier || 'single';
+  let tier = remoteInfo.tier || localInfo.tier || 'bronze';
   let subId = remoteInfo.subscription_id || localInfo.subscription_id || '';
   renderPanel(user.email, tier, subId, async newTier => {
     tier = newTier;
@@ -65,7 +65,7 @@ function renderPanel(email, tier, subId, onTierChange, onCancel, onChangePw) {
         <div id="pw-msg" class="hidden text-sm"></div>
       </div>
     </div>`;
-  const plans = ['single','three','eight'];
+  const plans = ['bronze','silver','gold'];
   div.querySelector('#upgrade').onclick = async () => {
     const idx = plans.indexOf(tier);
     if (idx < plans.length - 1) {
