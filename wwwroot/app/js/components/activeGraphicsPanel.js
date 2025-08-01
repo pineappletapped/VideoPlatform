@@ -35,6 +35,10 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
         </div>
         <div id="sponsors-tab" class="tab-content hidden"></div>`;
 
+    const activeList = container.querySelector('#active-list');
+    const favList = container.querySelector('#fav-list');
+    const logsTable = container.querySelector('#logs-table');
+
     renderLog();
     const sponsorsContainer = container.querySelector('#sponsors-tab');
     if (sponsorsContainer) {
@@ -75,11 +79,13 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
         }
     });
 
-    container.querySelector('#hide-selected').addEventListener('click', ()=>{
+    const hideBtn = container.querySelector('#hide-selected');
+    if(hideBtn) hideBtn.addEventListener('click', ()=>{
         const checks = container.querySelectorAll('#active-list input[type="checkbox"]');
         checks.forEach((ch,i)=>{ if(ch.checked){ const itemIndex=i; const items=[]; if(overlayState.holdslateVisible) items.push({type:'holdslate'}); if(overlayState.stingerVisible) items.push({type:'stinger'}); if(overlayState.liveProgramVisible) items.push({type:'program'}); if(overlayState.scoreboardVisible||overlayState.scoreboardPreviewVisible) items.push({type:'scoreboard'}); if(graphicsData.liveLowerThirdId) items.push({type:'lowerThird'}); if(graphicsData.liveTitleSlideId) items.push({type:'titleSlide'}); if(overlayState.statVisible) items.push({type:'stat'}); const item=items[itemIndex]; if(item) hideItem(item.type); }});
     });
-    container.querySelector('#fav-live').addEventListener('click', ()=>{
+    const favLiveBtn = container.querySelector('#fav-live');
+    if(favLiveBtn) favLiveBtn.addEventListener('click', ()=>{
         const favChecks = container.querySelectorAll('#fav-list input[type="checkbox"]');
         const favItems = [];
         favorites.lowerThirds.forEach(id=>{ favItems.push({type:'lowerThird', id}); });
@@ -87,8 +93,8 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
         if(favorites.scoreboard) favItems.push({type:'scoreboard', id:'scoreboard'});
         favChecks.forEach((ch,i)=>{ if(ch.checked){ const item=favItems[i]; if(item.type==='lowerThird') updateGraphicsData(eventId,{liveLowerThirdId:item.id}, mode); else if(item.type==='titleSlide') updateGraphicsData(eventId,{liveTitleSlideId:item.id}, mode); else if(item.type==='scoreboard') updateOverlayState(eventId,{scoreboardVisible:true,scoreboardPreviewVisible:false}); }});
     });
-
-    container.querySelector('#logs-toggle').addEventListener('click', ()=>{
+    const logsToggle = container.querySelector('#logs-toggle');
+    if(logsToggle) logsToggle.addEventListener('click', ()=>{
         logVisible = !logVisible;
         updateOverlayState(eventId,{matchLogVisible:logVisible});
         renderLog();
@@ -129,8 +135,10 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
             const ts = graphicsData.titleSlides.find(t=>t.id===graphicsData.liveTitleSlideId);
             if (ts) items.push({ key:'ts', label:`Title Slide: ${ts.title}`, type:'titleSlide' });
         }
-        const listHtml = items.map((it,i)=>`<li class="flex items-center gap-2"><input type="checkbox" data-idx="${i}"><span class="flex-1">${it.label}</span><button class="control-button btn-xs" data-hide="${it.type}">Hide</button></li>`).join('');
-        container.querySelector('#active-list').innerHTML = listHtml || '<li class="text-gray-500">No active graphics.</li>';
+        if (activeList) {
+            const listHtml = items.map((it,i)=>`<li class="flex items-center gap-2"><input type="checkbox" data-idx="${i}"><span class="flex-1">${it.label}</span><button class="control-button btn-xs" data-hide="${it.type}">Hide</button></li>`).join('');
+            activeList.innerHTML = listHtml || '<li class="text-gray-500">No active graphics.</li>';
+        }
     }
 
     function hideItem(type){
@@ -150,20 +158,21 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
         favorites.lowerThirds.forEach(id=>{ const lt=lts.find(l=>l.id===id); if(lt) favItems.push({id, label:`LT: ${lt.title}`, type:'lowerThird'}); });
         favorites.titleSlides.forEach(id=>{ const t=ts.find(t=>t.id===id); if(t) favItems.push({id, label:`TS: ${t.title}`, type:'titleSlide'}); });
         if(favorites.scoreboard) favItems.push({id:'scoreboard', label:'Scoreboard', type:'scoreboard'});
-        const favHtml = favItems.map((f,i)=>`<li class="flex items-center gap-2"><input type="checkbox" data-fidx="${i}"><span class="flex-1">${f.label}</span><button class="control-button btn-xs" data-live="${f.type}" data-id="${f.id}">Live</button><button class="control-button btn-xs btn-remove" data-remove="${f.type}" data-id="${f.id}">Remove</button></li>`).join('');
-        container.querySelector('#fav-list').innerHTML = favHtml || '<li class="text-gray-500">No favourites.</li>';
+        if (favList) {
+            const favHtml = favItems.map((f,i)=>`<li class="flex items-center gap-2"><input type="checkbox" data-fidx="${i}"><span class="flex-1">${f.label}</span><button class="control-button btn-xs" data-live="${f.type}" data-id="${f.id}">Live</button><button class="control-button btn-xs btn-remove" data-remove="${f.type}" data-id="${f.id}">Remove</button></li>`).join('');
+            favList.innerHTML = favHtml || '<li class="text-gray-500">No favourites.</li>';
+        }
     }
 
     function renderLog(){
-        const tbl = container.querySelector('#logs-table');
-        if(!tbl) return;
+        if(!logsTable) return;
         const rows = (matchLogs||[]).map(e=>{
             const team = e.team==='a'?teamsData?.teamA?.name||'Team A':teamsData?.teamB?.name||'Team B';
             const players = e.team==='a'?teamsData?.teamA?.players||[]:teamsData?.teamB?.players||[];
             const opts = ['<option value="">-</option>', ...players.map(p=>`<option ${e.player===p.name?'selected':''} value="${p.name}">${p.name}</option>`)].join('');
             return `<tr data-id="${e.id}"><td class='pr-2'>${e.time}</td><td>${team}</td><td>${e.type}</td><td><select data-player="${e.id}" class='border p-1'>${opts}</select></td></tr>`;
         }).join('');
-        tbl.innerHTML = `<thead><tr><th class='pr-2'>Time</th><th>Team</th><th>Type</th><th>Player</th></tr></thead><tbody>${rows}</tbody>`;
+        logsTable.innerHTML = `<thead><tr><th class='pr-2'>Time</th><th>Team</th><th>Type</th><th>Player</th></tr></thead><tbody>${rows}</tbody>`;
         const btn = container.querySelector('#logs-toggle');
         if(btn) btn.textContent = logVisible ? 'Hide Overlay' : 'Show Overlay';
     }

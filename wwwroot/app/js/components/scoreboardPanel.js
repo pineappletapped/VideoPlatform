@@ -350,8 +350,6 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             }
         });
 
-        renderLogSection();
-
         const timeInput = container.querySelector('#sb-time');
         const startBtn = container.querySelector('#sb-start');
         const stopBtn = container.querySelector('#sb-stop');
@@ -441,6 +439,8 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                 render(obj);
             };
         }
+
+        renderLogSection();
 
         const dartVal = container.querySelector('#dart-val');
         const dartBtnA = container.querySelector('#dart-a');

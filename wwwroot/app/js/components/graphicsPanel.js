@@ -54,7 +54,7 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
     // Listen for graphics changes from Firebase
     listenGraphicsData(eventId, (data) => {
         if (!data && eventData.graphics) {
-            graphicsData = { ...eventData.graphics };
+            graphicsData = { ...(eventData.graphics || {}) };
             setGraphicsData(eventId, graphicsData, mode);
         } else {
             graphicsData = { lowerThirds: [], titleSlides: [], teams: {}, ...(data || {}) };
