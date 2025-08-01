@@ -100,6 +100,16 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
     const logEvents = getLogEventsForSport(sport);
 
     let teamsData = null;
+
+    function getTeam(idx){
+        if(!teamsData) return { name:`Team ${idx+1}`, color:'#ffffff', players:[] };
+        if(teamsData.teams){
+            const sel = idx===0 ? (teamsData.currentA||0) : (teamsData.currentB||1);
+            return teamsData.teams[sel] || { name:`Team ${idx+1}`, color:'#ffffff', players:[] };
+        }
+        return idx===0 ? (teamsData.teamA || {name:`Team ${idx+1}`, color:'#ffffff', players:[]} )
+                        : (teamsData.teamB || {name:`Team ${idx+1}`, color:'#ffffff', players:[]});
+    }
     let currentData = null;
     let timerInterval = null;
     let matchLog = [];
@@ -231,14 +241,6 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             </div>`;
         const table = container.querySelector('#sb-table');
         const htmlParts = [];
-        const getTeam = idx => {
-            if (!teamsData) return { name: `Team ${idx+1}`, color: '#ffffff' };
-            if (teamsData.teams) {
-                const sel = idx===0 ? teamsData.currentA||0 : teamsData.currentB||1;
-                return teamsData.teams[sel] || { name:`Team ${idx+1}`, color:'#ffffff' };
-            }
-            return idx===0 ? teamsData.teamA : teamsData.teamB;
-        };
         (data.scores || []).forEach((sc, i) => {
             const t = getTeam(i);
             const name = t.name || `Team ${i + 1}`;
