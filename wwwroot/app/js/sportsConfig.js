@@ -5,7 +5,7 @@ export const sportsData = {
     subs: 5,
     positions: ["GK","LB","CB","RB","LWB","RWB","DM","CM","AM","LW","RW","ST"],
     scoreboard: { periods: 2, periodLabel: "Half", time: true, timeDirection: 'up' },
-    scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
+    scoreboardStyles: ['football','style1','style2','style3','style4','style5','h1','h2'],
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }],
     logEvents: ['goal','substitution','corner','throw in','yellow card','red card','free kick']
   },
@@ -99,7 +99,7 @@ export const sportsData = {
     subs: 0,
     positions: ["Player"],
     scoreboard: { sets: true, games: true },
-    scoreboardStyles: ['style1','style2','style3','style4','style5'],
+    scoreboardStyles: ['tennis','style1','style2','style3','style4','style5'],
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }],
     logEvents: ['ace','double fault','break point','set won']
   },

@@ -135,8 +135,16 @@ html,body { margin: 0; width:100%; height:100%; overflow:hidden; }
 .sb-h2 .sb-row { width:100%; justify-content:center; }
 .sb-h2 .sb-team { flex:0 0 20%; text-align:center; }
 .sb-h2 .sb-score { flex:0 0 auto; margin:0 1rem; }
+.sb-cricket { width:90%; margin:0 auto; }
 .sb-cricket .sb-row { justify-content:space-between; }
 .sb-cricket .sb-score { margin:0 0.5rem; }
+.sb-football .sb-row { align-items:center; gap:0.5rem; }
+.sb-football .sb-time { margin-left:0.5rem; }
+.sb-tennis { background:var(--brand-secondary1, rgba(0,0,0,0.6)); border-radius:0.5rem; padding:0.25rem; }
+.sb-tennis-table { width:100%; border-collapse:collapse; }
+.sb-tennis-table th, .sb-tennis-table td { padding:0.25rem 0.5rem; text-align:center; }
+.sb-tennis-table th { background:var(--brand-secondary1, rgba(0,0,0,0.6)); color:#fff; }
+.sb-tennis-table td { background:rgba(0,0,0,0.5); color:#fff; }
 .sb-team.active { text-decoration: underline; }
 .sb-break { font-size: 0.875rem; text-align:center; margin-top:0.25rem; }
 .sb-checkout { font-size: 0.875rem; text-align:center; margin-top:0.25rem; }

@@ -5,6 +5,7 @@ import { updateOverlayState, listenOverlayState, addMatchLog, listenFavorites, u
 import { suggestAbbreviation } from "../teamUtils.js";
 
 const DEFAULT_STYLES = [
+    { id: 'football', label: 'Football Row' },
     { id: 'style1', label: 'Classic' },
     { id: 'style2', label: 'Dark Box' },
     { id: 'style3', label: 'Outline' },
@@ -12,7 +13,8 @@ const DEFAULT_STYLES = [
     { id: 'style5', label: 'Solid' },
     { id: 'h1', label: 'Horizontal 1' },
     { id: 'h2', label: 'Horizontal 2' },
-    { id: 'cricket', label: 'Cricket' }
+    { id: 'cricket', label: 'Cricket' },
+    { id: 'tennis', label: 'Tennis' }
 ];
 
 function getStylesForSport(sport){

@@ -561,6 +561,34 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             </div>
             ${sbSponsorHtml}
             ${bottomImg}`;
+        } else if(style==='football'){
+            const timePart = timeStr ? `<span class="sb-time">${timeStr}</span>` : '';
+            const stopPart = scoreboardData.showStoppage && scoreboardData.stoppage ? `<span class="sb-time">+${scoreboardData.stoppage}</span>` : '';
+            scoreboardOverlay.innerHTML = `
+            ${topImg}
+            <div class="sb-row">
+                <span class="sb-team${aClassA}" style="background:${colors[0]};color:${textA}">${showLogos ? `<img src='${logos[0]}' class='sb-team-logo'>` : ''}${names[0]}</span>
+                <span class="sb-score" style="background:${brand};color:${textBrand}">${sA} - ${sB}</span>
+                <span class="sb-team${aClassB}" style="background:${colors[1]};color:${textB}">${showLogos ? `<img src='${logos[1]}' class='sb-team-logo'>` : ''}${names[1]}</span>
+                ${timePart}
+                ${stopPart}
+            </div>
+            ${sbSponsorHtml}
+            ${bottomImg}`;
+        } else if(style==='tennis'){
+            const setsA = scoreboardData.sets?.[0] ?? 0;
+            const setsB = scoreboardData.sets?.[1] ?? 0;
+            const gamesA = scoreboardData.games?.[0] ?? 0;
+            const gamesB = scoreboardData.games?.[1] ?? 0;
+            scoreboardOverlay.innerHTML = `
+            ${topImg}
+            <table class="sb-tennis-table">
+                <tr><th></th><th>Sets</th><th>Games</th><th>Pts</th></tr>
+                <tr><td class="sb-team${aClassA}" style="background:${colors[0]};color:${textA}">${names[0]}</td><td>${setsA}</td><td>${gamesA}</td><td>${sA}</td></tr>
+                <tr><td class="sb-team${aClassB}" style="background:${colors[1]};color:${textB}">${names[1]}</td><td>${setsB}</td><td>${gamesB}</td><td>${sB}</td></tr>
+            </table>
+            ${sbSponsorHtml}
+            ${bottomImg}`;
         } else {
             scoreboardOverlay.innerHTML = `
             ${topImg}
@@ -576,7 +604,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             ${bottomImg}`;
         }
         let stopEl = overlayContainer.querySelector('#stoppage-overlay');
-        if(scoreboardData.showStoppage && scoreboardData.stoppage){
+        if(style!=='football' && scoreboardData.showStoppage && scoreboardData.stoppage){
             if(!stopEl){
                 stopEl = document.createElement('div');
                 stopEl.id = 'stoppage-overlay';
