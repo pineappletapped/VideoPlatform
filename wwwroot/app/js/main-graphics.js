@@ -172,7 +172,7 @@ async function initializeComponents(eventData) {
         renderProgramPreview(document.getElementById('schedule-panel'), eventData, onOverlayStateChange);
     }
 
-    renderHoldslatePanel(document.getElementById('holdslate-panel'), onOverlayStateChange);
+    renderHoldslatePanel(document.getElementById('holdslate-panel'), eventId, onOverlayStateChange);
     const { renderStingerPanel } = await import('./components/stingerPanel.js');
     renderStingerPanel(document.getElementById('stinger-panel'), eventId);
     if((eventData.eventType || 'corporate') === 'corporate') {

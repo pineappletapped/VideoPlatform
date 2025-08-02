@@ -181,7 +181,7 @@ async function initializeComponents(eventData) {
     }
 
     // Initialize main content panels
-    renderHoldslatePanel(document.getElementById('holdslate-panel'), onOverlayStateChange);
+    renderHoldslatePanel(document.getElementById('holdslate-panel'), eventId, onOverlayStateChange);
     renderGraphicsPanel(document.getElementById('events-panel'), eventData, graphicsMode);
 
     // Initialize AV panels
