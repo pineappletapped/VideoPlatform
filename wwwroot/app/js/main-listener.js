@@ -4,6 +4,7 @@ import './components/topBar.js';
 import OBSWebSocket from 'https://cdn.jsdelivr.net/npm/obs-websocket-js@5.0.3/+esm';
 import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 import { getDatabaseInstance } from "./firebaseApp.js";
+import { updateEventMetadata } from './firebase.js';
 import { requireAuth, logout } from './auth.js';
 import { renderBrandingModal } from './components/brandingModal.js';
 
@@ -511,6 +512,7 @@ async function initializeListener(user) {
     currentUserId = user ? user.uid.replace('local-','') : '';
     // Status bar
     const eventData = await eventStorage.loadEvent(eventId);
+    updateEventMetadata(eventId, { lastOpened: Date.now() }).catch(()=>{});
     const topBar = document.createElement('top-bar');
     if (currentUserId === 'ryanadmin') topBar.setAttribute('is-admin','true');
     topBar.setAttribute('event-name', eventData.title || eventId);

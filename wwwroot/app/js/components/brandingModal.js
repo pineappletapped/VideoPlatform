@@ -102,8 +102,8 @@ export function renderBrandingModal(container, opts) {
             const data = Object.fromEntries(new FormData(form));
             const logoPrimaryFile = form.logoPrimary.files[0];
             const logoSecondaryFile = form.logoSecondary.files[0];
-            let logoPrimary = branding.logoPrimary;
-            let logoSecondary = branding.logoSecondary;
+            let logoPrimary = branding.logoPrimary || '';
+            let logoSecondary = branding.logoSecondary || '';
             if (logoPrimaryFile) {
                 const path = `uploads/${isUser ? 'user_'+targetId : targetId}/branding/primary_${logoPrimaryFile.name}`;
                 const url = await upload(logoPrimaryFile, path);

@@ -8,19 +8,19 @@ function getHoldslatesRef(eventId) {
     return ref(db, `holdslates/${eventId}`);
 }
 
-export function renderHoldslatePanel(container, onOverlayStateChange) {
-    const eventId = window.eventId || 'demo';
+export function renderHoldslatePanel(container, eventId, onOverlayStateChange) {
+    const eid = eventId || 'demo';
     let holdslates = [];
     let activeHoldslate = {};
     let visible = false;
     let preview = false;
 
-    onValue(getHoldslatesRef(eventId), snap => {
+    onValue(getHoldslatesRef(eid), snap => {
         holdslates = snap.val() || [];
         render();
     });
 
-    listenOverlayState(eventId, state => {
+    listenOverlayState(eid, state => {
         activeHoldslate = (state && state.holdslate) || {};
         visible = !!(state && state.holdslateVisible);
         preview = !!(state && state.holdslatePreviewVisible);
@@ -28,7 +28,7 @@ export function renderHoldslatePanel(container, onOverlayStateChange) {
     });
 
     async function saveHoldslates(list){
-        await set(getHoldslatesRef(eventId), list);
+        await set(getHoldslatesRef(eid), list);
     }
 
     function render(){
@@ -41,13 +41,13 @@ export function renderHoldslatePanel(container, onOverlayStateChange) {
                 </div>
                 <ul class="space-y-2 mb-4">
                     ${holdslates.length===0 ? `<li class='text-gray-400'>No holdslates yet.</li>` : holdslates.map((hs,i)=>`
-                        <li class="flex items-center gap-4 bg-gray-50 rounded p-2">
+                        <li class="flex items-center gap-4 bg-gray-50 rounded p-2 text-gray-900">
                             <img src="${hs.image || ''}" alt="thumb" class="w-16 h-9 object-cover rounded border" />
                             <div class="flex-1">${hs.name || 'Holdslate '+(i+1)}</div>
                             <button class="control-button btn-sm" data-action="preview" data-idx="${i}">Preview</button>
                             <button class="control-button btn-sm" data-action="live" data-idx="${i}">Live</button>
                             <button class="control-button btn-sm" data-action="edit" data-idx="${i}">Edit</button>
-                            <button class="control-button btn-sm" data-action="remove" data-idx="${i}">Remove</button>
+                            <button class="control-button btn-sm btn-remove" data-action="remove" data-idx="${i}">Remove</button>
                         </li>
                     `).join('')}
                 </ul>
@@ -89,11 +89,11 @@ export function renderHoldslatePanel(container, onOverlayStateChange) {
             const idx = parseInt(btn.getAttribute('data-idx'));
             const act = btn.getAttribute('data-action');
             if(act==='preview') btn.onclick=()=>{
-                updateOverlayState(eventId,{ holdslate: holdslates[idx], holdslatePreviewVisible:true, holdslateVisible:false });
+                updateOverlayState(eid,{ holdslate: holdslates[idx], holdslatePreviewVisible:true, holdslateVisible:false });
                 if(onOverlayStateChange) onOverlayStateChange({ holdslatePreviewVisible:true, holdslate: holdslates[idx] });
             };
             if(act==='live') btn.onclick=()=>{
-                updateOverlayState(eventId,{ holdslate: holdslates[idx], holdslateVisible:true, holdslatePreviewVisible:false });
+                updateOverlayState(eid,{ holdslate: holdslates[idx], holdslateVisible:true, holdslatePreviewVisible:false });
                 if(onOverlayStateChange) onOverlayStateChange({ holdslateVisible:true, holdslatePreviewVisible:false, holdslate: holdslates[idx] });
             };
             if(act==='edit') btn.onclick=()=> showModal(holdslates[idx], idx);
@@ -109,7 +109,7 @@ export function renderHoldslatePanel(container, onOverlayStateChange) {
                 const data = Object.fromEntries(new FormData(form));
                 let img = data.image;
                 if(form['hs-file'].files[0]){
-                    const path = `uploads/${eventId}/holdslates/${form['hs-file'].files[0].name}`;
+                    const path = `uploads/${eid}/holdslates/${form['hs-file'].files[0].name}`;
                     setStatus('Uploading...');
                     const url = await uploadToServer(form['hs-file'].files[0], path);
                     setStatus('');
@@ -122,7 +122,7 @@ export function renderHoldslatePanel(container, onOverlayStateChange) {
             };
             container.querySelector('#hs-upload').onclick = async () => {
                 if(form['hs-file'].files[0]){
-                    const path = `uploads/${eventId}/holdslates/${form['hs-file'].files[0].name}`;
+                    const path = `uploads/${eid}/holdslates/${form['hs-file'].files[0].name}`;
                     setStatus('Uploading...');
                     const url = await uploadToServer(form['hs-file'].files[0], path);
                     setStatus('');

@@ -1,7 +1,7 @@
 import { requireAuth, logout } from './auth.js';
 import './components/topBar.js';
 import { renderStatusBar } from './components/statusBar.js';
-import { listenPresentation, updatePresentation, updateOverlayState, getEventMetadata } from './firebase.js';
+import { listenPresentation, updatePresentation, updateOverlayState, getEventMetadata, updateEventMetadata } from './firebase.js';
 
 const params = new URLSearchParams(window.location.search);
 const eventId = params.get('event_id') || 'demo';
@@ -19,6 +19,7 @@ async function uploadToServer(file){
 
 async function init(user){
     const ev = await getEventMetadata(eventId) || {};
+    updateEventMetadata(eventId, { lastOpened: Date.now() }).catch(()=>{});
     const tb = document.createElement('top-bar');
     tb.setAttribute('event-name', ev.title || eventId);
     tb.addEventListener('logout', logout);

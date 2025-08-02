@@ -83,9 +83,9 @@ preview to live in one click.
 Logging in as `ryanadmin` reveals an **Admin** button on the dashboard. This
 opens a simple admin panel showing all users and their billing tier. Plans are:
 
-- **single** – Single Event £3.75/month
-- **three** – 3 Events £6/month
-- **eight** – 8 Events £15/month
+- **bronze** – Bronze £3.75/month (1 event)
+- **silver** – Silver £6/month (3 events)
+- **gold** – Gold £15/month (8 events)
 
 Regular users can manage their default branding from **Brand Settings** in the
 account menu. Uploaded logos are stored under `uploads/user_<id>/branding/`.

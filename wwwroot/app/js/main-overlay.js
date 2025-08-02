@@ -1,4 +1,4 @@
-import { listenOverlayState, listenGraphicsData, listenBranding, listenSponsors, listenSponsorPlacements, addSponsorLog } from './firebase.js';
+import { listenOverlayState, listenGraphicsData, listenBranding, listenSponsors, listenSponsorPlacements, addSponsorLog, updateEventMetadata } from './firebase.js';
 import { getDatabaseInstance } from './firebaseApp.js';
 import { suggestAbbreviation } from './teamUtils.js';
 import { ref, onValue, set } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
@@ -6,6 +6,7 @@ import { ref, onValue, set } from 'https://www.gstatic.com/firebasejs/9.22.2/fir
 const params = new URLSearchParams(window.location.search);
 const eventId = params.get('event_id') || 'demo';
 const previewMode = params.get('mode') === 'preview';
+updateEventMetadata(eventId, { lastOpened: Date.now() }).catch(()=>{});
 
 let countdownInterval = null;
 let vtVideo = null;
@@ -504,7 +505,13 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         if (scoreboardData.round) info.push('R' + scoreboardData.round);
         if (scoreboardData.sets) info.push('Sets ' + scoreboardData.sets.join('-'));
         if (scoreboardData.games) info.push('Games ' + scoreboardData.games.join('-'));
-        if (scoreboardData.frames) info.push('Frames ' + scoreboardData.frames.join('-'));
+        if (scoreboardData.frames) {
+            info.push('Frames ' + scoreboardData.frames.join('-'));
+            if (scoreboardData.frameTarget) {
+                const lbl = scoreboardData.frameFormat === 'bestOf' ? 'Best of' : 'First to';
+                info.push(`${lbl} ${scoreboardData.frameTarget}`);
+            }
+        }
         if (scoreboardData.legs) info.push('Legs ' + scoreboardData.legs.join('-'));
         if (scoreboardData.points) info.push('Pts ' + scoreboardData.points.join('-'));
         if (scoreboardData.overs) info.push('Ov ' + scoreboardData.overs.join('-'));
@@ -554,6 +561,34 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             </div>
             ${sbSponsorHtml}
             ${bottomImg}`;
+        } else if(style==='football'){
+            const timePart = timeStr ? `<span class="sb-time">${timeStr}</span>` : '';
+            const stopPart = scoreboardData.showStoppage && scoreboardData.stoppage ? `<span class="sb-time">+${scoreboardData.stoppage}</span>` : '';
+            scoreboardOverlay.innerHTML = `
+            ${topImg}
+            <div class="sb-row">
+                <span class="sb-team${aClassA}" style="background:${colors[0]};color:${textA}">${showLogos ? `<img src='${logos[0]}' class='sb-team-logo'>` : ''}${names[0]}</span>
+                <span class="sb-score" style="background:${brand};color:${textBrand}">${sA} - ${sB}</span>
+                <span class="sb-team${aClassB}" style="background:${colors[1]};color:${textB}">${showLogos ? `<img src='${logos[1]}' class='sb-team-logo'>` : ''}${names[1]}</span>
+                ${timePart}
+                ${stopPart}
+            </div>
+            ${sbSponsorHtml}
+            ${bottomImg}`;
+        } else if(style==='tennis'){
+            const setsA = scoreboardData.sets?.[0] ?? 0;
+            const setsB = scoreboardData.sets?.[1] ?? 0;
+            const gamesA = scoreboardData.games?.[0] ?? 0;
+            const gamesB = scoreboardData.games?.[1] ?? 0;
+            scoreboardOverlay.innerHTML = `
+            ${topImg}
+            <table class="sb-tennis-table">
+                <tr><th></th><th>Sets</th><th>Games</th><th>Pts</th></tr>
+                <tr><td class="sb-team${aClassA}" style="background:${colors[0]};color:${textA}">${names[0]}</td><td>${setsA}</td><td>${gamesA}</td><td>${sA}</td></tr>
+                <tr><td class="sb-team${aClassB}" style="background:${colors[1]};color:${textB}">${names[1]}</td><td>${setsB}</td><td>${gamesB}</td><td>${sB}</td></tr>
+            </table>
+            ${sbSponsorHtml}
+            ${bottomImg}`;
         } else {
             scoreboardOverlay.innerHTML = `
             ${topImg}
@@ -569,7 +604,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             ${bottomImg}`;
         }
         let stopEl = overlayContainer.querySelector('#stoppage-overlay');
-        if(scoreboardData.showStoppage && scoreboardData.stoppage){
+        if(style!=='football' && scoreboardData.showStoppage && scoreboardData.stoppage){
             if(!stopEl){
                 stopEl = document.createElement('div');
                 stopEl.id = 'stoppage-overlay';
@@ -754,16 +789,29 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     let stingerOverlay = overlayContainer.querySelector('#stinger-overlay');
     const stingerData = state && state.stinger;
     const stingerShow = previewMode ? state && state.stingerPreviewVisible : state && state.stingerVisible;
-    if(stingerShow && stingerData && stingerData.logo){
-        if(!stingerOverlay){
+    if (stingerShow && stingerData) {
+        if (!stingerOverlay) {
             stingerOverlay = document.createElement('div');
             stingerOverlay.id = 'stinger-overlay';
             overlayContainer.appendChild(stingerOverlay);
         }
         stingerOverlay.style.fontFamily = branding.font;
         stingerOverlay.style.opacity = previewMode ? '0.6' : '1';
-        stingerOverlay.innerHTML = `<img src='${stingerData.logo}'>`;
-    } else if(stingerOverlay){
+        const style = stingerData.style || 'logo';
+        const colors = stingerData.colors || [branding.primaryColor || '#000', branding.secondaryColor1 || '#fff'];
+        const textColor = branding.primaryColor || '#fff';
+        stingerOverlay.style.background = 'transparent';
+        if (style === 'split') {
+            stingerOverlay.innerHTML = `
+                <div class="stinger-split">
+                    <div class="stinger-split-top" style="background:${colors[0]}"></div>
+                    <div class="stinger-split-bottom" style="background:${colors[1]}"></div>
+                    ${stingerData.logo ? `<img src='${stingerData.logo}' class='stinger-logo'>` : stingerData.text ? `<div class='stinger-logo stinger-text' style='color:${textColor}'>${stingerData.text}</div>` : ''}
+                </div>`;
+        } else {
+            stingerOverlay.innerHTML = stingerData.logo ? `<img src='${stingerData.logo}'>` : stingerData.text ? `<div class='stinger-text' style='color:${textColor}'>${stingerData.text}</div>` : '';
+        }
+    } else if (stingerOverlay) {
         stingerOverlay.remove();
     }
 

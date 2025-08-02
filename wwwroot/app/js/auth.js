@@ -12,11 +12,11 @@ function getLocalUsers() {
   try {
     const users = JSON.parse(localStorage.getItem(LOCAL_USERS_KEY) || '{}');
     if (!users[DEFAULT_ADMIN.email]) {
-      users[DEFAULT_ADMIN.email] = { password: DEFAULT_ADMIN.password, tier: 'eight' };
+      users[DEFAULT_ADMIN.email] = { password: DEFAULT_ADMIN.password, tier: 'gold' };
     }
     return users;
   } catch {
-    return { [DEFAULT_ADMIN.email]: { password: DEFAULT_ADMIN.password, tier: 'eight' } };
+    return { [DEFAULT_ADMIN.email]: { password: DEFAULT_ADMIN.password, tier: 'gold' } };
   }
 }
 

@@ -239,3 +239,11 @@ export function updatePresentation(eventId, data) {
 export function listenPresentation(eventId, cb) {
   return onValue(ref(db, `presentation/${eventId}`), snap => cb(snap.val()));
 }
+
+// Plan features helpers
+export function getPlanFeatures() {
+  return get(ref(db, 'planFeatures')).then(snap => snap.val());
+}
+export function updatePlanFeature(plan, feature, value) {
+  return update(ref(db, `planFeatures/${plan}`), { [feature]: value });
+}

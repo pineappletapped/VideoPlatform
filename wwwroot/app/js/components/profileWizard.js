@@ -1,7 +1,7 @@
 import { setBranding, getBranding } from '../firebase.js';
 import { getDatabaseInstance } from '../firebaseApp.js';
 import { ref, set, get } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
-import { sportsData } from '../sportsConfig.js';
+import { sportsData, getTeamLabel } from '../sportsConfig.js';
 import { renderTeamsPanel } from './teamsPanel.js';
 
 const db = getDatabaseInstance();
@@ -93,13 +93,16 @@ export function renderProfileWizard(container, eventData) {
     async function renderTeamsStep() {
         const snap = await get(teamsRef);
         const cfg = sportsData[sport] || sportsData['Football'];
+        const label = getTeamLabel(sport);
         const playerSlots = cfg.playersPerTeam + (cfg.subs || 0);
         const players = Array.from({ length: playerSlots }).map(() => ({ name: '', pos: '' }));
-        const data = snap.val() || { teamA:{ name:'Team A', logo:'', players: players.slice() }, teamB:{ name:'Team B', logo:'', players: players.slice() } };
+        const nameA = cfg.playersPerTeam === 1 ? 'Player 1' : 'Team A';
+        const nameB = cfg.playersPerTeam === 1 ? 'Player 2' : 'Team B';
+        const data = snap.val() || { teamA:{ name:nameA, logo:'', players: players.slice() }, teamB:{ name:nameB, logo:'', players: players.slice() } };
         container.innerHTML = `
             <div class="modal-overlay">
                 <div class="modal-window max-h-[95vh] overflow-y-auto">
-                    <h2 class="font-bold mb-2">Teams</h2>
+                    <h2 class="font-bold mb-2">${label}</h2>
                     <div id="teams-panel"></div>
                     <div class="flex gap-2 mt-4">
                         <button id="teams-finish" class="control-button btn-sm">Finish</button>

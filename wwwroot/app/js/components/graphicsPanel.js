@@ -1,4 +1,4 @@
-import { setGraphicsData, updateGraphicsData, getGraphicsData, listenGraphicsData, listenFavorites, updateFavorites } from '../firebase.js';
+import { setGraphicsData, updateGraphicsData, getGraphicsData, listenGraphicsData, listenFavorites, updateFavorites, addMatchLog, listenOverlayState } from '../firebase.js';
 import { ref, onValue } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
 import { getDatabaseInstance } from '../firebaseApp.js';
 import { sportsData } from '../sportsConfig.js';
@@ -12,12 +12,18 @@ const transitions = [
     { value: 'slide-down', label: 'Slide Down' }
 ];
 
+const BASE_LOG_EVENTS = ['goal','substitution'];
+function getLogEventsForSport(sp){
+    return sportsData[sp]?.logEvents || BASE_LOG_EVENTS;
+}
+
 let liveLowerThirdId = null;
 let previewLowerThirdId = null;
 let liveTitleSlideId = null;
 let previewTitleSlideId = null;
-let graphicsData = null;
-let favorites = { lowerThirds: [], titleSlides: [] };
+let graphicsData = { lowerThirds: [], titleSlides: [], teams: {} };
+let favorites = { lowerThirds: [], titleSlides: [], scoreboard: false };
+let overlayState = {};
 
 function saveLiveState(eventId, mode) {
     // Only update visibility IDs so preview actions don't overwrite graphics data
@@ -45,19 +51,21 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
     const eventType = eventData.eventType || 'corporate';
     const sportsMode = eventType === 'sports';
     let teamsData = null;
+    let logEvents = [];
 
     if (sportsMode) {
         const db = getDatabaseInstance();
         const teamsRef = ref(db, `teams/${eventId}`);
         onValue(teamsRef, snap => { teamsData = snap.val(); renderPanel(); });
+        logEvents = getLogEventsForSport(eventData.sport);
     }
     // Listen for graphics changes from Firebase
     listenGraphicsData(eventId, (data) => {
         if (!data && eventData.graphics) {
-            graphicsData = { ...eventData.graphics };
+            graphicsData = { ...(eventData.graphics || {}) };
             setGraphicsData(eventId, graphicsData, mode);
         } else {
-            graphicsData = data || { lowerThirds: [], titleSlides: [], teams: {} };
+            graphicsData = { lowerThirds: [], titleSlides: [], teams: {}, ...(data || {}) };
         }
         liveLowerThirdId = graphicsData.liveLowerThirdId || null;
         previewLowerThirdId = graphicsData.previewLowerThirdId || null;
@@ -65,7 +73,8 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
         previewTitleSlideId = graphicsData.previewTitleSlideId || null;
         renderPanel();
     }, mode);
-    listenFavorites(eventId, (fav) => { favorites = fav || { lowerThirds: [], titleSlides: [] }; renderPanel(); });
+    listenFavorites(eventId, (fav) => { favorites = { lowerThirds: [], titleSlides: [], scoreboard: false, ...(fav || {}) }; renderPanel(); });
+    listenOverlayState(eventId, state => { overlayState = state || {}; });
 
     function renderPanel() {
         const lowerThirds = graphicsData.lowerThirds || [];
@@ -145,10 +154,9 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                                     <td class="pr-2 py-1">${lt.title} <span class="text-xs text-gray-500">(${lt.subtitle})</span></td>
                                     <td class="py-1"><button class="control-button btn-sm btn-preview" data-action="preview-lt" data-id="${lt.id}">Preview</button></td>
                                     <td class="py-1"><button class="control-button btn-sm btn-live" data-action="take-lt" data-id="${lt.id}">Live</button></td>
-                                    <td class="py-1"><button class="control-button btn-sm" data-action="hide-lt" data-id="${lt.id}">Hide</button></td>
                                     <td class="py-1"><button class="control-button btn-sm" data-action="edit-lt" data-id="${lt.id}">Edit</button></td>
                                     <td class="py-1"><button class="control-button btn-sm" data-action="favorite-lt" data-id="${lt.id}">${favorites.lowerThirds.includes(lt.id) ? '★' : '☆'}</button></td>
-                                    <td class="py-1"><button class="control-button btn-sm" data-action="remove-lt" data-id="${lt.id}">Remove</button></td>
+                                    <td class="py-1"><button class="control-button btn-sm btn-remove" data-action="remove-lt" data-id="${lt.id}">Remove</button></td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -166,26 +174,27 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                                     <td class="pr-2 py-1">${ts.title} <span class="text-xs text-gray-500">(${ts.subtitle})</span></td>
                                     <td class="py-1"><button class="control-button btn-sm btn-preview" data-action="preview-ts" data-id="${ts.id}">Preview</button></td>
                                     <td class="py-1"><button class="control-button btn-sm btn-live" data-action="take-ts" data-id="${ts.id}">Live</button></td>
-                                    <td class="py-1"><button class="control-button btn-sm" data-action="hide-ts" data-id="${ts.id}">Hide</button></td>
                                     <td class="py-1"><button class="control-button btn-sm" data-action="edit-ts" data-id="${ts.id}">Edit</button></td>
                                     <td class="py-1"><button class="control-button btn-sm" data-action="favorite-ts" data-id="${ts.id}">${favorites.titleSlides.includes(ts.id) ? '★' : '☆'}</button></td>
-                                    <td class="py-1"><button class="control-button btn-sm" data-action="remove-ts" data-id="${ts.id}">Remove</button></td>
+                                    <td class="py-1"><button class="control-button btn-sm btn-remove" data-action="remove-ts" data-id="${ts.id}">Remove</button></td>
                                 </tr>
                             `).join('')}
                         </tbody>
                     </table>
                 </div>
-                ${sportsMode && teamsData && (sportsData[eventData.sport]?.subs || 0) > 0 ? `
+                ${sportsMode && teamsData ? `
                 <div class="mt-4">
-                    <strong>Add Example:</strong>
+                    <strong>In Game Events:</strong>
                     <div class="flex gap-2 mt-1 text-sm items-center">
-                        <span>Substitution</span>
-                        <select id="ex-team" class="border p-1">
+                        <select id="ige-type" class="border p-1 flex-1">
+                            ${logEvents.map(e=>`<option value="${e}">${e}</option>`).join('')}
+                        </select>
+                        <select id="ige-team" class="border p-1">
                             ${['teamA','teamB'].map(k=>`<option value="${k}">${teamsData[k]?.name || k}</option>`).join('')}
                         </select>
-                        <select id="ex-off" class="border p-1"></select>
-                        <select id="ex-on" class="border p-1"></select>
-                        <button id="ex-add" class="control-button btn-sm">Add</button>
+                        <select id="ige-player" class="border p-1 flex-1"></select>
+                        <select id="ige-player-on" class="border p-1 flex-1" style="display:none;"></select>
+                        <button id="ige-add" class="control-button btn-sm">Add</button>
                     </div>
                 </div>
                 ` : ''}
@@ -266,23 +275,55 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
             modal.style.display = 'flex';
         };
         if (sportsMode && teamsData) {
-            const teamSel = container.querySelector('#ex-team');
-            const offSel = container.querySelector('#ex-off');
-            const onSel = container.querySelector('#ex-on');
+            const typeSel = container.querySelector('#ige-type');
+            const teamSel = container.querySelector('#ige-team');
+            const playerSel = container.querySelector('#ige-player');
+            const playerOnSel = container.querySelector('#ige-player-on');
+
             const fillPlayers = () => {
                 const teamKey = teamSel.value;
                 const players = (teamsData[teamKey]?.players || []).map(p => p.name);
-                offSel.innerHTML = players.map(p=>`<option value="${p}">${p}</option>`).join('');
-                onSel.innerHTML = players.map(p=>`<option value="${p}">${p}</option>`).join('');
+                const opts = ['<option value=""></option>', ...players.map(p=>`<option value="${p}">${p}</option>`)];
+                playerSel.innerHTML = opts.join('');
+                playerOnSel.innerHTML = opts.join('');
             };
-            fillPlayers();
+            const updateType = () => {
+                playerOnSel.style.display = typeSel.value === 'substitution' ? '' : 'none';
+            };
             teamSel.onchange = fillPlayers;
-            container.querySelector('#ex-add').onclick = () => {
-                const teamName = teamsData[teamSel.value]?.name || '';
+            typeSel.onchange = updateType;
+            fillPlayers();
+            updateType();
+
+            container.querySelector('#ige-add').onclick = async () => {
+                const type = typeSel.value;
+                const teamKey = teamSel.value;
+                const teamName = teamsData[teamKey]?.name || '';
+                const off = playerSel.value;
+                const on = playerOnSel.value;
+                let subtitle = '';
+                let playerField = '';
+                if (type === 'substitution') {
+                    subtitle = `${off} → ${on}`;
+                    playerField = subtitle;
+                } else {
+                    subtitle = off;
+                    playerField = off;
+                }
+                const sb = overlayState.scoreboard || {};
+                const parseTime = str => { const [m = '0', s = '0'] = str.split(':'); return parseInt(m) * 60 + parseInt(s); };
+                const formatTime = secs => `${Math.floor(secs/60)}:${(Math.abs(secs)%60).toString().padStart(2,'0')}`;
+                let secs = parseTime(sb.time || '0:00');
+                if(sb.timerRunning && sb.timerStart){
+                    const elapsed = Math.floor((Date.now()-sb.timerStart)/1000);
+                    secs = sb.timeDirection === 'down' ? Math.max(0,(sb.timerBase||0) - elapsed) : (sb.timerBase||0) + elapsed;
+                }
+                const timeStr = formatTime(secs);
+                await addMatchLog(eventId,{ ts: Date.now(), type, team: teamKey==='teamA'?'a':'b', player: playerField, time: timeStr });
                 const obj = {
                     id: (Date.now()+Math.random()).toString(36),
-                    title: `${teamName} Substitution`,
-                    subtitle: `${offSel.value} → ${onSel.value}`,
+                    title: `${teamName} ${type.charAt(0).toUpperCase()+type.slice(1)}`,
+                    subtitle,
                     style: 'default',
                     position: 'bottom-left',
                     transitionIn: 'fade',
@@ -298,26 +339,34 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                 const action = btn.getAttribute('data-action');
                 const id = btn.getAttribute('data-id');
                 if (action === 'preview-lt') {
-                    previewLowerThirdId = id;
+                    if (previewLowerThirdId === id) {
+                        previewLowerThirdId = null;
+                    } else {
+                        previewLowerThirdId = id;
+                    }
                     saveLiveState(eventId, mode);
                 } else if (action === 'take-lt') {
-                    liveLowerThirdId = id;
-                    previewLowerThirdId = null;
-                    saveLiveState(eventId, mode);
-                } else if (action === 'hide-lt') {
-                    liveLowerThirdId = null;
-                    previewLowerThirdId = null;
+                    if (liveLowerThirdId === id) {
+                        liveLowerThirdId = null;
+                    } else {
+                        liveLowerThirdId = id;
+                        previewLowerThirdId = null;
+                    }
                     saveLiveState(eventId, mode);
                 } else if (action === 'preview-ts') {
-                    previewTitleSlideId = id;
+                    if (previewTitleSlideId === id) {
+                        previewTitleSlideId = null;
+                    } else {
+                        previewTitleSlideId = id;
+                    }
                     saveLiveState(eventId, mode);
                 } else if (action === 'take-ts') {
-                    liveTitleSlideId = id;
-                    previewTitleSlideId = null;
-                    saveLiveState(eventId, mode);
-                } else if (action === 'hide-ts') {
-                    liveTitleSlideId = null;
-                    previewTitleSlideId = null;
+                    if (liveTitleSlideId === id) {
+                        liveTitleSlideId = null;
+                    } else {
+                        liveTitleSlideId = id;
+                        previewTitleSlideId = null;
+                    }
                     saveLiveState(eventId, mode);
                 } else if (action === 'edit-lt' || action === 'edit-ts') {
                 const item = (action === 'edit-lt' ? lowerThirds : titleSlides).find(x => x.id === id);

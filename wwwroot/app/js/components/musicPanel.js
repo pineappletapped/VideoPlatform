@@ -61,7 +61,7 @@ export function renderMusicPanel(container, eventId) {
                             <div class="text-xs text-gray-500">${track.duration || '--:--'} | <span class="italic">${track.audioUrl ? track.audioUrl.split('/').pop() : ''}</span></div>
                         </div>
                         <button class="control-button btn-sm" data-action="edit" data-idx="${idx}">Edit</button>
-                        <button class="control-button btn-sm" data-action="remove" data-idx="${idx}">Remove</button>
+                        <button class="control-button btn-sm btn-remove" data-action="remove" data-idx="${idx}">Remove</button>
                         <button class="control-button btn-sm" data-action="play" data-idx="${idx}">Play</button>
                         <button class="control-button btn-sm" data-action="queue" data-idx="${idx}">Add</button>
                     </li>

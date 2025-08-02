@@ -29,7 +29,7 @@ export function renderVtsPanel(container, eventId, onLoadVT) {
                             <div class="text-xs text-gray-500">${vt.duration || '--:--'} | <span class="italic">${vt.videoUrl ? vt.videoUrl.split('/').pop() : ''}</span></div>
                         </div>
                         <button class="control-button btn-sm" data-action="edit" data-idx="${idx}">Edit</button>
-                        <button class="control-button btn-sm" data-action="remove" data-idx="${idx}">Remove</button>
+                        <button class="control-button btn-sm btn-remove" data-action="remove" data-idx="${idx}">Remove</button>
                         <button class="control-button btn-sm" data-action="load" data-idx="${idx}">Load</button>
                     </li>
                 `).join('')}

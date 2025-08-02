@@ -39,6 +39,7 @@ export function renderBrandingPanel(container, eventId){
                     <form id="sponsor-form">
                         <input type="hidden" name="idx" />
                         <div class="mb-2"><input class="border p-1 w-full" name="name" placeholder="Name" required /></div>
+                        <div class="mb-2 flex gap-2"><input type="color" name="color" value="#ffffff" class="flex-1"><input type="color" name="color2" value="#000000" class="flex-1"></div>
                         <div class="mb-2"><input type="file" id="sponsor-logo" /><button type="button" id="upload-logo" class="control-button btn-sm ml-2">Upload</button></div>
                         <div class="mb-2"><input class="border p-1 w-full" name="logo" placeholder="Logo URL" /></div>
                         <div class="flex gap-2"><button class="control-button btn-sm" type="submit">Save</button><button type="button" id="cancel-sponsor" class="control-button btn-sm bg-gray-400">Cancel</button></div>
@@ -50,7 +51,7 @@ export function renderBrandingPanel(container, eventId){
         const modal = container.querySelector('#sponsor-modal');
         const form = container.querySelector('#sponsor-form');
         function renderSponsors(){
-            list.innerHTML = branding.sponsors.map((s,i)=>`<li class="flex items-center gap-2"><span class="flex-1">${s.name}</span><button class="control-button btn-xs" data-edit="${i}">Edit</button><button class="control-button btn-xs" data-remove="${i}">Remove</button></li>`).join('') || '<li class="text-gray-500">None</li>';
+            list.innerHTML = branding.sponsors.map((s,i)=>`<li class="flex items-center gap-2"><span class="flex-1">${s.name}</span><button class="control-button btn-xs" data-edit="${i}">Edit</button><button class="control-button btn-xs btn-remove" data-remove="${i}">Remove</button></li>`).join('') || '<li class="text-gray-500">None</li>';
         }
         renderSponsors();
         const placementSel = container.querySelector('#schedule-placement');
@@ -76,13 +77,15 @@ export function renderBrandingPanel(container, eventId){
         });
         container.querySelector('#add-sponsor').onclick=()=>showModal();
         if(form){
-            form.onsubmit=e=>{e.preventDefault(); const data=Object.fromEntries(new FormData(form)); const idx=data.idx?parseInt(data.idx,10):-1; const sponsor={name:data.name,logo:data.logo}; if(idx>=0) branding.sponsors[idx]=sponsor; else branding.sponsors.push(sponsor); save(); renderSponsors(); modal.style.display='none';};
+            form.onsubmit=e=>{e.preventDefault(); const data=Object.fromEntries(new FormData(form)); const idx=data.idx?parseInt(data.idx,10):-1; const sponsor={name:data.name,logo:data.logo,color:data.color,color2:data.color2}; if(idx>=0) branding.sponsors[idx]=sponsor; else branding.sponsors.push(sponsor); save(); renderSponsors(); modal.style.display='none';};
             form.querySelector('#cancel-sponsor').onclick=()=>{modal.style.display='none';};
             form.querySelector('#upload-logo').onclick=async()=>{ const file=document.getElementById('sponsor-logo').files[0]; if(file){ const url=await upload(file,`uploads/${eventId}/branding/sponsors/${file.name}`); if(url) form.logo.value=url; }};
         }
         function showModal(idx){
             form.idx.value= idx ?? '';
             form.name.value= idx!=null ? branding.sponsors[idx].name : '';
+            form.color.value= idx!=null ? branding.sponsors[idx].color||'#ffffff' : '#ffffff';
+            form.color2.value= idx!=null ? branding.sponsors[idx].color2||'#000000' : '#000000';
             form.logo.value= idx!=null ? branding.sponsors[idx].logo : '';
             document.getElementById('sponsor-logo').value='';
             modal.style.display='flex';

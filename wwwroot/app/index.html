@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Event Dashboard</title>
     <link rel="stylesheet" href="css/custom.css?v=20240610">
+<script>window.__TAILWIND_DISABLE_CDN_WARNING = true; window.__TWCSS_DISABLE_CDN_WARNING = true;</script>
     <script src="https://cdn.tailwindcss.com?v=20240610"></script>
     <script>
         tailwind.config = { theme: { extend: { colors: { brand: '#e16316' } } } };
@@ -28,9 +29,9 @@
                     <input name="email" type="text" placeholder="Email" class="border p-2 w-full" required>
                     <input name="password" type="password" placeholder="Password" class="border p-2 w-full" required>
                     <select name="tier" class="border p-2 w-full">
-                        <option value="single">Single Event £3.75/month</option>
-                        <option value="three">3 Events £6/month</option>
-                        <option value="eight">8 Events £15/month</option>
+                        <option value="bronze">Bronze £3.75/month</option>
+                        <option value="silver">Silver £6/month</option>
+                        <option value="gold">Gold £15/month</option>
                     </select>
                     <div id="card-container" class="border p-2"></div>
                     <div id="payment-msg" class="text-center text-xs text-gray-500"></div>

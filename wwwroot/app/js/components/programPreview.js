@@ -50,7 +50,7 @@ export function renderProgramPreview(container, eventData, onOverlayStateChange)
                                     <input class="border p-1 w-16" name="time" value="${item.time}" required />
                                     <input class="border p-1 flex-1" name="title" value="${item.title}" required />
                                     <input class="border p-1 flex-1" name="presenter" value="${item.presenter}" required />
-                                    <button type="button" class="control-button btn-sm" data-action="remove" data-idx="${idx}">Remove</button>
+                                    <button type="button" class="control-button btn-sm btn-remove" data-action="remove" data-idx="${idx}">Remove</button>
                                 </div>
                             `).join('')}
                         </div>

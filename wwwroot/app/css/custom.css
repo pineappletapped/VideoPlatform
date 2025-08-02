@@ -2,7 +2,20 @@
   --brand-color: #e16316;
 }
 html,body { margin: 0; width:100%; height:100%; overflow:hidden; }
-.status-bar, .input-sources-bar, .graphics-panel, .obs-controls, .atem-controls, .ptz-controls, .branding-modal, .profile-wizard, .calendar-drawer {
+.status-bar,
+ .input-sources-bar,
+ .graphics-panel,
+ .obs-controls,
+ .atem-controls,
+ .ptz-controls,
+ .branding-modal,
+ .profile-wizard,
+ .calendar-drawer,
+ .scoreboard-panel,
+ .teams-panel,
+ .lineup-panel,
+ .stats-panel,
+ .sponsors-panel {
   border: 2px dashed #e16316;
   background: #1f2937;
   color: #f3f4f6;
@@ -62,6 +75,13 @@ html,body { margin: 0; width:100%; height:100%; overflow:hidden; }
   background: #dc2626;
 }
 
+.btn-remove {
+  background: #000;
+}
+.btn-remove:hover {
+  background: #333;
+}
+
 .btn-sm {
   font-size: 0.7rem;
   padding: 0.12rem 0.32rem;
@@ -115,8 +135,16 @@ html,body { margin: 0; width:100%; height:100%; overflow:hidden; }
 .sb-h2 .sb-row { width:100%; justify-content:center; }
 .sb-h2 .sb-team { flex:0 0 20%; text-align:center; }
 .sb-h2 .sb-score { flex:0 0 auto; margin:0 1rem; }
+.sb-cricket { width:90%; margin:0 auto; }
 .sb-cricket .sb-row { justify-content:space-between; }
 .sb-cricket .sb-score { margin:0 0.5rem; }
+.sb-football .sb-row { align-items:center; gap:0.5rem; }
+.sb-football .sb-time { margin-left:0.5rem; }
+.sb-tennis { background:var(--brand-secondary1, rgba(0,0,0,0.6)); border-radius:0.5rem; padding:0.25rem; }
+.sb-tennis-table { width:100%; border-collapse:collapse; }
+.sb-tennis-table th, .sb-tennis-table td { padding:0.25rem 0.5rem; text-align:center; }
+.sb-tennis-table th { background:var(--brand-secondary1, rgba(0,0,0,0.6)); color:#fff; }
+.sb-tennis-table td { background:rgba(0,0,0,0.5); color:#fff; }
 .sb-team.active { text-decoration: underline; }
 .sb-break { font-size: 0.875rem; text-align:center; margin-top:0.25rem; }
 .sb-checkout { font-size: 0.875rem; text-align:center; margin-top:0.25rem; }
@@ -148,13 +176,24 @@ html,body { margin: 0; width:100%; height:100%; overflow:hidden; }
   left:0;
   width:100vw;
   height:100vh;
-  background:var(--brand-primary,#e16316);
+  background:transparent;
   display:flex;
   align-items:center;
   justify-content:center;
   z-index:150;
 }
 #stinger-overlay img{max-width:60vw;max-height:60vh;}
+
+.stinger-split{position:relative;width:100%;height:100%;overflow:hidden;}
+.stinger-split-top,.stinger-split-bottom{position:absolute;width:100%;height:50%;opacity:0;}
+.stinger-split-top{top:0;left:0;animation:stinger-top 2s forwards;}
+.stinger-split-bottom{bottom:0;left:0;animation:stinger-bottom 2s forwards;}
+.stinger-logo{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);animation:stinger-logo 2s forwards;max-width:40vw;max-height:40vh;}
+.stinger-text{font-size:8vw;font-weight:bold;text-transform:uppercase;color:#fff;}
+
+@keyframes stinger-top{0%{transform:translateX(-100%);opacity:1;}50%{transform:translateX(0);opacity:1;}100%{transform:translateX(-100%);opacity:0;}}
+@keyframes stinger-bottom{0%{transform:translateX(100%);opacity:1;}50%{transform:translateX(0);opacity:1;}100%{transform:translateX(100%);opacity:0;}}
+@keyframes stinger-logo{0%{opacity:0;}10%{opacity:1;}90%{opacity:1;}100%{opacity:0;}}
 
 /* Additional styles for column layouts */
 .col-cameras, .col-atem, .col-obs {
@@ -254,6 +293,12 @@ html,body { margin: 0; width:100%; height:100%; overflow:hidden; }
 .stats-panel input,
 .stats-panel select,
 .stats-panel textarea {
+  color: #000;
+}
+
+.sponsors-panel input,
+.sponsors-panel select,
+.sponsors-panel textarea {
   color: #000;
 }
 
