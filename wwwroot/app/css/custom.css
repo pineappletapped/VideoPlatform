@@ -168,13 +168,23 @@ html,body { margin: 0; width:100%; height:100%; overflow:hidden; }
   left:0;
   width:100vw;
   height:100vh;
-  background:var(--brand-primary,#e16316);
+  background:transparent;
   display:flex;
   align-items:center;
   justify-content:center;
   z-index:150;
 }
 #stinger-overlay img{max-width:60vw;max-height:60vh;}
+
+.stinger-split{position:relative;width:100%;height:100%;overflow:hidden;}
+.stinger-split-top,.stinger-split-bottom{position:absolute;width:100%;height:50%;opacity:0;}
+.stinger-split-top{top:0;left:0;animation:stinger-top 2s forwards;}
+.stinger-split-bottom{bottom:0;left:0;animation:stinger-bottom 2s forwards;}
+.stinger-logo{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);animation:stinger-logo 2s forwards;max-width:40vw;max-height:40vh;}
+
+@keyframes stinger-top{0%{transform:translateX(-100%);opacity:1;}50%{transform:translateX(0);opacity:1;}100%{transform:translateX(-100%);opacity:0;}}
+@keyframes stinger-bottom{0%{transform:translateX(100%);opacity:1;}50%{transform:translateX(0);opacity:1;}100%{transform:translateX(100%);opacity:0;}}
+@keyframes stinger-logo{0%{opacity:0;}10%{opacity:1;}90%{opacity:1;}100%{opacity:0;}}
 
 /* Additional styles for column layouts */
 .col-cameras, .col-atem, .col-obs {

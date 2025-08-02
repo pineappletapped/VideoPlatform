@@ -755,16 +755,28 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     let stingerOverlay = overlayContainer.querySelector('#stinger-overlay');
     const stingerData = state && state.stinger;
     const stingerShow = previewMode ? state && state.stingerPreviewVisible : state && state.stingerVisible;
-    if(stingerShow && stingerData && stingerData.logo){
-        if(!stingerOverlay){
+    if (stingerShow && stingerData) {
+        if (!stingerOverlay) {
             stingerOverlay = document.createElement('div');
             stingerOverlay.id = 'stinger-overlay';
             overlayContainer.appendChild(stingerOverlay);
         }
         stingerOverlay.style.fontFamily = branding.font;
         stingerOverlay.style.opacity = previewMode ? '0.6' : '1';
-        stingerOverlay.innerHTML = `<img src='${stingerData.logo}'>`;
-    } else if(stingerOverlay){
+        const style = stingerData.style || 'logo';
+        const color = stingerData.color || branding.primaryColor || '#000';
+        stingerOverlay.style.background = 'transparent';
+        if (style === 'split') {
+            stingerOverlay.innerHTML = `
+                <div class="stinger-split">
+                    <div class="stinger-split-top" style="background:${color}"></div>
+                    <div class="stinger-split-bottom" style="background:${color}"></div>
+                    ${stingerData.logo ? `<img src='${stingerData.logo}' class='stinger-logo'>` : ''}
+                </div>`;
+        } else {
+            stingerOverlay.innerHTML = stingerData.logo ? `<img src='${stingerData.logo}'>` : '';
+        }
+    } else if (stingerOverlay) {
         stingerOverlay.remove();
     }
 

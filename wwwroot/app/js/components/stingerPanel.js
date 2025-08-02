@@ -44,26 +44,50 @@ export function renderStingerPanel(container, eventId){
                         ${options.map((o,i)=>`<option value="${i}">${o.label}</option>`).join('')}
                     </select>
                 </div>
+                <div class="mb-2">
+                    <label class="block text-sm">Style</label>
+                    <select id="stinger-style" class="border p-1 w-full">
+                        <option value="logo">Logo Only</option>
+                        <option value="split">Split Slide</option>
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <label class="block text-sm">Colour</label>
+                    <input id="stinger-color" type="color" class="border p-1 w-full" value="#000000">
+                </div>
                 <div class="flex gap-2">
                     <button id="stinger-preview" class="control-button btn-sm">Preview</button>
                     <button id="stinger-live" class="control-button btn-sm">Live</button>
-                    <button id="stinger-hide" class="control-button btn-sm">Hide</button>
                 </div>
             </div>`;
         const sel = container.querySelector('#stinger-select');
+        const styleSel = container.querySelector('#stinger-style');
+        const colorInp = container.querySelector('#stinger-color');
         const previewBtn = container.querySelector('#stinger-preview');
         const liveBtn = container.querySelector('#stinger-live');
-        const hideBtn = container.querySelector('#stinger-hide');
+        let previewing = false;
+        let living = false;
         if(previewBtn) previewBtn.onclick = () => {
             const opt = options[parseInt(sel.value||'0',10)];
-            if(opt) updateOverlayState(eventId,{stinger:{logo:opt.logo},stingerPreviewVisible:true,stingerVisible:false});
+            if(previewing){
+                updateOverlayState(eventId,{stingerPreviewVisible:false});
+                previewing = false;
+            } else if(opt){
+                updateOverlayState(eventId,{stinger:{logo:opt.logo,style:styleSel.value,color:colorInp.value},stingerPreviewVisible:true,stingerVisible:false});
+                previewing = true;
+                living = false;
+            }
         };
         if(liveBtn) liveBtn.onclick = () => {
             const opt = options[parseInt(sel.value||'0',10)];
-            if(opt) updateOverlayState(eventId,{stinger:{logo:opt.logo},stingerVisible:true,stingerPreviewVisible:false});
-        };
-        if(hideBtn) hideBtn.onclick = () => {
-            updateOverlayState(eventId,{stingerVisible:false,stingerPreviewVisible:false});
+            if(living){
+                updateOverlayState(eventId,{stingerVisible:false});
+                living = false;
+            } else if(opt){
+                updateOverlayState(eventId,{stinger:{logo:opt.logo,style:styleSel.value,color:colorInp.value},stingerVisible:true,stingerPreviewVisible:false});
+                living = true;
+                previewing = false;
+            }
         };
     }
 }
