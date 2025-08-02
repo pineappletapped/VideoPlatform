@@ -1,7 +1,7 @@
 import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 import { getDatabaseInstance } from "../firebaseApp.js";
 import { sportsData } from "../sportsConfig.js";
-import { updateOverlayState, listenOverlayState, addMatchLog, listenMatchLog, listenFavorites, updateFavorites } from "../firebase.js";
+import { updateOverlayState, listenOverlayState, addMatchLog, listenFavorites, updateFavorites } from "../firebase.js";
 import { suggestAbbreviation } from "../teamUtils.js";
 
 const DEFAULT_STYLES = [
@@ -38,18 +38,6 @@ const transitions = [
     { value: 'slide-down', label: 'Slide Down' }
 ];
 
-const BASE_LOG_EVENTS = ['goal','substitution'];
-const SPORT_LOG_EVENTS = {
-    'Football': ['corner','throw in','yellow card','red card','free kick'],
-    'Rugby': ['try','conversion','penalty','drop goal','yellow card','red card'],
-    'Hockey': ['green card','yellow card','red card'],
-    'Basketball': ['foul','timeout'],
-    'Cricket': ['wicket','four','six']
-};
-function getLogEventsForSport(sp){
-    const evs = SPORT_LOG_EVENTS[sp] || [];
-    return [...BASE_LOG_EVENTS, ...evs];
-}
 
 function contrastColor(hex) {
     let c = hex.replace('#', '');
@@ -97,7 +85,6 @@ function getScoreboardRef(eventId) {
 export function renderScoreboardPanel(container, sport = 'Football', eventId = 'demo') {
     const cfg = sportsData[sport] || sportsData['Football'];
     const scoreboardStyles = getStylesForSport(sport);
-    const logEvents = getLogEventsForSport(sport);
 
     let teamsData = null;
 
@@ -112,7 +99,6 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
     }
     let currentData = null;
     let timerInterval = null;
-    let matchLog = [];
     let favorites = { scoreboard: false };
 
     const teamsRef = ref(db, `teams/${eventId}`);
@@ -137,7 +123,6 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         render(currentData);
         updateOverlayState(eventId, { scoreboard: currentData });
     });
-    listenMatchLog(eventId, data => { matchLog = data || []; render(currentData); });
 
     function defaultData() {
         const startVal = cfg.scoreboard.start || 0;
@@ -186,18 +171,6 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                     <button id="sb-fav" class="control-button btn-sm">${favorites.scoreboard ? '★' : '☆'}</button>
                 </div>
                 <table id="sb-table" class="w-full text-sm"></table>
-                <div id="sb-log" class="mt-4">
-                    <h3 class="font-bold text-md mb-1">Match Log</h3>
-                    <div class="flex gap-2 mb-2">
-                        <select id="log-type" class="border p-1 flex-1">
-                            ${logEvents.map(e=>`<option value="${e}">${e}</option>`).join('')}
-                        </select>
-                        <select id="log-team" class="border p-1"></select>
-                        <select id="log-player" class="border p-1 flex-1"></select>
-                        <button id="log-add" class="control-button btn-sm">Add</button>
-                    </div>
-                    <table id="log-table" class="text-sm w-full"></table>
-                </div>
                 <div id="sb-modal" class="modal-overlay" style="display:none;">
                     <div class="modal-window">
                         <h3 class="font-bold text-lg mb-2">Scoreboard Options</h3>
@@ -442,8 +415,6 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             };
         }
 
-        renderLogSection();
-
         const dartVal = container.querySelector('#dart-val');
         const dartBtnA = container.querySelector('#dart-a');
         const dartBtnB = container.querySelector('#dart-b');
@@ -686,49 +657,5 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             container.dataset.heartbeat = 'true';
         }
         updateDartStats();
-        renderLogTable();
-    }
-
-    function renderLogSection(){
-        const teamSel = container.querySelector('#log-team');
-        const playerSel = container.querySelector('#log-player');
-        if(teamSel){
-            teamSel.innerHTML = `<option value="a">${getTeam(0).name}</option><option value="b">${getTeam(1).name}</option>`;
-            teamSel.onchange = updatePlayers;
-        }
-        function updatePlayers(){
-            const team = teamSel.value;
-            const players = team==='a'? (getTeam(0).players||[]) : (getTeam(1).players||[]);
-            if(playerSel){
-                playerSel.innerHTML = ['<option value="">-</option>', ...players.map(p=>`<option value="${p.name}">${p.name}</option>`)].join('');
-            }
-        }
-        updatePlayers();
-        const addBtn = container.querySelector('#log-add');
-        if(addBtn){
-            addBtn.onclick = async ()=>{
-                const type = container.querySelector('#log-type').value;
-                const team = teamSel.value;
-                const player = playerSel.value;
-                const timeVal = container.querySelector('#sb-time')?.value || '';
-                await addMatchLog(eventId,{ts:Date.now(),type,team,player,time:timeVal});
-                if(type==='goal'){
-                    const idx = team==='a'?0:1;
-                    data.scores[idx] = (data.scores[idx]||0)+1;
-                    await saveData(getFormData());
-                }
-            };
-        }
-        renderLogTable();
-    }
-
-    function renderLogTable(){
-        const tbl = container.querySelector('#log-table');
-        if(!tbl) return;
-        const rows = (matchLog||[]).map(e=>{
-            const teamName = e.team==='a'?getTeam(0).name:getTeam(1).name;
-            return `<tr><td class='pr-2'>${e.time||''}</td><td>${teamName}</td><td>${e.type}</td><td>${e.player||''}</td></tr>`;
-        }).join('');
-        tbl.innerHTML = `<thead><tr><th class='pr-2'>Time</th><th>Team</th><th>Type</th><th>Player</th></tr></thead><tbody>${rows}</tbody>`;
     }
 }
