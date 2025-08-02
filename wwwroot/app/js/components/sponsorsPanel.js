@@ -39,7 +39,7 @@ export function renderSponsorsPanel(container, eventId){
                         <form id="sponsor-form">
                             <input type="hidden" name="idx" />
                             <div class="mb-2"><input class="border p-1 w-full" name="name" placeholder="Name" required></div>
-                            <div class="mb-2"><input type="color" name="color" value="#ffffff"></div>
+                            <div class="mb-2 flex gap-2"><input type="color" name="color" value="#ffffff" class="flex-1"><input type="color" name="color2" value="#000000" class="flex-1"></div>
                             <div class="mb-2"><input type="file" id="logo-file"><button type="button" id="upload-logo" class="control-button btn-sm ml-2">Upload</button></div>
                             <div class="mb-2"><input class="border p-1 w-full" name="logo" placeholder="Logo URL"></div>
                             <div class="flex gap-2"><button class="control-button btn-sm" type="submit">Save</button><button type="button" id="cancel" class="control-button btn-sm bg-gray-400">Cancel</button></div>
@@ -97,13 +97,14 @@ export function renderSponsorsPanel(container, eventId){
         form.idx.value = idx!=null?idx:'';
         form.name.value = idx!=null?sponsors[idx].name:'';
         form.color.value = idx!=null?sponsors[idx].color||'#ffffff':'#ffffff';
+        form.color2.value = idx!=null?sponsors[idx].color2||'#000000':'#000000';
         form.logo.value = idx!=null?sponsors[idx].logo:'';
         document.getElementById('logo-file').value='';
         modal.style.display='flex';
         form.onsubmit = async e=>{
             e.preventDefault();
             const data = Object.fromEntries(new FormData(form));
-            const obj = { name:data.name, logo:data.logo, color:data.color };
+            const obj = { name:data.name, logo:data.logo, color:data.color, color2:data.color2 };
             if(data.idx!=='') sponsors[parseInt(data.idx,10)]=obj; else sponsors.push(obj);
             await setSponsors(eventId, sponsors);
             modal.style.display='none';

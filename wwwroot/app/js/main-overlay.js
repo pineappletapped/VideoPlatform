@@ -798,17 +798,18 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         stingerOverlay.style.fontFamily = branding.font;
         stingerOverlay.style.opacity = previewMode ? '0.6' : '1';
         const style = stingerData.style || 'logo';
-        const color = stingerData.color || branding.primaryColor || '#000';
+        const colors = stingerData.colors || [branding.primaryColor || '#000', branding.secondaryColor1 || '#fff'];
+        const textColor = branding.primaryColor || '#fff';
         stingerOverlay.style.background = 'transparent';
         if (style === 'split') {
             stingerOverlay.innerHTML = `
                 <div class="stinger-split">
-                    <div class="stinger-split-top" style="background:${color}"></div>
-                    <div class="stinger-split-bottom" style="background:${color}"></div>
-                    ${stingerData.logo ? `<img src='${stingerData.logo}' class='stinger-logo'>` : ''}
+                    <div class="stinger-split-top" style="background:${colors[0]}"></div>
+                    <div class="stinger-split-bottom" style="background:${colors[1]}"></div>
+                    ${stingerData.logo ? `<img src='${stingerData.logo}' class='stinger-logo'>` : stingerData.text ? `<div class='stinger-logo stinger-text' style='color:${textColor}'>${stingerData.text}</div>` : ''}
                 </div>`;
         } else {
-            stingerOverlay.innerHTML = stingerData.logo ? `<img src='${stingerData.logo}'>` : '';
+            stingerOverlay.innerHTML = stingerData.logo ? `<img src='${stingerData.logo}'>` : stingerData.text ? `<div class='stinger-text' style='color:${textColor}'>${stingerData.text}</div>` : '';
         }
     } else if (stingerOverlay) {
         stingerOverlay.remove();
