@@ -1,4 +1,4 @@
-import { setGraphicsData, updateGraphicsData, getGraphicsData, listenGraphicsData, listenFavorites, updateFavorites, addMatchLog, listenMatchLog } from '../firebase.js';
+import { setGraphicsData, updateGraphicsData, getGraphicsData, listenGraphicsData, listenFavorites, updateFavorites, addMatchLog, listenOverlayState } from '../firebase.js';
 import { ref, onValue } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
 import { getDatabaseInstance } from '../firebaseApp.js';
 import { sportsData } from '../sportsConfig.js';
@@ -31,7 +31,7 @@ let liveTitleSlideId = null;
 let previewTitleSlideId = null;
 let graphicsData = { lowerThirds: [], titleSlides: [], teams: {} };
 let favorites = { lowerThirds: [], titleSlides: [], scoreboard: false };
-let matchLog = [];
+let overlayState = {};
 
 function saveLiveState(eventId, mode) {
     // Only update visibility IDs so preview actions don't overwrite graphics data
@@ -66,7 +66,6 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
         const teamsRef = ref(db, `teams/${eventId}`);
         onValue(teamsRef, snap => { teamsData = snap.val(); renderPanel(); });
         logEvents = getLogEventsForSport(eventData.sport);
-        listenMatchLog(eventId, data => { matchLog = data || []; renderPanel(); });
     }
     // Listen for graphics changes from Firebase
     listenGraphicsData(eventId, (data) => {
@@ -83,6 +82,7 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
         renderPanel();
     }, mode);
     listenFavorites(eventId, (fav) => { favorites = { lowerThirds: [], titleSlides: [], scoreboard: false, ...(fav || {}) }; renderPanel(); });
+    listenOverlayState(eventId, state => { overlayState = state || {}; });
 
     function renderPanel() {
         const lowerThirds = graphicsData.lowerThirds || [];
@@ -204,7 +204,6 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                         <select id="ige-player-on" class="border p-1 flex-1" style="display:none;"></select>
                         <button id="ige-add" class="control-button btn-sm">Add</button>
                     </div>
-                    <table id="ige-table" class="text-sm w-full mt-2"></table>
                 </div>
                 ` : ''}
                 ${modalHtml}
@@ -319,7 +318,16 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                     subtitle = off;
                     playerField = off;
                 }
-                await addMatchLog(eventId,{ ts: Date.now(), type, team: teamKey==='teamA'?'a':'b', player: playerField });
+                const sb = overlayState.scoreboard || {};
+                const parseTime = str => { const [m = '0', s = '0'] = str.split(':'); return parseInt(m) * 60 + parseInt(s); };
+                const formatTime = secs => `${Math.floor(secs/60)}:${(Math.abs(secs)%60).toString().padStart(2,'0')}`;
+                let secs = parseTime(sb.time || '0:00');
+                if(sb.timerRunning && sb.timerStart){
+                    const elapsed = Math.floor((Date.now()-sb.timerStart)/1000);
+                    secs = sb.timeDirection === 'down' ? Math.max(0,(sb.timerBase||0) - elapsed) : (sb.timerBase||0) + elapsed;
+                }
+                const timeStr = formatTime(secs);
+                await addMatchLog(eventId,{ ts: Date.now(), type, team: teamKey==='teamA'?'a':'b', player: playerField, time: timeStr });
                 const obj = {
                     id: (Date.now()+Math.random()).toString(36),
                     title: `${teamName} ${type.charAt(0).toUpperCase()+type.slice(1)}`,
@@ -332,15 +340,6 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                 lowerThirds.push(obj);
                 saveGraphicsData(eventId,{ lowerThirds, titleSlides }, mode);
             };
-
-            const table = container.querySelector('#ige-table');
-            if (table) {
-                const rows = (matchLog||[]).map(e=>{
-                    const tName = e.team==='a' ? (teamsData.teamA?.name || 'Team A') : (teamsData.teamB?.name || 'Team B');
-                    return `<tr><td class='pr-2'>${tName}</td><td class='pr-2'>${e.type}</td><td>${e.player||''}</td></tr>`;
-                }).join('');
-                table.innerHTML = `<thead><tr><th class='pr-2'>Team</th><th class='pr-2'>Type</th><th>Player</th></tr></thead><tbody>${rows}</tbody>`;
-            }
         }
         // Row button handlers
         container.querySelectorAll('button[data-action]').forEach(btn => {

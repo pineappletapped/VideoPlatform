@@ -1,7 +1,7 @@
 import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 import { getDatabaseInstance } from "../firebaseApp.js";
 import { sportsData } from "../sportsConfig.js";
-import { updateOverlayState, listenOverlayState, addMatchLog, listenFavorites, updateFavorites } from "../firebase.js";
+import { updateOverlayState, listenOverlayState, addMatchLog, listenFavorites, updateFavorites, listenMatchLog } from "../firebase.js";
 import { suggestAbbreviation } from "../teamUtils.js";
 
 const DEFAULT_STYLES = [
@@ -100,6 +100,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
     let currentData = null;
     let timerInterval = null;
     let favorites = { scoreboard: false };
+    let matchLogs = [];
 
     const teamsRef = ref(db, `teams/${eventId}`);
     onValue(teamsRef, snap => { teamsData = snap.val(); if(currentData) render(currentData); });
@@ -117,12 +118,31 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         if (currentData) render(currentData);
     });
     listenFavorites(eventId, fav => { favorites = { scoreboard: false, ...(fav || {}) }; if(currentData) render(currentData); });
+    listenMatchLog(eventId, logs => { matchLogs = logs || []; updateScorersFromLogs(); if(currentData) render(currentData); });
 
     onValue(getScoreboardRef(eventId), snap => {
         currentData = snap.val() || defaultData();
+        updateScorersFromLogs();
         render(currentData);
         updateOverlayState(eventId, { scoreboard: currentData });
     });
+
+    function updateScorersFromLogs(){
+        if(!currentData) return;
+        const newScorers = [[],[]];
+        (matchLogs||[]).forEach(e=>{
+            if(e.type==='goal'){
+                const idx = e.team==='a'?0:1;
+                const entry = e.player ? `${e.player}${e.time?` ${e.time}`:''}` : e.time||'';
+                newScorers[idx].push(entry.trim());
+            }
+        });
+        if(JSON.stringify(currentData.scorers||[])!==JSON.stringify(newScorers)){
+            currentData.scorers = newScorers;
+            set(getScoreboardRef(eventId), currentData);
+            updateOverlayState(eventId,{scoreboard: currentData});
+        }
+    }
 
     function defaultData() {
         const startVal = cfg.scoreboard.start || 0;
@@ -266,8 +286,8 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             htmlParts.push(`<tr><td class="pr-2">Dart:</td><td><input type="number" class="border p-1 w-16" id="dart-val"><button id="dart-a" class="control-button btn-xs ml-1">${tnA}</button><button id="dart-b" class="control-button btn-xs ml-1">${tnB}</button><button id="new-leg" class="control-button btn-xs ml-1">New Leg</button></td></tr>`);
             htmlParts.push(`<tr><td colspan="2"><div id="dart-stats" class="text-xs"></div></td></tr>`);
         }
-        htmlParts.push(`<tr><td class="pr-2 align-top">${tnA} scorers:</td><td><textarea id="sb-scorers-a" class="border p-1 w-full text-xs" rows="2">${(data.scorers?.[0] || []).join('\n')}</textarea></td></tr>`);
-        htmlParts.push(`<tr><td class="pr-2 align-top">${tnB} scorers:</td><td><textarea id="sb-scorers-b" class="border p-1 w-full text-xs" rows="2">${(data.scorers?.[1] || []).join('\n')}</textarea></td></tr>`);
+        htmlParts.push(`<tr><td class="pr-2 align-top">${tnA} scorers:</td><td><div id="sb-scorers-a" class="text-xs">${(data.scorers?.[0] || []).join('<br>')}</div></td></tr>`);
+        htmlParts.push(`<tr><td class="pr-2 align-top">${tnB} scorers:</td><td><div id="sb-scorers-b" class="text-xs">${(data.scorers?.[1] || []).join('<br>')}</div></td></tr>`);
         if (cfg.scoreboard.breaks) {
             htmlParts.push(`<tr><td class="pr-2">Current Break:</td><td><input type="number" class="border p-1 w-16" id="sb-break" value="${data.currentBreak || 0}"></td></tr>`);
         }
@@ -494,10 +514,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             if (cfg.scoreboard.breaks) obj.currentBreak = parseInt(container.querySelector('#sb-break').value) || 0;
             if (cfg.scoreboard.highBreak) obj.highBreak = parseInt(container.querySelector('#sb-highbreak').value) || 0;
             if (cfg.scoreboard.turn) obj.turn = parseInt(container.querySelector('#sb-turn').value) || 0;
-            obj.scorers = [
-                container.querySelector('#sb-scorers-a')?.value.split('\n').map(s=>s.trim()).filter(Boolean) || [],
-                container.querySelector('#sb-scorers-b')?.value.split('\n').map(s=>s.trim()).filter(Boolean) || []
-            ];
+            obj.scorers = currentData.scorers || [[],[]];
             if (sport === 'Darts' && data.checkoutText) {
                 obj.checkoutPlayer = data.checkoutPlayer;
                 obj.checkoutText = data.checkoutText;
