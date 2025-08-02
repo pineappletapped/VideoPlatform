@@ -12,17 +12,9 @@ const transitions = [
     { value: 'slide-down', label: 'Slide Down' }
 ];
 
-const SPORT_LOG_EVENTS = {
-    'Football': ['goal','substitution','corner','throw in','yellow card','red card','free kick'],
-    'Rugby': ['try','conversion','penalty','drop goal','yellow card','red card','substitution'],
-    'Hockey': ['goal','substitution','green card','yellow card','red card'],
-    'Basketball': ['point','substitution','foul','timeout'],
-    'Cricket': ['bowled out','wicket','four','six'],
-    'Snooker': ['147','100+ break']
-};
 const BASE_LOG_EVENTS = ['goal','substitution'];
 function getLogEventsForSport(sp){
-    return SPORT_LOG_EVENTS[sp] || BASE_LOG_EVENTS;
+    return sportsData[sp]?.logEvents || BASE_LOG_EVENTS;
 }
 
 let liveLowerThirdId = null;

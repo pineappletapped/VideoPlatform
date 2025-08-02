@@ -6,7 +6,8 @@ export const sportsData = {
     positions: ["GK","LB","CB","RB","LWB","RWB","DM","CM","AM","LW","RW","ST"],
     scoreboard: { periods: 2, periodLabel: "Half", time: true, timeDirection: 'up' },
     scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
-    scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }]
+    scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }],
+    logEvents: ['goal','substitution','corner','throw in','yellow card','red card','free kick']
   },
   "Rugby": {
     teamCount: 2,
@@ -24,7 +25,8 @@ export const sportsData = {
       { label: "Conv", value: 2, color: "#3b82f6" },
       { label: "Pen", value: 3, color: "#fbbf24" },
       { label: "Drop", value: 3, color: "#9ca3af" }
-    ]
+    ],
+    logEvents: ['try','conversion','penalty','drop goal','yellow card','red card','substitution']
   },
   "Hockey": {
     teamCount: 2,
@@ -33,7 +35,8 @@ export const sportsData = {
     positions: ["Goalkeeper","Defender","Midfielder","Forward"],
     scoreboard: { periods: 4, periodLabel: "Quarter", time: true, timeDirection: 'up' },
     scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
-    scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }]
+    scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }],
+    logEvents: ['goal','substitution','green card','yellow card','red card']
   },
   "Ice Hockey": {
     teamCount: 2,
@@ -42,7 +45,8 @@ export const sportsData = {
     positions: ["Goalie","Defense","Center","Winger"],
     scoreboard: { periods: 3, periodLabel: "Period", time: true, timeDirection: 'down' },
     scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
-    scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }]
+    scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }],
+    logEvents: ['goal','penalty','power play','substitution','timeout']
   },
   "Boxing": {
     teamCount: 2,
@@ -51,7 +55,8 @@ export const sportsData = {
     positions: ["Fighter"],
     scoreboard: { round: true, time: true, timeDirection: 'down' },
     scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
-    scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }]
+    scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }],
+    logEvents: ['knockdown','knockout','warning','round end']
   },
   "Darts": {
     teamCount: 2,
@@ -66,7 +71,8 @@ export const sportsData = {
       { label: "-10", value: -10, color: "#6366f1" },
       { label: "-20", value: -20, color: "#f59e0b" },
       { label: "-60", value: -60, color: "#ef4444" }
-    ]
+    ],
+    logEvents: ['180','checkout','set won','leg won']
   },
   "Snooker": {
     teamCount: 2,
@@ -84,7 +90,8 @@ export const sportsData = {
       { label: "Pnk", value: 6, color: "#ff69b4" },
       { label: "Blk", value: 7, color: "#000000" },
       { label: "Foul", value: -4, color: "#ffffff", textColor: "#000" }
-    ]
+    ],
+    logEvents: ['147','100+ break','foul','frame win']
   },
   "Tennis": {
     teamCount: 2,
@@ -93,7 +100,8 @@ export const sportsData = {
     positions: ["Player"],
     scoreboard: { sets: true, games: true },
     scoreboardStyles: ['style1','style2','style3','style4','style5'],
-    scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }]
+    scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }],
+    logEvents: ['ace','double fault','break point','set won']
   },
   "Table Tennis": {
     teamCount: 2,
@@ -102,7 +110,8 @@ export const sportsData = {
     positions: ["Player"],
     scoreboard: { games: true, points: true },
     scoreboardStyles: ['style1','style2','style3','style4','style5'],
-    scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }]
+    scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }],
+    logEvents: ['point','fault','timeout','game won']
   },
   "Pool": {
     teamCount: 2,
@@ -111,7 +120,8 @@ export const sportsData = {
     positions: ["Player"],
     scoreboard: { frames: true },
     scoreboardStyles: ['style1','style2','style3','style4','style5'],
-    scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }]
+    scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }],
+    logEvents: ['ball potted','foul','rack won','break']
   },
   "Basketball": {
     teamCount: 2,
@@ -124,7 +134,8 @@ export const sportsData = {
       { label: "+1", value: 1, color: "#3b82f6" },
       { label: "+2", value: 2, color: "#10b981" },
       { label: "+3", value: 3, color: "#ef4444" }
-    ]
+    ],
+    logEvents: ['point','substitution','foul','timeout']
   },
   "Netball": {
     teamCount: 2,
@@ -133,7 +144,8 @@ export const sportsData = {
     positions: ["GS","GA","WA","C","WD","GD","GK"],
     scoreboard: { periods: 4, periodLabel: "Quarter", time: true, timeDirection: 'down' },
     scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
-    scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }]
+    scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }],
+    logEvents: ['goal','turnover','interception','timeout','substitution']
   },
   "Cricket": {
     teamCount: 2,
@@ -145,7 +157,8 @@ export const sportsData = {
     scoringButtons: [
       { label: "+1", value: 1, color: "#10b981" },
       { label: "Wkt", value: "w", color: "#ef4444" }
-    ]
+    ],
+    logEvents: ['bowled out','wicket','four','six','no ball','wide']
   },
   "Golf": {
     teamCount: 1,
@@ -154,7 +167,8 @@ export const sportsData = {
     positions: ["Player"],
     scoreboard: { golf: true },
     scoreboardStyles: ['style1'],
-    scoringButtons: []
+    scoringButtons: [],
+    logEvents: ['birdie','eagle','bogey','par','hole in one']
   },
   "Baseball": {
     teamCount: 2,
@@ -166,7 +180,8 @@ export const sportsData = {
     ],
     scoreboard: { periods: 9, periodLabel: "Inning" },
     scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
-    scoringButtons: [{ label: "Run", value: 1, color: "#10b981" }]
+    scoringButtons: [{ label: "Run", value: 1, color: "#10b981" }],
+    logEvents: ['home run','strikeout','walk','error','substitution']
   },
   "American Football": {
     teamCount: 2,
@@ -180,7 +195,8 @@ export const sportsData = {
       { label: "FG", value: 3, color: "#3b82f6" },
       { label: "XP", value: 1, color: "#fbbf24" },
       { label: "2P", value: 2, color: "#8b5cf6" }
-    ]
+    ],
+    logEvents: ['touchdown','field goal','extra point','two-point conversion','safety','turnover','penalty','timeout']
   },
   "Volleyball": {
     teamCount: 2,
@@ -189,7 +205,8 @@ export const sportsData = {
     positions: ["Setter","Opposite","Outside","Middle","Libero","Defensive Specialist"],
     scoreboard: { games: true, points: true },
     scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
-    scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }]
+    scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }],
+    logEvents: ['point','ace','block','timeout','substitution']
   },
   "Badminton": {
     teamCount: 2,
@@ -198,7 +215,8 @@ export const sportsData = {
     positions: ["Player"],
     scoreboard: { games: true, points: true },
     scoreboardStyles: ['style1','style2','style3','style4','style5'],
-    scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }]
+    scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }],
+    logEvents: ['point','fault','timeout','game won']
   },
   "Squash": {
     teamCount: 2,
@@ -207,7 +225,8 @@ export const sportsData = {
     positions: ["Player"],
     scoreboard: { games: true, points: true },
     scoreboardStyles: ['style1','style2','style3','style4','style5'],
-    scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }]
+    scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }],
+    logEvents: ['point','stroke','timeout','game won']
   },
   "Gaelic Football": {
     teamCount: 2,
@@ -224,7 +243,8 @@ export const sportsData = {
     scoringButtons: [
       { label: "Point", value: 1, color: "#10b981" },
       { label: "Goal", value: 3, color: "#ef4444" }
-    ]
+    ],
+    logEvents: ['point','goal','free kick','substitution','yellow card','red card']
   },
   "Hurling": {
     teamCount: 2,
@@ -241,7 +261,8 @@ export const sportsData = {
     scoringButtons: [
       { label: "Point", value: 1, color: "#10b981" },
       { label: "Goal", value: 3, color: "#ef4444" }
-    ]
+    ],
+    logEvents: ['point','goal','free puck','substitution','yellow card','red card']
   }
 };
 
