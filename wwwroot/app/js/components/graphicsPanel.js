@@ -12,17 +12,17 @@ const transitions = [
     { value: 'slide-down', label: 'Slide Down' }
 ];
 
-const BASE_LOG_EVENTS = ['goal','substitution'];
 const SPORT_LOG_EVENTS = {
-    'Football': ['corner','throw in','yellow card','red card','free kick'],
-    'Rugby': ['try','conversion','penalty','drop goal','yellow card','red card'],
-    'Hockey': ['green card','yellow card','red card'],
-    'Basketball': ['foul','timeout'],
-    'Cricket': ['wicket','four','six']
+    'Football': ['goal','substitution','corner','throw in','yellow card','red card','free kick'],
+    'Rugby': ['try','conversion','penalty','drop goal','yellow card','red card','substitution'],
+    'Hockey': ['goal','substitution','green card','yellow card','red card'],
+    'Basketball': ['point','substitution','foul','timeout'],
+    'Cricket': ['bowled out','wicket','four','six'],
+    'Snooker': ['147','100+ break']
 };
+const BASE_LOG_EVENTS = ['goal','substitution'];
 function getLogEventsForSport(sp){
-    const evs = SPORT_LOG_EVENTS[sp] || [];
-    return [...BASE_LOG_EVENTS, ...evs];
+    return SPORT_LOG_EVENTS[sp] || BASE_LOG_EVENTS;
 }
 
 let liveLowerThirdId = null;

@@ -505,7 +505,13 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         if (scoreboardData.round) info.push('R' + scoreboardData.round);
         if (scoreboardData.sets) info.push('Sets ' + scoreboardData.sets.join('-'));
         if (scoreboardData.games) info.push('Games ' + scoreboardData.games.join('-'));
-        if (scoreboardData.frames) info.push('Frames ' + scoreboardData.frames.join('-'));
+        if (scoreboardData.frames) {
+            info.push('Frames ' + scoreboardData.frames.join('-'));
+            if (scoreboardData.frameTarget) {
+                const lbl = scoreboardData.frameFormat === 'bestOf' ? 'Best of' : 'First to';
+                info.push(`${lbl} ${scoreboardData.frameTarget}`);
+            }
+        }
         if (scoreboardData.legs) info.push('Legs ' + scoreboardData.legs.join('-'));
         if (scoreboardData.points) info.push('Pts ' + scoreboardData.points.join('-'));
         if (scoreboardData.overs) info.push('Ov ' + scoreboardData.overs.join('-'));

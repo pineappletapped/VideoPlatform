@@ -160,6 +160,10 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         if (cfg.scoreboard.sets) base.sets = scores.map(() => 0);
         if (cfg.scoreboard.games) base.games = scores.map(() => 0);
         if (cfg.scoreboard.frames) base.frames = scores.map(() => 0);
+        if (sport === 'Snooker') {
+            base.frameFormat = 'firstTo';
+            base.frameTarget = 1;
+        }
         if (cfg.scoreboard.legs) base.legs = scores.map(() => 0);
         if (cfg.scoreboard.points) base.points = scores.map(() => 0);
         if (cfg.scoreboard.overs) base.overs = scores.map(() => 0);
@@ -264,6 +268,10 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         }
         if (cfg.scoreboard.frames) {
             htmlParts.push(`<tr><td class="pr-2">Frames:</td><td>${Array.from({length:count}).map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-frame-${i}" value="${(data.frames && data.frames[i]) || 0}">`).join('')}</td></tr>`);
+            if (sport === 'Snooker') {
+                const target = data.frameTarget || 0;
+                htmlParts.push(`<tr><td class="pr-2">Frame Target:</td><td><div class="flex items-center gap-2"><select id="sb-frame-format" class="border p-1"><option value="firstTo">First to</option><option value="bestOf">Best of</option></select><input type="number" class="border p-1 w-16" id="sb-frame-target" value="${target}"></div></td></tr>`);
+            }
         }
         if (cfg.scoreboard.legs) {
             htmlParts.push(`<tr><td class="pr-2">Legs:</td><td>${Array.from({length:count}).map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-leg-${i}" value="${(data.legs && data.legs[i]) || 0}">`).join('')}</td></tr>`);
@@ -300,6 +308,8 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             htmlParts.push(`<tr><td class="pr-2">In Play:</td><td><select id="sb-turn" class="border p-1"><option value="0">${optA}</option><option value="1">${optB}</option></select></td></tr>`);
         }
         table.innerHTML = htmlParts.join('');
+        const ffSel = container.querySelector('#sb-frame-format');
+        if (ffSel) ffSel.value = data.frameFormat || 'firstTo';
         updateDartStats();
         (data.scores || []).forEach((_, i) => {
             const holder = container.querySelector(`#score-btns-${i}`);
@@ -505,7 +515,13 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             if (cfg.scoreboard.round) obj.round = parseInt(container.querySelector('#sb-round').value) || 1;
             if (cfg.scoreboard.sets) obj.sets = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-set-${i}`).value) || 0);
             if (cfg.scoreboard.games) obj.games = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-game-${i}`).value) || 0);
-            if (cfg.scoreboard.frames) obj.frames = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-frame-${i}`).value) || 0);
+            if (cfg.scoreboard.frames) {
+                obj.frames = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-frame-${i}`).value) || 0);
+                if (sport === 'Snooker') {
+                    obj.frameFormat = container.querySelector('#sb-frame-format').value || 'firstTo';
+                    obj.frameTarget = parseInt(container.querySelector('#sb-frame-target').value) || 0;
+                }
+            }
             if (cfg.scoreboard.legs) obj.legs = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-leg-${i}`).value) || 0);
             if (cfg.scoreboard.points) obj.points = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-point-${i}`).value) || 0);
             if (cfg.scoreboard.overs) obj.overs = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-over-${i}`).value) || 0);
