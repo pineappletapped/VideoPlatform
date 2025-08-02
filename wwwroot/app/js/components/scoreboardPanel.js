@@ -248,7 +248,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             const activeClass = cfg.scoreboard.turn && data.turn === i ? ' class="active-player"' : '';
             const checkout = sport === 'Darts' ? getCheckout(sc) : null;
             const checkoutHtml = checkout ? `<span id="checkout-${i}" class="text-xs ml-2">${checkout}</span><button id="checkout-btn-${i}" class="control-button btn-xs ml-1">Show</button>` : '';
-            htmlParts.push(`<tr${activeClass}><td class="pr-2 whitespace-nowrap" style="background:${color};color:${textCol};min-width:6rem;text-align:center;">${name}</td><td><div class="flex items-center"><span id="team-score-${i}" class="px-2">${sc}</span><span id="score-btns-${i}" class="ml-1"></span>${checkoutHtml}</div></td></tr>`);
+            htmlParts.push(`<tr${activeClass}><td class="pr-2 whitespace-nowrap" style="background:${color};color:${textCol};min-width:6rem;text-align:center;">${name}</td><td><div class="flex items-center"><input type="number" id="team-score-${i}" class="border p-1 w-16 text-center" value="${sc}"><span id="score-btns-${i}" class="ml-1"></span>${checkoutHtml}</div></td></tr>`);
         });
         if (cfg.scoreboard.periods) {
             htmlParts.push(`<tr><td class="pr-2">${cfg.scoreboard.periodLabel || 'Period'}:</td><td><input type="number" class="border p-1 w-16" id="sb-period" value="${data.period || 1}"></td></tr>`);
@@ -314,6 +314,15 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         if (ffSel) ffSel.value = data.frameFormat || 'firstTo';
         updateDartStats();
         (data.scores || []).forEach((_, i) => {
+            const input = container.querySelector(`#team-score-${i}`);
+            if (input) {
+                input.addEventListener('input', () => {
+                    const val = parseInt(input.value) || 0;
+                    data.scores[i] = val;
+                    const cSpan = container.querySelector(`#checkout-${i}`);
+                    if (cSpan) cSpan.textContent = getCheckout(val) || '';
+                });
+            }
             const holder = container.querySelector(`#score-btns-${i}`);
             if (holder && cfg.scoringButtons) {
                 cfg.scoringButtons.forEach(btnCfg => {
@@ -323,10 +332,9 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                     btn.style.background = btnCfg.color || '#666';
                     if (btnCfg.textColor) btn.style.color = btnCfg.textColor;
                     btn.addEventListener('click', () => {
-                        const span = container.querySelector(`#team-score-${i}`);
-                        const val = parseInt(span.textContent) || 0;
+                        const val = parseInt(input.value) || 0;
                         const newVal = val + btnCfg.value;
-                        span.textContent = newVal;
+                        input.value = newVal;
                         data.scores[i] = newVal;
                         const cSpan = container.querySelector(`#checkout-${i}`);
                         if (cSpan) cSpan.textContent = getCheckout(newVal) || '';
@@ -345,7 +353,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             const cBtn = container.querySelector(`#checkout-btn-${i}`);
             if (cBtn) {
                 cBtn.addEventListener('click', async () => {
-                    const val = parseInt(container.querySelector(`#team-score-${i}`).textContent) || 0;
+                    const val = parseInt(input.value) || 0;
                     const checkout = getCheckout(val);
                     if (checkout) {
                         data.checkoutPlayer = i;
@@ -503,7 +511,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         }
 
         function getFormData() {
-            const obj = { scores: (data.scores || []).map((_,i)=> parseInt(container.querySelector(`#team-score-${i}`).textContent) || 0) };
+            const obj = { scores: (data.scores || []).map((_,i)=> parseInt(container.querySelector(`#team-score-${i}`).value) || 0) };
             if (cfg.scoreboard.periods) obj.period = parseInt(container.querySelector('#sb-period').value) || 1;
             if (cfg.scoreboard.time) {
                 obj.time = container.querySelector('#sb-time').value;
