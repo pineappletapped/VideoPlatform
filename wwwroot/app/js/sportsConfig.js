@@ -244,3 +244,8 @@ export const sportsData = {
     ]
   }
 };
+
+export function getTeamLabel(sport){
+  const cfg = sportsData[sport] || sportsData['Football'];
+  return cfg.playersPerTeam === 1 ? 'Players' : 'Teams';
+}

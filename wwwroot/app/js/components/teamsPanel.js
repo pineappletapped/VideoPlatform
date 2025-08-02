@@ -1,6 +1,6 @@
 import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 import { getDatabaseInstance } from "../firebaseApp.js";
-import { sportsData } from "../sportsConfig.js";
+import { sportsData, getTeamLabel } from "../sportsConfig.js";
 
 const db = getDatabaseInstance();
 
@@ -25,16 +25,19 @@ async function uploadToServer(file, path){
 
 export function renderTeamsPanel(container, eventId, sport='Football', tournament=false){
     const cfg = sportsData[sport] || sportsData['Football'];
+    const label = getTeamLabel(sport);
     let currentData = null;
     onValue(getTeamsRef(eventId), snap=>{ currentData = snap.val() || defaultData(); renderList(); });
 
     function defaultData(){
         const count = cfg.playersPerTeam + (cfg.subs||0);
         const players = Array.from({length:count}).map(()=>({name:'',pos:'',photo:''}));
+        const nameA = cfg.playersPerTeam === 1 ? 'Player 1' : 'Team A';
+        const nameB = cfg.playersPerTeam === 1 ? 'Player 2' : 'Team B';
         if(!tournament){
-            return { teamA:{name:'Team A', players:players.slice()}, teamB:{name:'Team B', players:players.slice()}, showPhotosFormation:false, showPhotosStats:false, showPhotosSubs:false };
+            return { teamA:{name:nameA, players:players.slice()}, teamB:{name:nameB, players:players.slice()}, showPhotosFormation:false, showPhotosStats:false, showPhotosSubs:false };
         }else{
-            return { teams:[{name:'Team 1', players:players.slice()},{name:'Team 2', players:players.slice()}], currentA:0, currentB:1, showPhotosFormation:false, showPhotosStats:false, showPhotosSubs:false };
+            return { teams:[{name:cfg.playersPerTeam === 1 ? 'Player 1' : 'Team 1', players:players.slice()},{name:cfg.playersPerTeam === 1 ? 'Player 2' : 'Team 2', players:players.slice()}], currentA:0, currentB:1, showPhotosFormation:false, showPhotosStats:false, showPhotosSubs:false };
         }
     }
 
@@ -45,7 +48,7 @@ export function renderTeamsPanel(container, eventId, sport='Football', tournamen
         const list = team=>team.players.map(pl=>`<li class="flex justify-between border-b border-gray-700 py-1"><span>${pl.name}</span><span class="text-xs text-gray-400">${pl.pos}${photoIcon(pl.photo)}</span></li>`).join('');
         container.innerHTML = `
             <div class='teams-panel'>
-                <h2 class="font-bold text-lg mb-2">Teams</h2>
+                <h2 class="font-bold text-lg mb-2">${label}</h2>
                 <div class="flex gap-4 text-sm mb-4">
                     <div class="flex-1 min-w-0">
                         <h3 class="font-semibold mb-1">${teamA.name}</h3>
@@ -78,16 +81,18 @@ export function renderTeamsPanel(container, eventId, sport='Football', tournamen
         const teamB = tournament ? currentData.teams[currentData.currentB||1] : currentData.teamB;
         const posOpts = cfg.positions.map(p=>`<option value="${p}">${p}</option>`).join('');
         const rows = (prefix, team)=>team.players.map((pl,idx)=>`<tr><td><input class="border p-1 w-full" id="${prefix}-name-${idx}" value="${pl.name}"></td><td><select class="border p-1 w-full" id="${prefix}-pos-${idx}"><option value=""></option>${posOpts}</select></td><td><input class="border p-1 w-full mb-1" id="${prefix}-photo-${idx}" placeholder="Photo URL" value="${pl.photo||''}"><input type="file" id="${prefix}-file-${idx}" class="text-xs" accept="image/*"></td></tr>`).join('');
+        const nameALabel = cfg.playersPerTeam === 1 ? 'Player 1 Name' : 'Team A Name';
+        const nameBLabel = cfg.playersPerTeam === 1 ? 'Player 2 Name' : 'Team B Name';
         return `
-            <h3 class="font-bold text-lg mb-2">Edit Teams</h3>
+            <h3 class="font-bold text-lg mb-2">Edit ${label}</h3>
             <div class="flex gap-4 text-sm mb-4">
                 <div class="flex-1 min-w-0">
-                    <label class="block text-sm mb-1">Team A Name</label>
+                    <label class="block text-sm mb-1">${nameALabel}</label>
                     <input class="border p-1 w-full mb-2" id="team-a-name" value="${teamA.name}">
                     <table class="w-full text-xs mb-2"><tbody>${rows('a', teamA)}</tbody></table>
                 </div>
                 <div class="flex-1 min-w-0">
-                    <label class="block text-sm mb-1">Team B Name</label>
+                    <label class="block text-sm mb-1">${nameBLabel}</label>
                     <input class="border p-1 w-full mb-2" id="team-b-name" value="${teamB.name}">
                     <table class="w-full text-xs mb-2"><tbody>${rows('b', teamB)}</tbody></table>
                 </div>

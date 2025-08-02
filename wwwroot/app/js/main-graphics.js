@@ -6,6 +6,7 @@ import { renderGraphicsPanel } from './components/graphicsPanel.js';
 import { renderScoreboardPanel } from './components/scoreboardPanel.js';
 import { renderStatsPanel } from './components/statsPanel.js';
 import { renderTeamsPanel } from './components/teamsPanel.js';
+import { getTeamLabel } from './sportsConfig.js';
 import { renderBrandingModal } from './components/brandingModal.js';
 import { renderProfileWizard } from './components/profileWizard.js';
 import { renderCalendarDrawer } from './components/calendarDrawer.js';
@@ -158,6 +159,9 @@ async function initializeComponents(eventData) {
     renderStatusBar(document.getElementById('status-bar'), eventData, {listener:false, atem:false, obs:false, sport:true, clock:true});
     updateGraphicsTabs(eventData.eventType || 'corporate', !!eventData.tournament);
     if ((eventData.eventType || 'corporate') === 'sports') {
+        const teamLabel = getTeamLabel(eventData.sport);
+        const teamsTabBtn = document.querySelector('[data-tab="teams"]');
+        if(teamsTabBtn) teamsTabBtn.textContent = teamLabel;
         renderScoreboardPanel(document.getElementById('scoreboard-panel'), eventData.sport, eventId);
         renderStatsPanel(document.getElementById('stats-panel'), eventId);
         renderTeamsPanel(document.getElementById('teams-panel'), eventId, eventData.sport, !!eventData.tournament);

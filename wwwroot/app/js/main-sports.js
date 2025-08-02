@@ -9,6 +9,7 @@ import { renderStatsPanel } from './components/statsPanel.js';
 import { renderBrandingModal } from './components/brandingModal.js';
 import { renderSponsorsPanel } from './components/sponsorsPanel.js';
 import { getEventMetadata, updateEventMetadata } from './firebase.js';
+import { getTeamLabel } from './sportsConfig.js';
 
 const params = new URLSearchParams(window.location.search);
 const eventId = params.get('event_id') || 'demo';
@@ -47,6 +48,9 @@ async function init() {
   sponsorsTab.appendChild(sponsorsPanel);
 
   function renderBySport(s){
+    const label = getTeamLabel(s);
+    const btn = document.querySelector('#right-tabs [data-tab="teams"]');
+    if(btn) btn.textContent = label;
     if(s === 'Golf') {
       renderGolfPanel(scoreboardPanel, eventId);
       teamsTab.classList.add('hidden');

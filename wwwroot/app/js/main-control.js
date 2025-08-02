@@ -20,6 +20,7 @@ import { renderVtsPanel } from './components/vtsPanel.js';
 import { renderMusicPanel } from './components/musicPanel.js';
 import { renderActiveGraphicsPanel } from './components/activeGraphicsPanel.js';
 import { requireAuth, logout } from './auth.js';
+import { getTeamLabel } from './sportsConfig.js';
 
 // Get event ID from URL params
 const params = new URLSearchParams(window.location.search);
@@ -168,14 +169,21 @@ async function initializeComponents(eventData) {
     
     updateGraphicsTabs(eventData.eventType || 'corporate');
     if ((eventData.eventType || 'corporate') === 'sports') {
+        const updateTeamsTab = sport => {
+            const btn = document.querySelector('[data-tab="teams"]');
+            if(btn) btn.textContent = getTeamLabel(sport);
+        };
         renderSportPanel(document.getElementById('sport-panel'), eventData, async (id, sport) => {
             await updateEventMetadata(eventId, { ...eventData, sport });
             eventData.sport = sport;
             renderScoreboardPanel(document.getElementById('scoreboard-panel'), sport, eventId);
+            renderTeamsPanel(document.getElementById('teams-panel'), eventId, sport);
+            updateTeamsTab(sport);
         });
         renderScoreboardPanel(document.getElementById('scoreboard-panel'), eventData.sport, eventId);
         renderStatsPanel(document.getElementById('stats-panel'), eventId);
         renderTeamsPanel(document.getElementById('teams-panel'), eventId, eventData.sport);
+        updateTeamsTab(eventData.sport);
     } else {
         renderProgramPreview(document.getElementById('schedule-panel'), eventData, onOverlayStateChange);
     }
