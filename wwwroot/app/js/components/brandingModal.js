@@ -41,38 +41,38 @@ export function renderBrandingModal(container, opts) {
     getBranding(targetId, isUser, (branding) => {
         container.innerHTML = `
             <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-                <div class="bg-white text-black p-6 rounded shadow-lg min-w-[340px] max-w-[95vw]">
+                <div class="bg-white text-black p-6 rounded shadow-lg min-w-[340px] max-w-[95vw] max-h-[90vh] overflow-y-auto">
                     <h2 class="font-bold text-xl mb-4">${isUser ? 'Account Branding' : 'Event Branding'}</h2>
-                    <form id="branding-form">
-                        <div class="mb-3">
+                    <form id="branding-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
                             <label class="block text-sm font-semibold mb-1">Primary Color</label>
                             <input type="color" name="primaryColor" value="${branding.primaryColor}" />
                         </div>
-                        <div class="mb-3">
+                        <div>
                             <label class="block text-sm font-semibold mb-1">Secondary Color 1</label>
                             <input type="color" name="secondaryColor1" value="${branding.secondaryColor1}" />
                         </div>
-                        <div class="mb-3">
+                        <div>
                             <label class="block text-sm font-semibold mb-1">Secondary Color 2</label>
                             <input type="color" name="secondaryColor2" value="${branding.secondaryColor2}" />
                         </div>
-                        <div class="mb-3">
-                            <label class="block text-sm font-semibold mb-1">Primary Logo</label>
-                            <input type="file" name="logoPrimary" accept="image/*" class="mb-1" />
-                            ${branding.logoPrimary ? `<img src="${resolveAssetPath(branding.logoPrimary)}" alt="Primary Logo" class="h-10 mt-1" />` : ''}
-                        </div>
-                        <div class="mb-3">
-                            <label class="block text-sm font-semibold mb-1">Secondary Logo</label>
-                            <input type="file" name="logoSecondary" accept="image/*" class="mb-1" />
-                            ${branding.logoSecondary ? `<img src="${resolveAssetPath(branding.logoSecondary)}" alt="Secondary Logo" class="h-10 mt-1" />` : ''}
-                        </div>
-                        <div class="mb-3">
+                        <div>
                             <label class="block text-sm font-semibold mb-1">Brand Font</label>
                             <select name="font" class="border p-1 w-full">
                                 ${FONT_OPTIONS.map(f => `<option value="${f}"${branding.font === f ? ' selected' : ''}>${f}</option>`).join('')}
                             </select>
                         </div>
-                        <div class="mb-3">
+                        <div class="sm:col-span-2">
+                            <label class="block text-sm font-semibold mb-1">Primary Logo</label>
+                            <input type="file" name="logoPrimary" accept="image/*" class="mb-1" />
+                            ${branding.logoPrimary ? `<img src="${resolveAssetPath(branding.logoPrimary)}" alt="Primary Logo" class="h-10 mt-1" />` : ''}
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-sm font-semibold mb-1">Secondary Logo</label>
+                            <input type="file" name="logoSecondary" accept="image/*" class="mb-1" />
+                            ${branding.logoSecondary ? `<img src="${resolveAssetPath(branding.logoSecondary)}" alt="Secondary Logo" class="h-10 mt-1" />` : ''}
+                        </div>
+                        <div>
                             <label class="block text-sm font-semibold mb-1">Schedule Sponsor Placement</label>
                             <select name="scheduleSponsorPlacement" class="border p-1 w-full">
                                 <option value="top-right"${branding.scheduleSponsorPlacement==='top-right'?' selected':''}>Top Right</option>
@@ -81,14 +81,14 @@ export function renderBrandingModal(container, opts) {
                                 <option value="bottom-sides"${branding.scheduleSponsorPlacement==='bottom-sides'?' selected':''}>Two Sides</option>
                             </select>
                         </div>
-                        <div class="mb-3">
+                        <div>
                             <label class="block text-sm font-semibold mb-1">Schedule Layout</label>
                             <select name="scheduleLayout" class="border p-1 w-full">
                                 <option value="corner"${!branding.scheduleLayout || branding.scheduleLayout==='corner'?' selected':''}>Corner Box</option>
                                 <option value="center"${branding.scheduleLayout==='center'?' selected':''}>Center Box</option>
                             </select>
                         </div>
-                        <div class="mb-3">
+                        <div class="sm:col-span-2">
                             <label class="block text-sm font-semibold mb-1">Social Template Style</label>
                             <select name="socialTemplateStyle" class="border p-1 w-full">
                                 <option value="style1"${!branding.socialTemplateStyle || branding.socialTemplateStyle==='style1'?' selected':''}>Style 1</option>
@@ -96,7 +96,7 @@ export function renderBrandingModal(container, opts) {
                                 <option value="style3"${branding.socialTemplateStyle==='style3'?' selected':''}>Style 3</option>
                             </select>
                         </div>
-                        <div class="flex gap-2 mt-4">
+                        <div class="col-span-1 sm:col-span-2 flex gap-2 mt-4">
                             <button type="submit" class="control-button btn-sm">Save</button>
                             <button type="button" id="branding-cancel" class="control-button btn-sm bg-gray-400 hover:bg-gray-600">Cancel</button>
                         </div>
