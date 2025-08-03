@@ -1,6 +1,7 @@
 import { listenMatchLog, updateMatchLogEntry, listenBranding } from '../firebase.js';
 import { generateSocialAssets } from '../socialAssets.js';
 import { renderBrandingModal } from './brandingModal.js';
+import { renderPostStyleModal } from './postStyleModal.js';
 
 export function renderSocialPanel(container, eventId) {
   class SocialPanel extends HTMLElement {
@@ -9,7 +10,20 @@ export function renderSocialPanel(container, eventId) {
       this.logs = [];
       this.generating = new Set();
       this.templateStyle = 'style1';
-      listenBranding(eventId, b => { this.templateStyle = b?.socialTemplateStyle || 'style1'; });
+      this.branding = null;
+      this.styleSettings = {
+        includeEventLogo: true,
+        eventLogoChoice: 'primary',
+        includeBrandLogo: true,
+        includePlayerPhotos: true,
+        includeTeamLogos: true,
+        includeTeamColors: true,
+        sponsors: []
+      };
+      listenBranding(eventId, b => {
+        this.templateStyle = b?.socialTemplateStyle || 'style1';
+        this.branding = b;
+      });
       listenMatchLog(eventId, logs => {
         this.logs = logs || [];
         this.logs.forEach(l => { if (l.social) this.generating.delete(l.id); });
@@ -24,7 +38,7 @@ export function renderSocialPanel(container, eventId) {
       this.generating.add(id);
       this.render();
       try {
-        const urls = await generateSocialAssets(this.eventId, id, this.templateStyle);
+        const urls = await generateSocialAssets(this.eventId, id, this.templateStyle, this.styleSettings);
         await updateMatchLogEntry(this.eventId, id, { ...log, social: urls });
       } catch (e) {
         console.error(e);
@@ -69,7 +83,17 @@ export function renderSocialPanel(container, eventId) {
     render() {
       this.innerHTML = `
         <top-bar></top-bar>
-        <div class="p-4 grid grid-cols-2 gap-6">
+        <div class="p-4">
+          <div class="mb-4 flex items-center gap-2 text-sm">
+            <label class="font-semibold">Post Style</label>
+            <select id="style-select" class="border p-1">
+              <option value="style1" ${this.templateStyle==='style1'?'selected':''}>Style 1</option>
+              <option value="style2" ${this.templateStyle==='style2'?'selected':''}>Style 2</option>
+              <option value="style3" ${this.templateStyle==='style3'?'selected':''}>Style 3</option>
+            </select>
+            <button id="edit-style" class="control-button btn-sm">Edit Style</button>
+          </div>
+          <div class="grid grid-cols-2 gap-6">
           <section>
             <h2 class="font-bold mb-2">Live Match Log</h2>
             <table class="w-full text-sm">
@@ -85,11 +109,23 @@ export function renderSocialPanel(container, eventId) {
               ${this.logs.map(l => this.postBlock(l)).join('') || '<div class="text-gray-500 text-sm">No posts yet.</div>'}
             </div>
           </section>
+          </div>
         </div>
       `;
       this.querySelectorAll('button.generate').forEach(btn => {
         btn.onclick = () => this.handleGenerate(btn.dataset.id);
       });
+      const styleSel = this.querySelector('#style-select');
+      styleSel.onchange = () => { this.templateStyle = styleSel.value; };
+      this.querySelector('#edit-style').onclick = () => {
+        let modal = document.getElementById('post-style-modal');
+        if (!modal) { modal = document.createElement('div'); modal.id = 'post-style-modal'; document.body.appendChild(modal); }
+        renderPostStyleModal(modal, {
+          branding: this.branding || {},
+          settings: this.styleSettings,
+          onSave: opts => { this.styleSettings = opts; modal.classList.add('hidden'); }
+        });
+      };
       const top = this.querySelector('top-bar');
       top.addEventListener('brand-settings', () => {
         let modal = document.getElementById('branding-modal');

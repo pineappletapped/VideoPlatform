@@ -1,6 +1,6 @@
 import { SOCIAL_TEMPLATES } from './templates/socialTemplates.js';
 
-export async function renderSocialImage({ templateStyle, aspect, data, size }) {
+export async function renderSocialImage({ templateStyle, aspect, data, size, options = {} }) {
   const [w, h] = size;
   const canvas = new OffscreenCanvas(w, h);
   const ctx = canvas.getContext('2d');
