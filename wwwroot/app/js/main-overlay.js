@@ -88,25 +88,16 @@ function applyBranding(branding = DEFAULT_BRANDING) {
     });
 }
 
-async function renderIntroOverlay(introData, branding) {
+async function renderIntroOverlay(introData, branding, introSettings = {}, scoreboardData = {}) {
     const holdslateOverlay = document.getElementById('holdslate-overlay');
     if (!holdslateOverlay) return;
-    let titleHtml = '';
-    if (introData.title) {
-        titleHtml = `<div style="font-size:3rem;font-weight:bold;margin-bottom:1rem;">${introData.title}</div>`;
-    }
-    let teamsHtml = '';
-    if (introData.homeTeam || introData.awayTeam) {
-        teamsHtml = `<div style="font-size:2rem;margin-bottom:1rem;">${introData.homeTeam || ''} ${introData.homeTeam && introData.awayTeam ? 'vs' : ''} ${introData.awayTeam || ''}</div>`;
-    }
-    let locationHtml = '';
-    if (introData.location) {
-        locationHtml = `<div style="font-size:1.5rem;margin-bottom:1rem;">${introData.location}</div>`;
-    }
-    let sponsorHtml = '';
-    if (introData.sponsor) {
-        sponsorHtml = `<img src="${introData.sponsor}" style="max-width:30%;margin-top:1rem;"/>`;
-    }
+    const home = scoreboardData.names?.[0] || scoreboardData.homeName || '';
+    const away = scoreboardData.names?.[1] || scoreboardData.awayName || '';
+    let titleHtml = introData.title ? `<div style="font-size:3rem;font-weight:bold;margin-bottom:1rem;">${introData.title}</div>` : '';
+    let teamsHtml = (home || away) ? `<div style="font-size:2rem;margin-bottom:1rem;">${home} ${home && away ? 'vs' : ''} ${away}</div>` : '';
+    let locationHtml = introSettings.venue ? `<div style="font-size:1.5rem;margin-bottom:1rem;">${introSettings.venue}</div>` : '';
+    const sponsor = sponsorsData[sponsorPlacements.intro];
+    let sponsorHtml = sponsor ? `<img src="${sponsor.logo}" style="max-width:30%;margin-top:1rem;"/>` : '';
     let messageHtml = '';
     if (introData.message) {
         messageHtml = `<div style="background:rgba(0,0,0,0.6);color:#fff;padding:1.5rem 2.5rem;border-radius:0.5rem;font-size:2rem;max-width:80vw;text-align:center;margin-top:1rem;">${introData.message}</div>`;
@@ -127,23 +118,12 @@ async function renderIntroOverlay(introData, branding) {
         countdownHtml = `<div style="background:rgba(0,0,0,0.7);color:#fff;padding:1.5rem 2.5rem;border-radius:0.5rem;font-size:2.5rem;max-width:80vw;text-align:center;margin-top:1.5rem;">${countdownDisplay}</div>`;
     }
     let weatherHtml = '';
-    if (introData.weather) {
-        weatherHtml = `<div class="hs-weather" style="margin-top:1rem;font-size:1.5rem;">Loading weather...</div>`;
+    if (introSettings.weatherSlots && introSettings.weatherSlots.length) {
+        const header = introSettings.weatherLoc ? `<div style="text-align:center;font-size:1.25rem;margin-bottom:0.5rem;">${introSettings.weatherLoc}</div>` : '';
+        const slotHtml = introSettings.weatherSlots.map(s=>`<div style='display:flex;flex-direction:column;align-items:center;padding:0 0.5rem;'><div>${s.time}</div><div>${s.icon}</div><div>${s.temp}</div></div>`).join('');
+        weatherHtml = `<div style="margin-top:1rem;font-size:1.5rem;">${header}<div style='display:flex;justify-content:center;'>${slotHtml}</div></div>`;
     }
     holdslateOverlay.innerHTML = `<div style="width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;">${titleHtml}${teamsHtml}${locationHtml}${sponsorHtml}${messageHtml}${countdownHtml}${weatherHtml}</div>`;
-    if (introData.weather) {
-        try {
-            const resp = await fetch(`https://wttr.in/${encodeURIComponent(introData.weather)}?format=j1`);
-            const data = await resp.json();
-            const cond = data.current_condition && data.current_condition[0];
-            const weatherEl = holdslateOverlay.querySelector('.hs-weather');
-            if (cond && weatherEl) {
-                weatherEl.innerHTML = `${cond.temp_C}°C ${cond.weatherDesc && cond.weatherDesc[0] ? cond.weatherDesc[0].value : ''}`;
-            }
-        } catch (err) {
-            console.warn('Weather fetch failed', err);
-        }
-    }
 }
 
 function playVT(vt) {
@@ -448,6 +428,8 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     // Intro Overlay
     let holdslateOverlay = overlayContainer.querySelector('#holdslate-overlay');
     const holdslateData = state && state.holdslate;
+    const introSettings = state && state.holdslateSettings || {};
+    const sb = state && state.scoreboard || {};
     const holdslateShow = previewMode ? state && state.holdslatePreviewVisible : state && state.holdslateVisible;
     if (holdslateShow && holdslateData && holdslateData.image) {
         if (!holdslateOverlay) {
@@ -467,10 +449,10 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         holdslateOverlay.style.zIndex = '100';
         holdslateOverlay.style.fontFamily = branding.font;
         holdslateOverlay.style.opacity = previewMode ? '0.6' : '1';
-        renderIntroOverlay(holdslateData, branding);
+        renderIntroOverlay(holdslateData, branding, introSettings, sb);
         if (countdownInterval) clearInterval(countdownInterval);
         if (holdslateData.countdown) {
-            countdownInterval = setInterval(() => renderIntroOverlay(holdslateData, branding), 1000);
+            countdownInterval = setInterval(() => renderIntroOverlay(holdslateData, branding, introSettings, sb), 1000);
         }
     } else if (holdslateOverlay) {
         holdslateOverlay.remove();

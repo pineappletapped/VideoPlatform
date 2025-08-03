@@ -8,15 +8,26 @@ function getIntroRef(eventId) {
     return ref(db, `holdslates/${eventId}`);
 }
 
+function getIntroSettingsRef(eventId) {
+    return ref(db, `introSettings/${eventId}`);
+}
+
 export function renderIntroPanel(container, eventId, onOverlayStateChange) {
     const eid = eventId || 'demo';
     let intros = [];
+    let introSettings = {};
     let activeIntro = {};
     let visible = false;
     let preview = false;
 
     onValue(getIntroRef(eid), snap => {
         intros = snap.val() || [];
+        render();
+    });
+
+    onValue(getIntroSettingsRef(eid), snap => {
+        introSettings = snap.val() || {};
+        updateOverlayState(eid,{ holdslateSettings:introSettings });
         render();
     });
 
@@ -33,17 +44,22 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
 
     function render(){
         const highlight = visible ? 'ring-4 ring-green-400' : preview ? 'ring-4 ring-brand' : '';
+        const weatherSection = introSettings.weatherLoc ? `<div class="mb-2"><button class="control-button btn-sm" id="hs-edit-weather">Weather Graphic</button></div>` : '';
         container.innerHTML = `
             <div class='intro-panel ${highlight}'>
                 <div class="flex items-center justify-between mb-2">
                     <h2 class="font-bold text-lg">Intro Graphics</h2>
-                    <button class="control-button btn-sm" id="hs-add">Add</button>
+                    <div class="flex gap-2">
+                        <button class="control-button btn-sm" id="hs-input">Input</button>
+                        <button class="control-button btn-sm" id="hs-add">Add</button>
+                    </div>
                 </div>
                 <div class="flex gap-2 mb-2">
                     <button class="control-button btn-sm" id="hs-show-fixtures">Show Fixtures</button>
                     <button class="control-button btn-sm" id="hs-show-formation">Formation Graphic</button>
                     <button class="control-button btn-sm" id="hs-show-course">Course Details</button>
                 </div>
+                ${weatherSection}
                 <ul class="space-y-2 mb-4">
                     ${intros.length===0 ? `<li class='text-gray-400'>No intro graphics yet.</li>` : intros.map((hs,i)=>`
                         <li class="flex items-center gap-4 bg-gray-50 rounded p-2 text-gray-900">
@@ -68,35 +84,11 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
                                 <label class="block text-sm">Title</label>
                                 <input class="border p-1 w-full" name="title" />
                             </div>
-                            <div class="mb-2 flex gap-2">
-                                <div class="flex-1">
-                                    <label class="block text-sm">Home Team</label>
-                                    <input class="border p-1 w-full" name="homeTeam" />
-                                </div>
-                                <div class="flex-1">
-                                    <label class="block text-sm">Away Team</label>
-                                    <input class="border p-1 w-full" name="awayTeam" />
-                                </div>
-                            </div>
-                            <div class="mb-2">
-                                <label class="block text-sm">Location</label>
-                                <input class="border p-1 w-full" name="location" />
-                            </div>
                             <div class="mb-2">
                                 <label class="block text-sm">Image</label>
                                 <input type="file" id="hs-file" accept="image/*" />
                                 <button type="button" id="hs-upload" class="control-button btn-sm mt-1">Upload</button>
                                 <input class="border p-1 w-full mt-1" name="image" placeholder="Uploaded image URL" />
-                            </div>
-                            <div class="mb-2">
-                                <label class="block text-sm">Sponsor Image</label>
-                                <input type="file" id="hs-sponsor-file" accept="image/*" />
-                                <button type="button" id="hs-sponsor-upload" class="control-button btn-sm mt-1">Upload</button>
-                                <input class="border p-1 w-full mt-1" name="sponsor" placeholder="Sponsor image URL" />
-                            </div>
-                            <div class="mb-2">
-                                <label class="block text-sm">Weather Location</label>
-                                <input class="border p-1 w-full" name="weather" placeholder="City, Country" />
                             </div>
                             <div class="mb-2">
                                 <label class="block text-sm">Message</label>
@@ -111,6 +103,59 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
                                 <button type="submit" class="control-button btn-sm">Save</button>
                                 <button type="button" id="hs-cancel" class="control-button btn-sm bg-gray-400 hover:bg-gray-600">Cancel</button>
                                 <span id="hs-status" class="text-xs text-gray-600 ml-2"></span>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div id="hs-input-modal" class="modal-overlay" style="display:none;">
+                    <div class="modal-window">
+                        <h3 class="font-bold text-lg mb-2">Intro Settings</h3>
+                        <form id="hs-input-form">
+                            <div class="mb-2">
+                                <label class="block text-sm">Venue Location</label>
+                                <input class="border p-1 w-full" name="venue" />
+                            </div>
+                            <div class="mb-2">
+                                <label class="block text-sm">Weather Location</label>
+                                <input class="border p-1 w-full" name="weatherLoc" />
+                            </div>
+                            <div class="flex gap-2 mt-4">
+                                <button type="submit" class="control-button btn-sm">Save</button>
+                                <button type="button" id="hs-input-cancel" class="control-button btn-sm bg-gray-400 hover:bg-gray-600">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div id="hs-weather-modal" class="modal-overlay" style="display:none;">
+                    <div class="modal-window">
+                        <h3 class="font-bold text-lg mb-2">Weather Graphic</h3>
+                        <form id="hs-weather-form">
+                            <div class="mb-2 flex gap-2">
+                                <input class="border p-1 flex-1" name="time1" placeholder="Time 1" />
+                                <input class="border p-1 flex-1" name="icon1" placeholder="Icon" />
+                                <input class="border p-1 flex-1" name="temp1" placeholder="Temp" />
+                            </div>
+                            <div class="mb-2 flex gap-2">
+                                <input class="border p-1 flex-1" name="time2" placeholder="Time 2" />
+                                <input class="border p-1 flex-1" name="icon2" placeholder="Icon" />
+                                <input class="border p-1 flex-1" name="temp2" placeholder="Temp" />
+                            </div>
+                            <div class="mb-2 flex gap-2">
+                                <input class="border p-1 flex-1" name="time3" placeholder="Time 3" />
+                                <input class="border p-1 flex-1" name="icon3" placeholder="Icon" />
+                                <input class="border p-1 flex-1" name="temp3" placeholder="Temp" />
+                            </div>
+                            <div class="mb-2 flex gap-2">
+                                <input type="color" class="flex-1" name="color1" />
+                                <input type="color" class="flex-1" name="color2" />
+                            </div>
+                            <div class="mb-2">
+                                <label class="block text-sm">Animation</label>
+                                <input class="border p-1 w-full" name="animation" placeholder="fade" />
+                            </div>
+                            <div class="flex gap-2 mt-4">
+                                <button type="submit" class="control-button btn-sm">Save</button>
+                                <button type="button" id="hs-weather-cancel" class="control-button btn-sm bg-gray-400 hover:bg-gray-600">Cancel</button>
                             </div>
                         </form>
                     </div>
@@ -140,6 +185,11 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
             if(act==='remove') btn.onclick=async()=>{ intros.splice(idx,1); await saveIntros(intros); };
         });
 
+        const inputBtn = container.querySelector('#hs-input');
+        if(inputBtn) inputBtn.onclick = () => showInputModal();
+        const weatherBtn = container.querySelector('#hs-edit-weather');
+        if(weatherBtn) weatherBtn.onclick = () => showWeatherModal();
+
         const modal = container.querySelector('#hs-modal');
         const form = container.querySelector('#hs-form');
         if(modal && form){
@@ -155,15 +205,7 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
                     setStatus('');
                     if(url) img = url;
                 }
-                let sponsorImg = data.sponsor;
-                if(form['hs-sponsor-file'].files[0]){
-                    const path = `uploads/${eid}/holdslates/${form['hs-sponsor-file'].files[0].name}`;
-                    setStatus('Uploading sponsor...');
-                    const url = await uploadToServer(form['hs-sponsor-file'].files[0], path);
-                    setStatus('');
-                    if(url) sponsorImg = url;
-                }
-                const hs = { name:data.name, title:data.title, homeTeam:data.homeTeam, awayTeam:data.awayTeam, location:data.location, image:img, sponsor:sponsorImg, weather:data.weather, message:data.message, countdown:data.countdown };
+                const hs = { name:data.name, title:data.title, image:img, message:data.message, countdown:data.countdown };
                 if(data.idx){ intros[data.idx] = hs; } else { intros.push(hs); }
                 await saveIntros(intros);
                 modal.style.display='none';
@@ -177,15 +219,6 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
                     if(url) form.image.value = url;
                 }
             };
-            container.querySelector('#hs-sponsor-upload').onclick = async () => {
-                if(form['hs-sponsor-file'].files[0]){
-                    const path = `uploads/${eid}/holdslates/${form['hs-sponsor-file'].files[0].name}`;
-                    setStatus('Uploading sponsor...');
-                    const url = await uploadToServer(form['hs-sponsor-file'].files[0], path);
-                    setStatus('');
-                    if(url) form.sponsor.value = url;
-                }
-            };
         }
     }
 
@@ -195,16 +228,10 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
         if(!modal || !form) return;
         form.name.value = hs.name || '';
         form.title.value = hs.title || '';
-        form.homeTeam.value = hs.homeTeam || '';
-        form.awayTeam.value = hs.awayTeam || '';
-        form.location.value = hs.location || '';
         form.image.value = hs.image || '';
-        form.sponsor.value = hs.sponsor || '';
-        form.weather.value = hs.weather || '';
         form.message.value = hs.message || '';
         form.countdown.value = hs.countdown ? new Date(hs.countdown).toISOString().slice(0,16) : '';
         form['hs-file'].value = '';
-        form['hs-sponsor-file'].value = '';
         form.idx.value = idx;
         container.querySelector('#hs-modal-title').textContent = idx===''?'Add Intro Graphic':'Edit Intro Graphic';
         modal.style.display = 'flex';
@@ -213,6 +240,60 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
     function setStatus(t){
         const el = document.getElementById('hs-status');
         if(el) el.textContent = t;
+    }
+
+    function showInputModal(){
+        const modal = container.querySelector('#hs-input-modal');
+        const form = container.querySelector('#hs-input-form');
+        if(!modal || !form) return;
+        form.venue.value = introSettings.venue || '';
+        form.weatherLoc.value = introSettings.weatherLoc || '';
+        modal.style.display='flex';
+        form.onsubmit = async e=>{
+            e.preventDefault();
+            const data = Object.fromEntries(new FormData(form));
+            introSettings.venue = data.venue || '';
+            introSettings.weatherLoc = data.weatherLoc || '';
+            await set(getIntroSettingsRef(eid), introSettings);
+            await updateOverlayState(eid,{ holdslateSettings:introSettings });
+            modal.style.display='none';
+        };
+        form.querySelector('#hs-input-cancel').onclick = ()=>{ modal.style.display='none'; };
+    }
+
+    function showWeatherModal(){
+        const modal = container.querySelector('#hs-weather-modal');
+        const form = container.querySelector('#hs-weather-form');
+        if(!modal || !form) return;
+        const slots = introSettings.weatherSlots || [];
+        form.time1.value = slots[0]?.time || '';
+        form.icon1.value = slots[0]?.icon || '';
+        form.temp1.value = slots[0]?.temp || '';
+        form.time2.value = slots[1]?.time || '';
+        form.icon2.value = slots[1]?.icon || '';
+        form.temp2.value = slots[1]?.temp || '';
+        form.time3.value = slots[2]?.time || '';
+        form.icon3.value = slots[2]?.icon || '';
+        form.temp3.value = slots[2]?.temp || '';
+        form.color1.value = introSettings.color1 || '#ffffff';
+        form.color2.value = introSettings.color2 || '#000000';
+        form.animation.value = introSettings.animation || '';
+        modal.style.display='flex';
+        form.onsubmit = async e=>{
+            e.preventDefault();
+            introSettings.weatherSlots = [
+                {time:form.time1.value, icon:form.icon1.value, temp:form.temp1.value},
+                {time:form.time2.value, icon:form.icon2.value, temp:form.temp2.value},
+                {time:form.time3.value, icon:form.icon3.value, temp:form.temp3.value}
+            ];
+            introSettings.color1 = form.color1.value;
+            introSettings.color2 = form.color2.value;
+            introSettings.animation = form.animation.value;
+            await set(getIntroSettingsRef(eid), introSettings);
+            await updateOverlayState(eid,{ holdslateSettings:introSettings });
+            modal.style.display='none';
+        };
+        form.querySelector('#hs-weather-cancel').onclick = ()=>{ modal.style.display='none'; };
     }
 
     async function uploadToServer(file, path){

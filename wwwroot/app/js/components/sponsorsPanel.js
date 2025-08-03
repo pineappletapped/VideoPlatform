@@ -82,7 +82,8 @@ export function renderSponsorsPanel(container, eventId){
             ['cornerTL','Top Left Corner'],
             ['cornerTR','Top Right Corner'],
             ['cornerBL','Bottom Left Corner'],
-            ['cornerBR','Bottom Right Corner']
+            ['cornerBR','Bottom Right Corner'],
+            ['intro','Intro Graphic']
         ];
         const placeTable = container.querySelector('#place-table');
         placeTable.innerHTML = rows.map(r=>`<tr><td class="pr-2">${r[1]}</td><td><select data-place="${r[0]}" class="border p-1 w-full"><option value="">None</option>${sponsors.map((s,i)=>`<option value="${i}">${s.name}</option>`).join('')}</select></td></tr>`).join('');
