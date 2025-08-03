@@ -21,7 +21,7 @@ export async function generateSocialAssets(eventId, logId, style, options = {}) 
     const blob = await renderSocialImage({templateStyle:style, aspect:ratio, data:dyn, size:[w,h], options});
     const path = `social/${eventId}/${logId}-${ratio}.jpg`;
     await uploadBlobAsJpg(blob, path);
-    out[ratio] = `assets/${path}`;
+    out[ratio] = `../assets/${path}`;
   }
   return out;
 }
@@ -47,7 +47,7 @@ export async function generateFinalScoreAssets(eventId, style, options = {}) {
     const blob = await renderSocialImage({templateStyle:style, aspect:ratio, data:dyn, size:[w,h], options});
     const path = `social/${eventId}/final-${ratio}.jpg`;
     await uploadBlobAsJpg(blob, path);
-    out[ratio] = `assets/${path}`;
+    out[ratio] = `../assets/${path}`;
   }
   return out;
 }
