@@ -154,6 +154,13 @@ export function renderSocialPanel(container, eventId) {
       this.updatePosts();
     }
 
+    resolveUrl(url){
+      if(!url) return '';
+      if(url.startsWith('http') || url.startsWith('/') || url.startsWith('../')) return url;
+      if(url.startsWith('assets/')) return `../${url}`;
+      return `../assets/social/${this.eventId}/${url}`;
+    }
+
     buildPostBlock(l) {
       const wrapper = document.createElement('div');
       wrapper.className = 'border p-2';
@@ -168,11 +175,11 @@ export function renderSocialPanel(container, eventId) {
           const d = document.createElement('div');
           d.className = 'text-center';
           const img = document.createElement('img');
-          img.src = url;
+          img.src = this.resolveUrl(url);
           img.className = 'w-full object-cover mb-1';
           d.appendChild(img);
           const a = document.createElement('a');
-          a.href = url;
+          a.href = this.resolveUrl(url);
           a.download = '';
           a.className = 'control-button btn-sm';
           a.textContent = 'Download';
@@ -213,11 +220,11 @@ export function renderSocialPanel(container, eventId) {
           const d = document.createElement('div');
           d.className = 'text-center';
           const img = document.createElement('img');
-          img.src = url;
+          img.src = this.resolveUrl(url);
           img.className = 'w-full object-cover mb-1';
           d.appendChild(img);
           const a = document.createElement('a');
-          a.href = url;
+          a.href = this.resolveUrl(url);
           a.download = '';
           a.className = 'control-button btn-sm';
           a.textContent = 'Download';
