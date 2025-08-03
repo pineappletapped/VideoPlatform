@@ -132,6 +132,7 @@ async function loadEvents() {
       const sportsBtn = ev.eventType === 'sports' ? `<a class="control-button btn-sm" href="sports.html?event_id=${id}">Sports Admin</a>` : '';
       const commBtn = ev.eventType === 'sports' ? `<a class="control-button btn-sm" href="commentator.html?event_id=${id}" target="_blank">Commentator</a>` : '';
       const speakBtn = `<a class="control-button btn-sm" href="speakers.html?event_id=${id}" target="_blank">Speakers</a>`;
+      const socialBtn = ev.eventType === 'sports' ? `<a class="control-button btn-sm" href="social.html?event_id=${id}">Social</a>` : '';
       return `<div class="bg-white text-black p-3 rounded shadow space-y-1">
         <div class="flex items-center gap-2">
           <div class="flex-1">
@@ -141,7 +142,7 @@ async function loadEvents() {
           </div>
           <a class="control-button btn-sm" href="graphics.html?event_id=${id}">Graphics</a>
           <a class="control-button btn-sm" href="overlay.html?event_id=${id}" target="_blank">Overlay</a>
-          ${sportsBtn} ${commBtn} ${speakBtn}
+          ${sportsBtn} ${commBtn} ${speakBtn} ${socialBtn}
         </div>
       </div>`;
     }).join('');
