@@ -2,7 +2,7 @@ import { getAuth, setPersistence, browserLocalPersistence, onAuthStateChanged, s
 import { getOrInitApp } from "./firebaseApp.js";
 import { setUser, getUser } from './firebase.js';
 
-const DEFAULT_ADMIN = { email: 'ryanadmin', password: 'password' };
+const DEFAULT_ADMIN = { email: 'ryanadmin', passwordHash: '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8' };
 const LOCAL_USERS_KEY = 'localUsers';
 
 const auth = getAuth(getOrInitApp());
@@ -12,11 +12,11 @@ function getLocalUsers() {
   try {
     const users = JSON.parse(localStorage.getItem(LOCAL_USERS_KEY) || '{}');
     if (!users[DEFAULT_ADMIN.email]) {
-      users[DEFAULT_ADMIN.email] = { password: DEFAULT_ADMIN.password, tier: 'gold' };
+      users[DEFAULT_ADMIN.email] = { passwordHash: DEFAULT_ADMIN.passwordHash, tier: 'gold' };
     }
     return users;
   } catch {
-    return { [DEFAULT_ADMIN.email]: { password: DEFAULT_ADMIN.password, tier: 'gold' } };
+    return { [DEFAULT_ADMIN.email]: { passwordHash: DEFAULT_ADMIN.passwordHash, tier: 'gold' } };
   }
 }
 
@@ -43,11 +43,17 @@ export function onAuth(cb) {
   return onAuthStateChanged(auth, cb);
 }
 
-export function login(email, password) {
+async function hashPassword(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+export async function login(email, password) {
   const localUsers = getLocalUsers();
-  if (localUsers[email] && localUsers[email].password === password) {
+  const hashed = await hashPassword(password);
+  if (localUsers[email] && localUsers[email].passwordHash === hashed) {
     setLocalLoggedIn(email);
-    return Promise.resolve({ user: { uid: 'local-' + email, email } });
+    return { user: { uid: 'local-' + email, email } };
   }
   return signInWithEmailAndPassword(auth, email, password).then(res => {
     localStorage.setItem('loginTime', Date.now().toString());
@@ -55,7 +61,7 @@ export function login(email, password) {
   });
 }
 
-export function register(email, password, tier, subId) {
+export async function register(email, password, tier, subId) {
   const locals = getLocalUsers();
   if (locals[email]) {
     return Promise.reject(new Error('Email already registered'));
@@ -64,13 +70,14 @@ export function register(email, password, tier, subId) {
     localStorage.setItem('loginTime', Date.now().toString());
     await setUser(res.user.uid, { email, tier, subscription_id: subId });
     return res;
-  }).catch(err => {
+  }).catch(async err => {
     if (err.code === 'auth/email-already-in-use') {
       throw new Error('Email already registered');
     }
     const users = getLocalUsers();
     if (!users[email]) {
-      users[email] = { password, tier, subscription_id: subId };
+      const hashed = await hashPassword(password);
+      users[email] = { passwordHash: hashed, tier, subscription_id: subId };
       saveLocalUsers(users);
       setLocalLoggedIn(email);
       return { user: { uid: 'local-' + email, email } };

@@ -1,7 +1,27 @@
-import { renderSocialImage } from './graphicsEngine.js';
 import { getEventMetadata, getMatchLogEntry } from './firebase.js';
 import { getDatabaseInstance } from './firebaseApp.js';
 import { ref, get } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
+
+const worker = new Worker('./graphicsWorker.js', { type: 'module' });
+const pending = new Map();
+let wid = 0;
+
+worker.onmessage = e => {
+  const { id, buf, error } = e.data;
+  const cb = pending.get(id);
+  if (!cb) return;
+  pending.delete(id);
+  if (error) cb.reject(new Error(error));
+  else cb.resolve(new Blob([buf], { type: 'image/jpeg' }));
+};
+
+function renderSocialImageWorker(opts) {
+  return new Promise((resolve, reject) => {
+    const id = ++wid;
+    pending.set(id, { resolve, reject });
+    worker.postMessage({ id, opts });
+  });
+}
 
 const metaCache = new Map();
 
@@ -26,7 +46,7 @@ export async function generateSocialAssets(eventId, logId, style, options = {}) 
   };
   const ratios = { '9x16':[1080,1920], '1x1':[1080,1080], '2x3':[1080,1620] };
   const results = await Promise.all(Object.entries(ratios).map(async ([ratio,[w,h]]) => {
-    const blob = await renderSocialImage({templateStyle:style, aspect:ratio, data:dyn, size:[w,h], options});
+    const blob = await renderSocialImageWorker({templateStyle:style, aspect:ratio, data:dyn, size:[w,h], options});
     const path = `social/${eventId}/${logId}-${ratio}.jpg`;
     await uploadBlobAsJpg(blob, path);
     return [ratio, `../assets/${path}`];
@@ -51,7 +71,7 @@ export async function generateFinalScoreAssets(eventId, style, options = {}) {
   };
   const ratios = { '9x16':[1080,1920], '1x1':[1080,1080], '2x3':[1080,1620] };
   const results = await Promise.all(Object.entries(ratios).map(async ([ratio,[w,h]]) => {
-    const blob = await renderSocialImage({templateStyle:style, aspect:ratio, data:dyn, size:[w,h], options});
+    const blob = await renderSocialImageWorker({templateStyle:style, aspect:ratio, data:dyn, size:[w,h], options});
     const path = `social/${eventId}/final-${ratio}.jpg`;
     await uploadBlobAsJpg(blob, path);
     return [ratio, `../assets/${path}`];
@@ -59,10 +79,23 @@ export async function generateFinalScoreAssets(eventId, style, options = {}) {
   return Object.fromEntries(results);
 }
 
+let csrfPromise;
+async function getCsrfToken() {
+  if (!csrfPromise) {
+    csrfPromise = fetch('../upload.php?token', { credentials: 'same-origin' }).then(r => r.text());
+  }
+  return csrfPromise;
+}
+
 async function uploadBlobAsJpg(blob, path) {
   const fd = new FormData();
   fd.append('file', blob, 'image.jpg');
   fd.append('path', path);
+  fd.append('csrf', await getCsrfToken());
   const res = await fetch('../upload.php', { method:'POST', body: fd, credentials: 'same-origin' });
   if (!res.ok) throw new Error('Upload failed');
+  if ('caches' in window) {
+    const cache = await caches.open('social-assets');
+    await cache.put(`../assets/${path}`, new Response(blob));
+  }
 }
