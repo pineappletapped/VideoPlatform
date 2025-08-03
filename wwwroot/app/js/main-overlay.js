@@ -88,17 +88,33 @@ function applyBranding(branding = DEFAULT_BRANDING) {
     });
 }
 
-function renderHoldslateCountdown(holdslateData, branding) {
+async function renderIntroOverlay(introData, branding) {
     const holdslateOverlay = document.getElementById('holdslate-overlay');
     if (!holdslateOverlay) return;
+    let titleHtml = '';
+    if (introData.title) {
+        titleHtml = `<div style="font-size:3rem;font-weight:bold;margin-bottom:1rem;">${introData.title}</div>`;
+    }
+    let teamsHtml = '';
+    if (introData.homeTeam || introData.awayTeam) {
+        teamsHtml = `<div style="font-size:2rem;margin-bottom:1rem;">${introData.homeTeam || ''} ${introData.homeTeam && introData.awayTeam ? 'vs' : ''} ${introData.awayTeam || ''}</div>`;
+    }
+    let locationHtml = '';
+    if (introData.location) {
+        locationHtml = `<div style="font-size:1.5rem;margin-bottom:1rem;">${introData.location}</div>`;
+    }
+    let sponsorHtml = '';
+    if (introData.sponsor) {
+        sponsorHtml = `<img src="${introData.sponsor}" style="max-width:30%;margin-top:1rem;"/>`;
+    }
     let messageHtml = '';
-    if (holdslateData.message) {
-        messageHtml = `<div style="background:rgba(0,0,0,0.6);color:#fff;padding:1.5rem 2.5rem;border-radius:0.5rem;font-size:2rem;max-width:80vw;text-align:center;">${holdslateData.message}</div>`;
+    if (introData.message) {
+        messageHtml = `<div style="background:rgba(0,0,0,0.6);color:#fff;padding:1.5rem 2.5rem;border-radius:0.5rem;font-size:2rem;max-width:80vw;text-align:center;margin-top:1rem;">${introData.message}</div>`;
     }
     let countdownHtml = '';
-    if (holdslateData.countdown) {
+    if (introData.countdown) {
         const now = Date.now();
-        const target = new Date(holdslateData.countdown).getTime();
+        const target = new Date(introData.countdown).getTime();
         const diff = target - now;
         let countdownDisplay = '';
         if (diff > 0) {
@@ -110,7 +126,24 @@ function renderHoldslateCountdown(holdslateData, branding) {
         }
         countdownHtml = `<div style="background:rgba(0,0,0,0.7);color:#fff;padding:1.5rem 2.5rem;border-radius:0.5rem;font-size:2.5rem;max-width:80vw;text-align:center;margin-top:1.5rem;">${countdownDisplay}</div>`;
     }
-    holdslateOverlay.innerHTML = `<div style="width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;">${messageHtml}${countdownHtml}</div>`;
+    let weatherHtml = '';
+    if (introData.weather) {
+        weatherHtml = `<div class="hs-weather" style="margin-top:1rem;font-size:1.5rem;">Loading weather...</div>`;
+    }
+    holdslateOverlay.innerHTML = `<div style="width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;">${titleHtml}${teamsHtml}${locationHtml}${sponsorHtml}${messageHtml}${countdownHtml}${weatherHtml}</div>`;
+    if (introData.weather) {
+        try {
+            const resp = await fetch(`https://wttr.in/${encodeURIComponent(introData.weather)}?format=j1`);
+            const data = await resp.json();
+            const cond = data.current_condition && data.current_condition[0];
+            const weatherEl = holdslateOverlay.querySelector('.hs-weather');
+            if (cond && weatherEl) {
+                weatherEl.innerHTML = `${cond.temp_C}°C ${cond.weatherDesc && cond.weatherDesc[0] ? cond.weatherDesc[0].value : ''}`;
+            }
+        } catch (err) {
+            console.warn('Weather fetch failed', err);
+        }
+    }
 }
 
 function playVT(vt) {
@@ -393,7 +426,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     } else if (programOverlay) {
         programOverlay.remove();
     }
-    // Holdslate Overlay
+    // Intro Overlay
     let holdslateOverlay = overlayContainer.querySelector('#holdslate-overlay');
     const holdslateData = state && state.holdslate;
     const holdslateShow = previewMode ? state && state.holdslatePreviewVisible : state && state.holdslateVisible;
@@ -415,14 +448,89 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         holdslateOverlay.style.zIndex = '100';
         holdslateOverlay.style.fontFamily = branding.font;
         holdslateOverlay.style.opacity = previewMode ? '0.6' : '1';
-        renderHoldslateCountdown(holdslateData, branding);
+        renderIntroOverlay(holdslateData, branding);
         if (countdownInterval) clearInterval(countdownInterval);
         if (holdslateData.countdown) {
-            countdownInterval = setInterval(() => renderHoldslateCountdown(holdslateData, branding), 1000);
+            countdownInterval = setInterval(() => renderIntroOverlay(holdslateData, branding), 1000);
         }
     } else if (holdslateOverlay) {
         holdslateOverlay.remove();
         if (countdownInterval) clearInterval(countdownInterval);
+    }
+
+    // Fixtures Overlay
+    let fixturesOverlay = overlayContainer.querySelector('#fixtures-overlay');
+    if (state && state.fixturesVisible) {
+        if (!fixturesOverlay) {
+            fixturesOverlay = document.createElement('div');
+            fixturesOverlay.id = 'fixtures-overlay';
+            overlayContainer.appendChild(fixturesOverlay);
+        }
+        fixturesOverlay.style.position = 'absolute';
+        fixturesOverlay.style.top = '0';
+        fixturesOverlay.style.left = '0';
+        fixturesOverlay.style.width = '100vw';
+        fixturesOverlay.style.height = '100vh';
+        fixturesOverlay.style.background = 'rgba(0,0,0,0.8)';
+        fixturesOverlay.style.color = '#fff';
+        fixturesOverlay.style.display = 'flex';
+        fixturesOverlay.style.alignItems = 'center';
+        fixturesOverlay.style.justifyContent = 'center';
+        fixturesOverlay.style.zIndex = '110';
+        fixturesOverlay.style.fontFamily = branding.font;
+        fixturesOverlay.innerHTML = '<div style="font-size:3rem;">Fixtures coming soon</div>';
+    } else if (fixturesOverlay) {
+        fixturesOverlay.remove();
+    }
+
+    // Formation Overlay
+    let formationOverlay = overlayContainer.querySelector('#formation-overlay');
+    if (state && state.formationVisible) {
+        if (!formationOverlay) {
+            formationOverlay = document.createElement('div');
+            formationOverlay.id = 'formation-overlay';
+            overlayContainer.appendChild(formationOverlay);
+        }
+        formationOverlay.style.position = 'absolute';
+        formationOverlay.style.top = '0';
+        formationOverlay.style.left = '0';
+        formationOverlay.style.width = '100vw';
+        formationOverlay.style.height = '100vh';
+        formationOverlay.style.background = 'rgba(0,0,0,0.8)';
+        formationOverlay.style.color = '#fff';
+        formationOverlay.style.display = 'flex';
+        formationOverlay.style.alignItems = 'center';
+        formationOverlay.style.justifyContent = 'center';
+        formationOverlay.style.zIndex = '110';
+        formationOverlay.style.fontFamily = branding.font;
+        formationOverlay.innerHTML = '<div style="font-size:3rem;">Formation graphic</div>';
+    } else if (formationOverlay) {
+        formationOverlay.remove();
+    }
+
+    // Course Overlay
+    let courseOverlay = overlayContainer.querySelector('#course-overlay');
+    if (state && state.courseVisible) {
+        if (!courseOverlay) {
+            courseOverlay = document.createElement('div');
+            courseOverlay.id = 'course-overlay';
+            overlayContainer.appendChild(courseOverlay);
+        }
+        courseOverlay.style.position = 'absolute';
+        courseOverlay.style.top = '0';
+        courseOverlay.style.left = '0';
+        courseOverlay.style.width = '100vw';
+        courseOverlay.style.height = '100vh';
+        courseOverlay.style.background = 'rgba(0,0,0,0.8)';
+        courseOverlay.style.color = '#fff';
+        courseOverlay.style.display = 'flex';
+        courseOverlay.style.alignItems = 'center';
+        courseOverlay.style.justifyContent = 'center';
+        courseOverlay.style.zIndex = '110';
+        courseOverlay.style.fontFamily = branding.font;
+        courseOverlay.innerHTML = '<div style="font-size:3rem;">Course details</div>';
+    } else if (courseOverlay) {
+        courseOverlay.remove();
     }
 
     // Scoreboard Overlay

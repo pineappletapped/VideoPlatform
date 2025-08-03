@@ -14,7 +14,7 @@ import { renderPtzControls } from './components/ptzControls.js';
 import { renderBrandingModal } from './components/brandingModal.js';
 import { renderProfileWizard } from './components/profileWizard.js';
 import { renderCalendarDrawer } from './components/calendarDrawer.js';
-import { renderHoldslatePanel } from './components/holdslatePanel.js';
+import { renderIntroPanel } from './components/introPanel.js';
 import { updateOverlayState, getOverlayState, getEventMetadata, updateEventMetadata, getGraphicsData, updateGraphicsData } from './firebase.js';
 import { renderVtsPanel } from './components/vtsPanel.js';
 import { renderMusicPanel } from './components/musicPanel.js';
@@ -98,7 +98,7 @@ function setupTabs() {
         });
     });
     // Always show the first tab as active on load (no cache)
-    setActiveTab('holdslate', '.graphics-panel');
+    setActiveTab('intro', '.graphics-panel');
     setActiveTab('vts', '.av-panel');
 }
 
@@ -189,7 +189,7 @@ async function initializeComponents(eventData) {
     }
 
     // Initialize main content panels
-    renderHoldslatePanel(document.getElementById('holdslate-panel'), eventId, onOverlayStateChange);
+    renderIntroPanel(document.getElementById('intro-panel'), eventId, onOverlayStateChange);
     renderGraphicsPanel(document.getElementById('events-panel'), eventData, graphicsMode);
 
     // Initialize AV panels
@@ -237,7 +237,7 @@ async function initializeComponents(eventData) {
     });
 }
 
-// Called by programPreview/holdslatePanel when overlay state changes
+// Called by programPreview/introPanel when overlay state changes
 function onOverlayStateChange(state) {
     updateOverlayState(eventId, state);
 }

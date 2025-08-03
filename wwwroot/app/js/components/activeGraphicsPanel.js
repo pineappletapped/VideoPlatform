@@ -122,7 +122,10 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
 
     function render() {
         const items = [];
-        if (overlayState.holdslateVisible) items.push({ key:'holdslate', label:'Holdslate', type:'holdslate' });
+        if (overlayState.holdslateVisible) items.push({ key:'holdslate', label:'Intro Graphic', type:'holdslate' });
+        if (overlayState.fixturesVisible) items.push({ key:'fixtures', label:'Fixtures', type:'fixtures' });
+        if (overlayState.formationVisible) items.push({ key:'formation', label:'Formation', type:'formation' });
+        if (overlayState.courseVisible) items.push({ key:'course', label:'Course Details', type:'course' });
         if (overlayState.stingerVisible) items.push({ key:'stinger', label:'Stinger', type:'stinger' });
         if (overlayState.liveProgramVisible) items.push({ key:'program', label:'Program', type:'program' });
         if (overlayState.statVisible) items.push({ key:'stat', label:'Stat', type:'stat' });
@@ -149,6 +152,9 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
         else if(type==='stat') updateOverlayState(eventId,{statVisible:false,statPreviewVisible:false});
         else if(type==='stinger') updateOverlayState(eventId,{stingerVisible:false,stingerPreviewVisible:false});
         else if(type==='scoreboard') updateOverlayState(eventId,{scoreboardVisible:false,scoreboardPreviewVisible:false});
+        else if(type==='fixtures') updateOverlayState(eventId,{fixturesVisible:false});
+        else if(type==='formation') updateOverlayState(eventId,{formationVisible:false});
+        else if(type==='course') updateOverlayState(eventId,{courseVisible:false});
     }
 
     function renderFav() {
