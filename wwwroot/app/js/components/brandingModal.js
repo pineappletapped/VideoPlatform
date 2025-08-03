@@ -1,4 +1,4 @@
-import { setBranding, listenBranding, setUserBranding, listenUserBranding } from '../firebase.js';
+import { setBranding, listenBranding, setUserBranding, listenUserBranding, resolveAssetPath } from '../firebase.js';
 
 const FONT_OPTIONS = [
     'Arial', 'Helvetica', 'Georgia', 'Times New Roman', 'Courier New', 'Verdana',
@@ -59,12 +59,12 @@ export function renderBrandingModal(container, opts) {
                         <div class="mb-3">
                             <label class="block text-sm font-semibold mb-1">Primary Logo</label>
                             <input type="file" name="logoPrimary" accept="image/*" class="mb-1" />
-                            ${branding.logoPrimary ? `<img src="${branding.logoPrimary}" alt="Primary Logo" class="h-10 mt-1" />` : ''}
+                            ${branding.logoPrimary ? `<img src="${resolveAssetPath(branding.logoPrimary)}" alt="Primary Logo" class="h-10 mt-1" />` : ''}
                         </div>
                         <div class="mb-3">
                             <label class="block text-sm font-semibold mb-1">Secondary Logo</label>
                             <input type="file" name="logoSecondary" accept="image/*" class="mb-1" />
-                            ${branding.logoSecondary ? `<img src="${branding.logoSecondary}" alt="Secondary Logo" class="h-10 mt-1" />` : ''}
+                            ${branding.logoSecondary ? `<img src="${resolveAssetPath(branding.logoSecondary)}" alt="Secondary Logo" class="h-10 mt-1" />` : ''}
                         </div>
                         <div class="mb-3">
                             <label class="block text-sm font-semibold mb-1">Brand Font</label>

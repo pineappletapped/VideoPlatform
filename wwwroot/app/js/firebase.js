@@ -34,6 +34,15 @@ export function getAllEventsMetadata() {
   return get(ref(db, 'events')).then(snap => snap.val());
 }
 
+// Resolve relative asset paths for logos/images
+export function resolveAssetPath(path) {
+  if (!path) return '';
+  if (/^https?:\/\//.test(path) || path.startsWith('assets/') || path.startsWith('/')) {
+    return path;
+  }
+  return `assets/${path}`;
+}
+
 export function deleteEvent(eventId) {
   return Promise.all([
     remove(ref(db, `events/${eventId}`)),

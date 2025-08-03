@@ -1,4 +1,4 @@
-import { listenOverlayState, listenGraphicsData, listenBranding, listenSponsors, listenSponsorPlacements, addSponsorLog, updateEventMetadata } from './firebase.js';
+import { listenOverlayState, listenGraphicsData, listenBranding, listenSponsors, listenSponsorPlacements, addSponsorLog, updateEventMetadata, resolveAssetPath } from './firebase.js';
 import { getDatabaseInstance } from './firebaseApp.js';
 import { suggestAbbreviation } from './teamUtils.js';
 import { ref, onValue, set } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
@@ -209,7 +209,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         const styleClass = `lower-third-${previewLowerThird.style || 'default'}`;
         document.getElementById('preview-lower-third').innerHTML =
             `<div class='${styleClass}' style='opacity:0.6;position:absolute;${stylePos}min-width:300px;font-family:${branding.font};'>`+
-            `${branding.logoPrimary ? `<img src='${branding.logoPrimary}' alt='Logo' style='height:32px;display:inline-block;margin-right:1rem;vertical-align:middle;' />` : ''}`+
+            `${branding.logoPrimary ? `<img src='${resolveAssetPath(branding.logoPrimary)}' alt='Logo' style='height:32px;display:inline-block;margin-right:1rem;vertical-align:middle;' />` : ''}`+
             `<span style='vertical-align:middle;'><span style='font-weight:bold;font-size:1.2em;'>${previewLowerThird.title}</span><br><span style='font-size:1em;'>${previewLowerThird.subtitle}</span></span>`+
             `</div>`;
     } else if (previewMode) {
@@ -237,7 +237,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         ltWrap.className = styleClass;
         ltWrap.style.position = 'absolute';
         ltWrap.style.cssText += stylePos + `min-width:300px;font-family:${branding.font};`;
-        ltWrap.innerHTML = `${branding.logoPrimary ? `<img src='${branding.logoPrimary}' alt='Logo' style='height:32px;display:inline-block;margin-right:1rem;vertical-align:middle;' />` : ''}`+
+        ltWrap.innerHTML = `${branding.logoPrimary ? `<img src='${resolveAssetPath(branding.logoPrimary)}' alt='Logo' style='height:32px;display:inline-block;margin-right:1rem;vertical-align:middle;' />` : ''}`+
             `<span style='vertical-align:middle;'><span style='font-weight:bold;font-size:1.2em;'>${lowerThird.title}</span><br><span style='font-size:1em;'>${lowerThird.subtitle}</span></span>`;
         containerEl.appendChild(ltWrap);
         playTransition(ltWrap,'in',lowerThird.transitionIn);
@@ -368,7 +368,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         const sponsors = branding.sponsors || [];
         const placement = branding.scheduleSponsorPlacement || 'bottom-spaced';
         let sponsorHtml = '';
-        const eventLogo = branding.logoSecondary || branding.logoPrimary || '';
+        const eventLogo = resolveAssetPath(branding.logoSecondary || branding.logoPrimary || '');
         if (sponsors.length) {
             if (placement === 'top-right') {
                 const s = sponsors[0];
@@ -422,7 +422,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         const sponsors2 = branding.sponsors || [];
         const placement2 = branding.scheduleSponsorPlacement || 'bottom-spaced';
         let sponsorHtml2 = '';
-        const eventLogo2 = branding.logoSecondary || branding.logoPrimary || '';
+        const eventLogo2 = resolveAssetPath(branding.logoSecondary || branding.logoPrimary || '');
         if (sponsors2.length) {
             if (placement2 === 'top-right') {
                 const s = sponsors2[0];
@@ -610,6 +610,8 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         else { scoreboardOverlay.style.bottom = '2rem'; scoreboardOverlay.style.left = '50%'; scoreboardOverlay.style.transform = 'translateX(-50%)'; }
         const teamA = getTeam(0) || { name: 'Team 1', abbrev: 'T1', color: '#333', logo: '' };
         const teamB = getTeam(1) || { name: 'Team 2', abbrev: 'T2', color: '#333', logo: '' };
+        teamA.logo = resolveAssetPath(teamA.logo);
+        teamB.logo = resolveAssetPath(teamB.logo);
         const nameAF = teamA.name || 'Team 1';
         const nameBF = teamB.name || 'Team 2';
         const abbrA = teamA.abbrev || suggestAbbreviation(nameAF);

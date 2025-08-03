@@ -1,4 +1,4 @@
-import { listenBranding, listenSponsors, updateOverlayState } from '../firebase.js';
+import { listenBranding, listenSponsors, updateOverlayState, resolveAssetPath } from '../firebase.js';
 import { getDatabaseInstance } from '../firebaseApp.js';
 import { ref, onValue } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
 
@@ -14,8 +14,8 @@ export function renderStingerPanel(container, eventId){
 
     function buildOptions(){
         const opts = [];
-        if(branding.logoPrimary) opts.push({label:'Event Primary', logo:branding.logoPrimary, type:'event', invert:false});
-        if(branding.logoSecondary) opts.push({label:'Event Secondary', logo:branding.logoSecondary, type:'event', invert:true});
+        if(branding.logoPrimary) opts.push({label:'Event Primary', logo:resolveAssetPath(branding.logoPrimary), type:'event', invert:false});
+        if(branding.logoSecondary) opts.push({label:'Event Secondary', logo:resolveAssetPath(branding.logoSecondary), type:'event', invert:true});
         if(teams){
             const getTeam = idx => {
                 if(teams.teams){
@@ -26,10 +26,10 @@ export function renderStingerPanel(container, eventId){
             };
             const tA = getTeam(0);
             const tB = getTeam(1);
-            if(tA && tA.logo) opts.push({label:`${tA.name||'Team A'} Logo`, logo:tA.logo, type:'team'});
-            if(tB && tB.logo) opts.push({label:`${tB.name||'Team B'} Logo`, logo:tB.logo, type:'team'});
+            if(tA && tA.logo) opts.push({label:`${tA.name||'Team A'} Logo`, logo:resolveAssetPath(tA.logo), type:'team'});
+            if(tB && tB.logo) opts.push({label:`${tB.name||'Team B'} Logo`, logo:resolveAssetPath(tB.logo), type:'team'});
         }
-        (sponsors||[]).forEach((s,i)=>{ if(s.logo) opts.push({label:`Sponsor: ${s.name}`, logo:s.logo, type:'sponsor', sponsorIndex:i}); });
+        (sponsors||[]).forEach((s,i)=>{ if(s.logo) opts.push({label:`Sponsor: ${s.name}`, logo:resolveAssetPath(s.logo), type:'sponsor', sponsorIndex:i}); });
         opts.push({label:'Replay', text:'REPLAY', type:'replay'});
         return opts;
     }

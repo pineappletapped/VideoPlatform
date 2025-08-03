@@ -1,7 +1,7 @@
 import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 import { getDatabaseInstance } from "../firebaseApp.js";
 import { sportsData } from "../sportsConfig.js";
-import { updateOverlayState, listenOverlayState, addMatchLog, listenFavorites, updateFavorites, listenMatchLog } from "../firebase.js";
+import { updateOverlayState, listenOverlayState, addMatchLog, listenFavorites, updateFavorites, listenMatchLog, resolveAssetPath } from "../firebase.js";
 import { suggestAbbreviation } from "../teamUtils.js";
 
 const DEFAULT_STYLES = [
@@ -651,8 +651,8 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             const nameA = useAbbrev ? abbrA : nameAFull;
             const nameB = useAbbrev ? abbrB : nameBFull;
             const longest = Math.max(nameA.length, nameB.length);
-            const logoA = tA.logo || '';
-            const logoB = tB.logo || '';
+            const logoA = resolveAssetPath(tA.logo || '');
+            const logoB = resolveAssetPath(tB.logo || '');
             const showLogo = (showLogoChk?.checked ?? true) && logoA && logoB;
             const brand = getComputedStyle(document.documentElement).getPropertyValue('--brand-primary') || '#e16316';
             const textA = contrastColor(colA);

@@ -6,30 +6,26 @@ export class EventStorage {
     }
 
     async loadEvent(eventId) {
-        try {
-            const response = await fetch(`assets/${eventId}-event.json`);
-            if (response.ok) {
-                this.eventData = await response.json();
-            } else {
-                // Initialize a blank event when no JSON exists
-                this.eventData = {
-                    id: eventId,
-                    title: eventId,
-                    graphics: { lowerThirds: [], titleSlides: [] }
-                };
+        if (eventId === 'demo') {
+            try {
+                const response = await fetch(`assets/${eventId}-event.json`);
+                if (response.ok) {
+                    this.eventData = await response.json();
+                }
+            } catch (error) {
+                console.warn('Event file missing, starting blank', error);
             }
-            this.notifyListeners();
-            return this.eventData;
-        } catch (error) {
-            console.warn('Event file missing, starting blank', error);
+        }
+        if (!this.eventData) {
+            // Initialize a blank event when no JSON exists
             this.eventData = {
                 id: eventId,
                 title: eventId,
                 graphics: { lowerThirds: [], titleSlides: [] }
             };
-            this.notifyListeners();
-            return this.eventData;
         }
+        this.notifyListeners();
+        return this.eventData;
     }
 
     subscribe(callback) {
