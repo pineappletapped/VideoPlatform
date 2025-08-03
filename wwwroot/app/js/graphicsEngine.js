@@ -1,5 +1,7 @@
 import { SOCIAL_TEMPLATES } from './templates/socialTemplates.js';
 
+const IMG_CACHE = new Map();
+
 export async function renderSocialImage({ templateStyle, aspect, data, size, options = {} }) {
   const [w, h] = size;
   const canvas = new OffscreenCanvas(w, h);
@@ -76,11 +78,14 @@ function resolve(val, data) {
 }
 
 function loadImage(src) {
-  return new Promise((res, rej) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => res(img);
-    img.onerror = rej;
-    img.src = src;
-  });
+  if (!IMG_CACHE.has(src)) {
+    IMG_CACHE.set(src, new Promise((res, rej) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => res(img);
+      img.onerror = rej;
+      img.src = src;
+    }));
+  }
+  return IMG_CACHE.get(src);
 }
