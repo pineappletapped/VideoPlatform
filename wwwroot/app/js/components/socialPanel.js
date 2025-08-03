@@ -1,7 +1,26 @@
 import { listenMatchLog, updateMatchLogEntry, listenBranding } from '../firebase.js';
-import { generateSocialAssets } from '../socialAssets.js';
+import { generateSocialAssets, generateFinalScoreAssets } from '../socialAssets.js';
 import { renderBrandingModal } from './brandingModal.js';
 import { renderPostStyleModal } from './postStyleModal.js';
+import { getDatabaseInstance } from '../firebaseApp.js';
+import { ref, onValue } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
+
+function formatTime(secs){
+  return `${Math.floor(secs/60)}:${(Math.abs(secs)%60).toString().padStart(2,'0')}`;
+}
+function parseTime(str){
+  const [m='0',s='0'] = str.split(':');
+  return parseInt(m)*60 + parseInt(s);
+}
+function contrastColor(hex){
+  let c = hex?.replace('#','') || '';
+  if(c.length===3) c = c.split('').map(x=>x+x).join('');
+  const r=parseInt(c.substr(0,2)||'0',16);
+  const g=parseInt(c.substr(2,2)||'0',16);
+  const b=parseInt(c.substr(4,2)||'0',16);
+  const lum=(0.299*r+0.587*g+0.114*b)/255;
+  return lum>0.6?'#000':'#fff';
+}
 
 export function renderSocialPanel(container, eventId) {
   class SocialPanel extends HTMLElement {
@@ -20,9 +39,17 @@ export function renderSocialPanel(container, eventId) {
         includeTeamColors: true,
         sponsors: []
       };
+      this.scoreboard = null;
+      this.teams = null;
+      this.finalPost = null;
+      this.generatingFinal = false;
+      const db = getDatabaseInstance();
+      onValue(ref(db, `scoreboard/${eventId}`), snap => { this.scoreboard = snap.val(); this.updateScoreboard(); });
+      onValue(ref(db, `teams/${eventId}`), snap => { this.teams = snap.val(); this.updateScoreboard(); });
       listenBranding(eventId, b => {
         this.templateStyle = b?.socialTemplateStyle || 'style1';
         this.branding = b;
+        this.updateScoreboard();
       });
       listenMatchLog(eventId, logs => {
         this.logs = logs || [];
@@ -80,10 +107,90 @@ export function renderSocialPanel(container, eventId) {
       return '';
     }
 
+    async handleGenerateFinal(){
+      if(this.generatingFinal) return;
+      this.generatingFinal = true;
+      this.render();
+      try{
+        this.finalPost = await generateFinalScoreAssets(this.eventId, this.templateStyle, this.styleSettings);
+      }catch(e){
+        console.error(e);
+        this.finalPost = null;
+      }
+      this.generatingFinal = false;
+      this.render();
+    }
+
+    finalBlock() {
+      const header = `<div class="mb-2 text-xs font-semibold">Final Score</div>`;
+      if (this.finalPost) {
+        const imgs = Object.entries(this.finalPost).map(([ratio,url])=>`
+          <div class="text-center">
+            <img src="${url}" class="w-full object-cover mb-1" />
+            <a href="${url}" download class="control-button btn-sm">Download</a>
+          </div>`).join('');
+        return `<div class="border p-2">${header}<div class="grid grid-cols-3 gap-2">${imgs}</div></div>`;
+      }
+      if (this.generatingFinal) {
+        return `<div class="border p-2">${header}
+          <div class="w-full h-32 bg-gray-200 animate-pulse mb-2"></div>
+          <div class="w-full h-2 bg-gray-200 overflow-hidden"><div class="h-full w-full animate-pulse" style="background: var(--brand-color,#e16316)"></div></div>
+        </div>`;
+      }
+      return '';
+    }
+
+    getTeam(key){
+      if(!this.teams) return {name:'',color:'#333'};
+      if(this.teams.teams){
+        const idx = key==='a' ? (this.teams.currentA||0) : (this.teams.currentB||1);
+        return this.teams.teams[idx] || {name:'',color:'#333'};
+      }
+      return key==='a' ? (this.teams.teamA || {name:'',color:'#333'}) : (this.teams.teamB || {name:'',color:'#333'});
+    }
+
+    updateScoreboard(){
+      const el = this.querySelector('#scoreboard');
+      if(!el) return;
+      if(!this.scoreboard || !this.teams){
+        el.innerHTML = '<div class="text-gray-500 text-sm">No scoreboard data</div>';
+        return;
+      }
+      const tA = this.getTeam('a');
+      const tB = this.getTeam('b');
+      const names = [tA.name, tB.name];
+      const colors = [tA.color||'#333', tB.color||'#333'];
+      const longest = Math.max(names[0].length, names[1].length);
+      const brand = this.branding?.brandColor || '#e16316';
+      const textA = contrastColor(colors[0]);
+      const textB = contrastColor(colors[1]);
+      const textBrand = contrastColor(brand);
+      let timeStr = this.scoreboard.time || '';
+      if(this.scoreboard.timerRunning && this.scoreboard.timerStart){
+        const elapsed = Math.floor((Date.now() - this.scoreboard.timerStart)/1000);
+        const base = this.scoreboard.timerBase || parseTime(timeStr || '0:00');
+        const down = (this.scoreboard.timeDirection || 'up') === 'down';
+        const secs = down ? Math.max(0, base - elapsed) : base + elapsed;
+        timeStr = formatTime(secs);
+      }
+      const info = [];
+      if(timeStr) info.push(timeStr);
+      if(this.scoreboard.period) info.push('P'+this.scoreboard.period);
+      el.innerHTML = `<div class='sb-container sb-style1' style='--sb-team-width:${longest}ch;font-size:1.5rem;'>
+          <div class='sb-row'>
+            <span class='sb-team' style='background:${colors[0]};color:${textA}'>${names[0]}</span>
+            <span class='sb-score' style='background:${brand};color:${textBrand}'>${this.scoreboard.scores?.[0]??0} | ${this.scoreboard.scores?.[1]??0}</span>
+            <span class='sb-team' style='background:${colors[1]};color:${textB}'>${names[1]}</span>
+          </div>
+          ${info.length?`<div class='sb-info'>${info.join(' | ')}</div>`:''}
+        </div>`;
+    }
+
     render() {
       this.innerHTML = `
         <top-bar></top-bar>
         <div class="p-4">
+          <div id="scoreboard" class="mb-4"></div>
           <div class="mb-4 flex items-center gap-2 text-sm">
             <label class="font-semibold">Post Style</label>
             <select id="style-select" class="border p-1">
@@ -104,9 +211,12 @@ export function renderSocialPanel(container, eventId) {
             </table>
           </section>
           <section id="posts">
-            <h2 class="font-bold mb-2">Generated Posts</h2>
+            <div class="flex items-center justify-between mb-2">
+              <h2 class="font-bold">Generated Posts</h2>
+              <button id="generate-final" class="control-button btn-sm">Final Score Post</button>
+            </div>
             <div class="space-y-4">
-              ${this.logs.map(l => this.postBlock(l)).join('') || '<div class="text-gray-500 text-sm">No posts yet.</div>'}
+              ${this.finalBlock()}${this.logs.map(l => this.postBlock(l)).join('') || '<div class="text-gray-500 text-sm">No posts yet.</div>'}
             </div>
           </section>
           </div>
@@ -115,6 +225,8 @@ export function renderSocialPanel(container, eventId) {
       this.querySelectorAll('button.generate').forEach(btn => {
         btn.onclick = () => this.handleGenerate(btn.dataset.id);
       });
+      const finalBtn = this.querySelector('#generate-final');
+      if(finalBtn) finalBtn.onclick = () => this.handleGenerateFinal();
       const styleSel = this.querySelector('#style-select');
       styleSel.onchange = () => { this.templateStyle = styleSel.value; };
       this.querySelector('#edit-style').onclick = () => {
@@ -133,6 +245,7 @@ export function renderSocialPanel(container, eventId) {
         renderBrandingModal(modal, { eventId: this.eventId });
         modal.classList.remove('hidden');
       });
+      this.updateScoreboard();
     }
   }
   if (!customElements.get('social-panel')) customElements.define('social-panel', SocialPanel);
