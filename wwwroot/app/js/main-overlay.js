@@ -887,7 +887,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     let statOverlay = overlayContainer.querySelector('#stat-overlay');
     const statData = state && state.stat;
     const statShow = previewMode ? state && state.statPreviewVisible : state && state.statVisible;
-    if (statShow && statData) {
+    if (statShow && statData && statData.rows && statData.rows.length) {
         if (!statOverlay) {
             statOverlay = document.createElement('div');
             statOverlay.id = 'stat-overlay';
@@ -899,18 +899,9 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         statOverlay.style.transform = 'translateX(-50%)';
         statOverlay.style.fontFamily = branding.font;
         statOverlay.style.opacity = previewMode ? '0.6' : '1';
-        let teamName = '';
-        if (statData.team) {
-            const tObj = statData.team==='a'?getTeam(0):statData.team==='b'?getTeam(1):null;
-            if (tObj) teamName = tObj.name || '';
-        }
-        let photoHtml = '';
-        if (teamsData && teamsData.showPhotosStats && statData.player && statData.team) {
-            const t = statData.team==='a'?getTeam(0):statData.team==='b'?getTeam(1):null;
-            const pl = t?.players?.find(p=>p.name===statData.player);
-            if (pl && pl.photo) photoHtml = `<img src='${pl.photo}' class='stat-photo'>`;
-        }
-        statOverlay.innerHTML = `<div class='lower-third-default'>${photoHtml}${statData.fact}${statData.player ? ' - ' + statData.player : ''}${teamName ? ' (' + teamName + ')' : ''}</div>`;
+        const head = `<thead><tr><th></th><th>${statData.teamA}</th><th>${statData.teamB}</th></tr></thead>`;
+        const body = `<tbody>${statData.rows.map(r=>`<tr><td>${r.label}</td><td>${r.a}</td><td>${r.b}</td></tr>`).join('')}</tbody>`;
+        statOverlay.innerHTML = `<div class='stats-box'><table>${head}${body}</table></div>`;
     } else if (statOverlay) {
         statOverlay.remove();
     }
