@@ -20,12 +20,22 @@ export function renderStatsPanel(container, eventId = 'demo') {
     let config = { included: [] };
     let visible = false;
     let preview = false;
+    let psVisible = false;
+    let psPreview = false;
+    let psPlayer = '';
+    let psFact = '';
 
     const configRef = ref(db, `matchStatsConfig/${eventId}`);
 
     onValue(ref(db, `teams/${eventId}`), snap => { teams = snap.val(); render(); });
     listenMatchLog(eventId, data => { logs = data || []; render(); });
-    listenOverlayState(eventId, state => { visible = !!(state && state.statVisible); preview = !!(state && state.statPreviewVisible); render(); });
+    listenOverlayState(eventId, state => {
+        visible = !!(state && state.statVisible);
+        preview = !!(state && state.statPreviewVisible);
+        psVisible = !!(state && state.playerStatVisible);
+        psPreview = !!(state && state.playerStatPreviewVisible);
+        render();
+    });
 
     getEventMetadata(eventId).then(meta => {
         sport = meta?.sport || 'Football';
@@ -63,6 +73,7 @@ export function renderStatsPanel(container, eventId = 'demo') {
         const teamA = teams.teamA?.name || 'Team A';
         const teamB = teams.teamB?.name || 'Team B';
         const highlight = visible ? 'ring-4 ring-green-400' : preview ? 'ring-4 ring-brand' : '';
+        const psHighlight = psVisible ? 'ring-4 ring-green-400' : psPreview ? 'ring-4 ring-brand' : '';
         container.innerHTML = `
             <div class='stats-panel ${highlight}'>
                 <h2 class="font-bold text-lg mb-2 flex items-center justify-between">
@@ -86,6 +97,18 @@ export function renderStatsPanel(container, eventId = 'demo') {
                         <form id="ms-form" class="space-y-1"></form>
                     </div>
                 </div>
+                <div class='player-stat mt-4 ${psHighlight}'>
+                    <h3 class='font-bold text-md mb-2'>Player Stat / Fact</h3>
+                    <div class='flex gap-2 mb-2'>
+                        <input id='ps-player' class='border p-1 flex-1' placeholder='Player Name'>
+                        <input id='ps-fact' class='border p-1 flex-1' placeholder='Stat or Fact'>
+                    </div>
+                    <div class='space-x-2'>
+                        <button id='ps-preview' class='control-button btn-sm'>Preview</button>
+                        <button id='ps-live' class='control-button btn-sm'>Live</button>
+                        <button id='ps-hide' class='control-button btn-sm'>Hide</button>
+                    </div>
+                </div>
             </div>`;
 
         const editBtn = container.querySelector('#ms-edit');
@@ -102,6 +125,22 @@ export function renderStatsPanel(container, eventId = 'demo') {
         };
         const hideBtn = container.querySelector('#ms-hide');
         if (hideBtn) hideBtn.onclick = () => updateOverlayState(eventId, { statVisible: false, statPreviewVisible: false });
+
+        // Player stat handlers
+        const psPlayerInput = container.querySelector('#ps-player');
+        const psFactInput = container.querySelector('#ps-fact');
+        if (psPlayerInput) { psPlayerInput.value = psPlayer; psPlayerInput.oninput = e => psPlayer = e.target.value; }
+        if (psFactInput) { psFactInput.value = psFact; psFactInput.oninput = e => psFact = e.target.value; }
+        const psPreviewBtn = container.querySelector('#ps-preview');
+        if (psPreviewBtn) psPreviewBtn.onclick = () => {
+            updateOverlayState(eventId, { playerStat: { player: psPlayer, fact: psFact }, playerStatPreviewVisible: true, playerStatVisible: false });
+        };
+        const psLiveBtn = container.querySelector('#ps-live');
+        if (psLiveBtn) psLiveBtn.onclick = () => {
+            updateOverlayState(eventId, { playerStat: { player: psPlayer, fact: psFact }, playerStatVisible: true, playerStatPreviewVisible: false });
+        };
+        const psHideBtn = container.querySelector('#ps-hide');
+        if (psHideBtn) psHideBtn.onclick = () => updateOverlayState(eventId, { playerStatVisible: false, playerStatPreviewVisible: false });
 
         const modal = container.querySelector('#ms-modal');
         if (modal) {

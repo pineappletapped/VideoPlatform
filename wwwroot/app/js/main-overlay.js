@@ -922,6 +922,26 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         statOverlay.remove();
     }
 
+    // Player Stat/Facts Overlay
+    let playerStatOverlay = overlayContainer.querySelector('#player-stat-overlay');
+    const playerStatData = state && state.playerStat;
+    const playerStatShow = previewMode ? state && state.playerStatPreviewVisible : state && state.playerStatVisible;
+    if (playerStatShow && playerStatData && playerStatData.player && playerStatData.fact) {
+        if (!playerStatOverlay) {
+            playerStatOverlay = document.createElement('div');
+            playerStatOverlay.id = 'player-stat-overlay';
+            overlayContainer.appendChild(playerStatOverlay);
+        }
+        playerStatOverlay.style.position = 'absolute';
+        playerStatOverlay.style.bottom = '2rem';
+        playerStatOverlay.style.left = '2rem';
+        playerStatOverlay.style.fontFamily = branding.font;
+        playerStatOverlay.style.opacity = previewMode ? '0.6' : '1';
+        playerStatOverlay.innerHTML = `<div class='stats-box'><strong>${playerStatData.player}</strong>: ${playerStatData.fact}</div>`;
+    } else if (playerStatOverlay) {
+        playerStatOverlay.remove();
+    }
+
     // Stinger Overlay
     let stingerOverlay = overlayContainer.querySelector('#stinger-overlay');
     const stingerData = state && state.stinger;
@@ -937,16 +957,17 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         const style = stingerData.style || 'logo';
         const colors = stingerData.colors || [branding.primaryColor || '#000', branding.secondaryColor1 || '#fff'];
         const textColor = branding.primaryColor || '#fff';
+        const logoUrl = resolveAssetPath(stingerData.logo);
         stingerOverlay.style.background = 'transparent';
         if (style === 'split') {
             stingerOverlay.innerHTML = `
                 <div class="stinger-split">
                     <div class="stinger-split-top" style="background:${colors[0]}"></div>
                     <div class="stinger-split-bottom" style="background:${colors[1]}"></div>
-                    ${stingerData.logo ? `<img src='${stingerData.logo}' class='stinger-logo'>` : stingerData.text ? `<div class='stinger-logo stinger-text' style='color:${textColor}'>${stingerData.text}</div>` : ''}
+                    ${logoUrl ? `<img src='${logoUrl}' class='stinger-logo'>` : stingerData.text ? `<div class='stinger-logo stinger-text' style='color:${textColor}'>${stingerData.text}</div>` : ''}
                 </div>`;
         } else {
-            stingerOverlay.innerHTML = stingerData.logo ? `<img src='${stingerData.logo}'>` : stingerData.text ? `<div class='stinger-text' style='color:${textColor}'>${stingerData.text}</div>` : '';
+            stingerOverlay.innerHTML = logoUrl ? `<img src='${logoUrl}'>` : stingerData.text ? `<div class='stinger-text' style='color:${textColor}'>${stingerData.text}</div>` : '';
         }
     } else if (stingerOverlay) {
         stingerOverlay.remove();
