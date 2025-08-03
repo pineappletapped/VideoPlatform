@@ -144,6 +144,10 @@ html,body { margin: 0; width:100%; height:100%; overflow:hidden; }
 .sb-cricket .sb-score { margin:0 0.5rem; }
 .sb-football .sb-row { align-items:center; gap:0.5rem; }
 .sb-football .sb-time { margin-left:0.5rem; }
+.sb-basketball .sb-row { align-items:center; gap:0.5rem; }
+.sb-basketball .sb-time { margin-left:0.5rem; }
+.sb-af .sb-row { align-items:center; gap:0.5rem; }
+.sb-af .sb-time { margin-left:0.5rem; }
 .sb-tennis { background:var(--brand-secondary1, rgba(0,0,0,0.6)); border-radius:0.5rem; padding:0.25rem; }
 .sb-tennis-table { width:100%; border-collapse:collapse; }
 .sb-tennis-table th, .sb-tennis-table td { padding:0.25rem 0.5rem; text-align:center; }

@@ -589,6 +589,8 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         const pos = scoreboardData.position || 'bottom-center';
         let baseClass = '';
         if(style === 'football' || style.startsWith('football-')) baseClass = 'sb-football ';
+        else if(style.startsWith('basketball-')) baseClass = 'sb-basketball ';
+        else if(style.startsWith('af-')) baseClass = 'sb-af ';
         else if(style === 'tennis' || style.startsWith('ten-')) baseClass = 'sb-tennis ';
         scoreboardOverlay.className = `sb-container ${baseClass}sb-${style}`;
         scoreboardOverlay.style.position = 'absolute';
@@ -702,6 +704,36 @@ function renderOverlayFromFirebase(state, graphics, branding) {
                 <span class="sb-team${aClassB}" style="background:${colors[1]};color:${textB}">${showLogos ? `<img src='${logos[1]}' class='sb-team-logo'>` : ''}${names[1]}</span>
                 ${timePart}
                 ${stopPart}
+            </div>
+            ${sbSponsorHtml}
+            ${bottomImg}`;
+        } else if(style.startsWith('basketball-')){
+            const period = scoreboardData.period || 1;
+            const timePart = timeStr ? `<span class="sb-time">${timeStr}</span>` : '';
+            const periodPart = `<span class="sb-time">Q${period}</span>`;
+            scoreboardOverlay.innerHTML = `
+            ${topImg}
+            <div class="sb-row">
+                <span class="sb-team${aClassA}" style="background:${colors[0]};color:${textA}">${showLogos ? `<img src='${logos[0]}' class='sb-team-logo'>` : ''}${names[0]}</span>
+                <span class="sb-score" style="background:${brand};color:${textBrand}">${sA} - ${sB}</span>
+                <span class="sb-team${aClassB}" style="background:${colors[1]};color:${textB}">${showLogos ? `<img src='${logos[1]}' class='sb-team-logo'>` : ''}${names[1]}</span>
+                ${periodPart}
+                ${timePart}
+            </div>
+            ${sbSponsorHtml}
+            ${bottomImg}`;
+        } else if(style.startsWith('af-')){
+            const period = scoreboardData.period || 1;
+            const timePart = timeStr ? `<span class="sb-time">${timeStr}</span>` : '';
+            const periodPart = `<span class="sb-time">Q${period}</span>`;
+            scoreboardOverlay.innerHTML = `
+            ${topImg}
+            <div class="sb-row">
+                <span class="sb-team${aClassA}" style="background:${colors[0]};color:${textA}">${showLogos ? `<img src='${logos[0]}' class='sb-team-logo'>` : ''}${names[0]}</span>
+                <span class="sb-score" style="background:${brand};color:${textBrand}">${sA} - ${sB}</span>
+                <span class="sb-team${aClassB}" style="background:${colors[1]};color:${textB}">${showLogos ? `<img src='${logos[1]}' class='sb-team-logo'>` : ''}${names[1]}</span>
+                ${periodPart}
+                ${timePart}
             </div>
             ${sbSponsorHtml}
             ${bottomImg}`;
