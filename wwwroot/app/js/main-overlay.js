@@ -248,6 +248,25 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     }
     prevLowerThirdId = liveLowerThirdId;
     prevLowerThirdData = lowerThird;
+    // Sponsor Lower Third Banner
+    let spEl = overlayContainer.querySelector('#sponsor-lt');
+    const spUrl = state && state.sponsorLtUrl;
+    const spShow = previewMode ? state && state.sponsorLtPreviewVisible : state && state.sponsorLtVisible;
+    if (spShow && spUrl) {
+        if (!spEl) {
+            spEl = document.createElement('div');
+            spEl.id = 'sponsor-lt';
+            overlayContainer.appendChild(spEl);
+        }
+        spEl.style.position = 'absolute';
+        spEl.style.left = '0';
+        spEl.style.right = '0';
+        spEl.style.bottom = '0';
+        spEl.style.opacity = previewMode ? '0.6' : '1';
+        spEl.innerHTML = `<img src='${spUrl}' style='width:100%;height:auto;'>`;
+    } else if (spEl) {
+        spEl.remove();
+    }
     if (state && state.musicVisible && state.nowPlaying) {
         let np = document.getElementById('now-playing');
         if (!np) {

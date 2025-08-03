@@ -42,6 +42,8 @@ export function renderBrandingPanel(container, eventId){
                         <div class="mb-2 flex gap-2"><input type="color" name="color" value="#ffffff" class="flex-1"><input type="color" name="color2" value="#000000" class="flex-1"></div>
                         <div class="mb-2"><input type="file" id="sponsor-logo" /><button type="button" id="upload-logo" class="control-button btn-sm ml-2">Upload</button></div>
                         <div class="mb-2"><input class="border p-1 w-full" name="logo" placeholder="Logo URL" /></div>
+                        <div class="mb-2"><input type="file" id="sponsor-lt" /><button type="button" id="upload-lt" class="control-button btn-sm ml-2">Upload LT</button></div>
+                        <div class="mb-2"><input class="border p-1 w-full" name="lowerThird" placeholder="Lower Third URL" /></div>
                         <div class="flex gap-2"><button class="control-button btn-sm" type="submit">Save</button><button type="button" id="cancel-sponsor" class="control-button btn-sm bg-gray-400">Cancel</button></div>
                         <span id="sponsor-status" class="text-xs ml-2"></span>
                     </form>
@@ -77,9 +79,10 @@ export function renderBrandingPanel(container, eventId){
         });
         container.querySelector('#add-sponsor').onclick=()=>showModal();
         if(form){
-            form.onsubmit=e=>{e.preventDefault(); const data=Object.fromEntries(new FormData(form)); const idx=data.idx?parseInt(data.idx,10):-1; const sponsor={name:data.name,logo:data.logo,color:data.color,color2:data.color2}; if(idx>=0) branding.sponsors[idx]=sponsor; else branding.sponsors.push(sponsor); save(); renderSponsors(); modal.style.display='none';};
+            form.onsubmit=e=>{e.preventDefault(); const data=Object.fromEntries(new FormData(form)); const idx=data.idx?parseInt(data.idx,10):-1; const sponsor={name:data.name,logo:data.logo,lowerThird:data.lowerThird,color:data.color,color2:data.color2}; if(idx>=0) branding.sponsors[idx]=sponsor; else branding.sponsors.push(sponsor); save(); renderSponsors(); modal.style.display='none';};
             form.querySelector('#cancel-sponsor').onclick=()=>{modal.style.display='none';};
             form.querySelector('#upload-logo').onclick=async()=>{ const file=document.getElementById('sponsor-logo').files[0]; if(file){ const url=await upload(file,`uploads/${eventId}/branding/sponsors/${file.name}`); if(url) form.logo.value=url; }};
+            form.querySelector('#upload-lt').onclick=async()=>{ const file=document.getElementById('sponsor-lt').files[0]; if(file){ const url=await upload(file,`uploads/${eventId}/branding/sponsors/${file.name}`); if(url) form.lowerThird.value=url; }};
         }
         function showModal(idx){
             form.idx.value= idx ?? '';
@@ -87,16 +90,24 @@ export function renderBrandingPanel(container, eventId){
             form.color.value= idx!=null ? branding.sponsors[idx].color||'#ffffff' : '#ffffff';
             form.color2.value= idx!=null ? branding.sponsors[idx].color2||'#000000' : '#000000';
             form.logo.value= idx!=null ? branding.sponsors[idx].logo : '';
+            form.lowerThird.value= idx!=null ? branding.sponsors[idx].lowerThird || '' : '';
             document.getElementById('sponsor-logo').value='';
+            document.getElementById('sponsor-lt').value='';
             modal.style.display='flex';
         }
         async function save(){ await updateBranding(eventId, {...branding}); }
     });
 }
 
+let csrfPromise;
+async function getCsrf(){
+    if(!csrfPromise) csrfPromise = fetch('upload.php?token',{credentials:'same-origin'}).then(r=>r.text());
+    return csrfPromise;
+}
 async function upload(file,path){
     const fd=new FormData();
     fd.append('file',file); fd.append('path',path);
-    const resp=await fetch('upload.php',{method:'POST',body:fd});
-    if(!resp.ok) return null; const d=await resp.json(); return d.url;
+    fd.append('csrf', await getCsrf());
+    const resp=await fetch('upload.php',{method:'POST',body:fd,credentials:'same-origin'});
+    if(!resp.ok) return null; return `assets/${path}`;
 }
