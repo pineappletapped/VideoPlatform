@@ -19,7 +19,8 @@ function getBranding(targetId, isUser, callback) {
                 logos: { tl:'', tr:'', bl:'', br:'' },
                 sponsors: [],
                 scheduleSponsorPlacement: 'bottom-spaced',
-                scheduleLayout: 'corner'
+                scheduleLayout: 'corner',
+                socialTemplateStyle: 'style1'
             });
         } else {
             callback(branding);
@@ -87,6 +88,14 @@ export function renderBrandingModal(container, opts) {
                                 <option value="center"${branding.scheduleLayout==='center'?' selected':''}>Center Box</option>
                             </select>
                         </div>
+                        <div class="mb-3">
+                            <label class="block text-sm font-semibold mb-1">Social Template Style</label>
+                            <select name="socialTemplateStyle" class="border p-1 w-full">
+                                <option value="style1"${!branding.socialTemplateStyle || branding.socialTemplateStyle==='style1'?' selected':''}>Style 1</option>
+                                <option value="style2"${branding.socialTemplateStyle==='style2'?' selected':''}>Style 2</option>
+                                <option value="style3"${branding.socialTemplateStyle==='style3'?' selected':''}>Style 3</option>
+                            </select>
+                        </div>
                         <div class="flex gap-2 mt-4">
                             <button type="submit" class="control-button btn-sm">Save</button>
                             <button type="button" id="branding-cancel" class="control-button btn-sm bg-gray-400 hover:bg-gray-600">Cancel</button>
@@ -124,7 +133,8 @@ export function renderBrandingModal(container, opts) {
                 logos: branding.logos || {tl:'',tr:'',bl:'',br:''},
                 sponsors: branding.sponsors || [],
                 scheduleSponsorPlacement: data.scheduleSponsorPlacement || branding.scheduleSponsorPlacement || 'bottom-spaced',
-                scheduleLayout: data.scheduleLayout || branding.scheduleLayout || 'corner'
+                scheduleLayout: data.scheduleLayout || branding.scheduleLayout || 'corner',
+                socialTemplateStyle: data.socialTemplateStyle || branding.socialTemplateStyle || 'style1'
             };
             saveBranding(targetId, newBranding, isUser);
             container.classList.add('hidden');

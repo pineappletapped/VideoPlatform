@@ -198,6 +198,9 @@ export function addMatchLog(eventId, entry) {
 export function updateMatchLogEntry(eventId, id, entry) {
   return set(ref(db, `matchLog/${eventId}/${id}`), entry);
 }
+export function getMatchLogEntry(eventId, id) {
+  return get(ref(db, `matchLog/${eventId}/${id}`)).then(snap => ({ id, ...snap.val() }));
+}
 export function listenMatchLog(eventId, cb) {
   return onValue(ref(db, `matchLog/${eventId}`), snap => {
     const val = snap.val() || {};

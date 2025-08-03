@@ -5,7 +5,7 @@ export const sportsData = {
     subs: 5,
     positions: ["GK","LB","CB","RB","LWB","RWB","DM","CM","AM","LW","RW","ST"],
     scoreboard: { periods: 2, periodLabel: "Half", time: true, timeDirection: 'up' },
-    scoreboardStyles: ['football','style1','style2','style3','style4','style5','h1','h2'],
+    scoreboardStyles: ['football-pulse','football-terrace','football-neon','football','style1','style2','style3','style4','style5','h1','h2'],
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }],
     logEvents: ['goal','substitution','corner','throw in','yellow card','red card','free kick']
   },
@@ -99,7 +99,7 @@ export const sportsData = {
     subs: 0,
     positions: ["Player"],
     scoreboard: { sets: true, games: true },
-    scoreboardStyles: ['tennis','style1','style2','style3','style4','style5'],
+    scoreboardStyles: ['ten-baseline','ten-chic','ten-digital','tennis','style1','style2','style3','style4','style5'],
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }],
     logEvents: ['ace','double fault','break point','set won']
   },
@@ -129,7 +129,7 @@ export const sportsData = {
     subs: 7,
     positions: ["PG","SG","SF","PF","C"],
     scoreboard: { periods: 4, periodLabel: "Quarter", time: true, timeDirection: 'down' },
-    scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
+    scoreboardStyles: ['basketball-catalyst','basketball-slick','basketball-retro','style1','style2','style3','style4','style5','h1','h2'],
     scoringButtons: [
       { label: "+1", value: 1, color: "#3b82f6" },
       { label: "+2", value: 2, color: "#10b981" },
@@ -189,7 +189,7 @@ export const sportsData = {
     subs: 5,
     positions: ["QB","RB","WR","TE","OL","DL","LB","CB","S","K","P"],
     scoreboard: { periods: 4, periodLabel: "Quarter", time: true, timeDirection: 'down' },
-    scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
+    scoreboardStyles: ['af-bold','af-stripes','af-horizon','style1','style2','style3','style4','style5','h1','h2'],
     scoringButtons: [
       { label: "TD", value: 6, color: "#10b981" },
       { label: "FG", value: 3, color: "#3b82f6" },

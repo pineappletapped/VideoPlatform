@@ -460,7 +460,10 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         }
         const style = scoreboardData.style || 'style1';
         const pos = scoreboardData.position || 'bottom-center';
-        scoreboardOverlay.className = `sb-container sb-${style}`;
+        let baseClass = '';
+        if(style === 'football' || style.startsWith('football-')) baseClass = 'sb-football ';
+        else if(style === 'tennis' || style.startsWith('ten-')) baseClass = 'sb-tennis ';
+        scoreboardOverlay.className = `sb-container ${baseClass}sb-${style}`;
         scoreboardOverlay.style.position = 'absolute';
         scoreboardOverlay.style.fontFamily = branding.font;
         scoreboardOverlay.style.fontSize = '1.5rem';
@@ -561,7 +564,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             </div>
             ${sbSponsorHtml}
             ${bottomImg}`;
-        } else if(style==='football'){
+        } else if(style==='football' || style.startsWith('football-')){
             const timePart = timeStr ? `<span class="sb-time">${timeStr}</span>` : '';
             const stopPart = scoreboardData.showStoppage && scoreboardData.stoppage ? `<span class="sb-time">+${scoreboardData.stoppage}</span>` : '';
             scoreboardOverlay.innerHTML = `
@@ -575,7 +578,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             </div>
             ${sbSponsorHtml}
             ${bottomImg}`;
-        } else if(style==='tennis'){
+        } else if(style==='tennis' || style.startsWith('ten-')){
             const setsA = scoreboardData.sets?.[0] ?? 0;
             const setsB = scoreboardData.sets?.[1] ?? 0;
             const gamesA = scoreboardData.games?.[0] ?? 0;
@@ -604,7 +607,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             ${bottomImg}`;
         }
         let stopEl = overlayContainer.querySelector('#stoppage-overlay');
-        if(style!=='football' && scoreboardData.showStoppage && scoreboardData.stoppage){
+        if(!(style==='football' || style.startsWith('football-')) && scoreboardData.showStoppage && scoreboardData.stoppage){
             if(!stopEl){
                 stopEl = document.createElement('div');
                 stopEl.id = 'stoppage-overlay';

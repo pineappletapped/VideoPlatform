@@ -5,6 +5,23 @@ import { updateOverlayState, listenOverlayState, addMatchLog, listenFavorites, u
 import { suggestAbbreviation } from "../teamUtils.js";
 
 const DEFAULT_STYLES = [
+    // Football / Soccer
+    { id: 'football-pulse', label: 'Pitch Pulse' },
+    { id: 'football-terrace', label: 'Modern Terrace' },
+    { id: 'football-neon', label: 'Stadium Neon' },
+    // Basketball
+    { id: 'basketball-catalyst', label: 'Court Catalyst' },
+    { id: 'basketball-slick', label: 'Skyline Slick' },
+    { id: 'basketball-retro', label: 'Hardwood Retro' },
+    // American Football
+    { id: 'af-bold', label: 'Grid Iron Bold' },
+    { id: 'af-stripes', label: 'Energy Stripes' },
+    { id: 'af-horizon', label: 'Field Horizon' },
+    // Tennis
+    { id: 'ten-baseline', label: 'Baseline Burst' },
+    { id: 'ten-chic', label: 'Grand Slam Chic' },
+    { id: 'ten-digital', label: 'Court Digital' },
+    // Existing generic styles
     { id: 'football', label: 'Football Row' },
     { id: 'style1', label: 'Classic' },
     { id: 'style2', label: 'Dark Box' },
