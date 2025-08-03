@@ -126,12 +126,13 @@ export function renderSponsorsPanel(container, eventId){
     function showModal(idx){
         const modal = container.querySelector('#sponsor-modal');
         const form = container.querySelector('#sponsor-form');
-        form.idx.value = idx!=null?idx:'';
-        form.name.value = idx!=null?sponsors[idx].name:'';
-        form.color.value = idx!=null?sponsors[idx].color||'#ffffff':'#ffffff';
-        form.color2.value = idx!=null?sponsors[idx].color2||'#000000':'#000000';
-        form.logo.value = idx!=null?sponsors[idx].logo:'';
-        form.lowerThird.value = idx!=null?sponsors[idx].lowerThird||'';
+        const sp = idx!=null ? sponsors[idx] : null;
+        form.idx.value = idx!=null ? idx : '';
+        form.name.value = sp ? sp.name : '';
+        form.color.value = sp ? (sp.color || '#ffffff') : '#ffffff';
+        form.color2.value = sp ? (sp.color2 || '#000000') : '#000000';
+        form.logo.value = sp ? sp.logo : '';
+        form.lowerThird.value = sp ? (sp.lowerThird || '') : '';
         document.getElementById('logo-file').value='';
         document.getElementById('lt-file').value='';
         modal.style.display='flex';
@@ -139,16 +140,24 @@ export function renderSponsorsPanel(container, eventId){
             e.preventDefault();
             const data = Object.fromEntries(new FormData(form));
             const obj = { name:data.name, logo:data.logo, color:data.color, color2:data.color2, lowerThird:data.lowerThird };
-            if(data.idx!=='') sponsors[parseInt(data.idx,10)]=obj; else sponsors.push(obj);
+            if(data.idx!=='') sponsors[parseInt(data.idx,10)] = obj; else sponsors.push(obj);
             await setSponsors(eventId, sponsors);
             modal.style.display='none';
         };
         form.querySelector('#cancel').onclick = ()=>{ modal.style.display='none'; };
         form.querySelector('#upload-logo').onclick = async()=>{
-            const file=document.getElementById('logo-file').files[0]; if(file){ const url=await uploadFile(file,`uploads/${eventId}/sponsors/${file.name}`); if(url) form.logo.value=url; }
+            const file = document.getElementById('logo-file').files[0];
+            if(file){
+                const url = await uploadFile(file, `uploads/${eventId}/sponsors/${file.name}`);
+                if(url) form.logo.value = url;
+            }
         };
         form.querySelector('#upload-lt').onclick = async()=>{
-            const file=document.getElementById('lt-file').files[0]; if(file){ const url=await uploadFile(file,`uploads/${eventId}/sponsors/${file.name}`); if(url) form.lowerThird.value=url; }
+            const file = document.getElementById('lt-file').files[0];
+            if(file){
+                const url = await uploadFile(file, `uploads/${eventId}/sponsors/${file.name}`);
+                if(url) form.lowerThird.value = url;
+            }
         };
     }
 }
