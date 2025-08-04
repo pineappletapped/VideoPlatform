@@ -17,7 +17,7 @@ export function renderStatsPanel(container, eventId = 'demo') {
     let teams = null;
     let logs = [];
     let sport = 'Football';
-    let config = { included: [] };
+    let config = { included: [], style: 'standard', position: 'bottom-center', transition: 'fade-slide' };
     let visible = false;
     let preview = false;
     let psVisible = false;
@@ -42,7 +42,19 @@ export function renderStatsPanel(container, eventId = 'demo') {
         if (!SPORT_STAT_OPTIONS[sport]) sport = 'Football';
         onValue(configRef, snap => {
             const val = snap.val();
-            if (val) config = val; else config = { included: SPORT_STAT_OPTIONS[sport].map(o => o.key) };
+            if (val) config = {
+                included: SPORT_STAT_OPTIONS[sport].map(o => o.key),
+                style: 'standard',
+                position: 'bottom-center',
+                transition: 'fade-slide',
+                ...val
+            };
+            else config = {
+                included: SPORT_STAT_OPTIONS[sport].map(o => o.key),
+                style: 'standard',
+                position: 'bottom-center',
+                transition: 'fade-slide'
+            };
             render();
         });
         render();
@@ -116,12 +128,20 @@ export function renderStatsPanel(container, eventId = 'demo') {
         const previewBtn = container.querySelector('#ms-preview');
         if (previewBtn) previewBtn.onclick = () => {
             const rows = calcRows();
-            updateOverlayState(eventId, { stat: { teamA, teamB, rows }, statPreviewVisible: true, statVisible: false });
+            updateOverlayState(eventId, {
+                stat: { teamA, teamB, rows, style: config.style, position: config.position, transition: config.transition },
+                statPreviewVisible: true,
+                statVisible: false
+            });
         };
         const liveBtn = container.querySelector('#ms-live');
         if (liveBtn) liveBtn.onclick = () => {
             const rows = calcRows();
-            updateOverlayState(eventId, { stat: { teamA, teamB, rows }, statVisible: true, statPreviewVisible: false });
+            updateOverlayState(eventId, {
+                stat: { teamA, teamB, rows, style: config.style, position: config.position, transition: config.transition },
+                statVisible: true,
+                statPreviewVisible: false
+            });
         };
         const hideBtn = container.querySelector('#ms-hide');
         if (hideBtn) hideBtn.onclick = () => updateOverlayState(eventId, { statVisible: false, statPreviewVisible: false });
@@ -144,17 +164,52 @@ export function renderStatsPanel(container, eventId = 'demo') {
 
         const modal = container.querySelector('#ms-modal');
         if (modal) {
-            modal.querySelector('#ms-form').innerHTML = (SPORT_STAT_OPTIONS[sport] || [])
-                .map(o=>`<label class="block text-sm"><input type="checkbox" name="${o.key}" ${config.included.includes(o.key)?'checked':''}/> ${o.label}</label>`)
-                .join('') +
-                `<div class="flex gap-2 mt-4"><button type="submit" class="control-button btn-sm">Save</button><button type="button" id="ms-cancel" class="control-button btn-sm bg-gray-400 hover:bg-gray-600">Cancel</button></div>`;
+            modal.querySelector('#ms-form').innerHTML =
+                (SPORT_STAT_OPTIONS[sport] || [])
+                    .map(o => `
+                        <label class="block text-sm">
+                            <input type="checkbox" name="${o.key}" ${config.included.includes(o.key) ? 'checked' : ''}/> ${o.label}
+                        </label>`)
+                    .join('') +
+                `<div class="mt-2">
+                    <label class="block text-sm">Style</label>
+                    <select name="style" class="border p-1 w-full">
+                        <option value="standard" ${config.style==='standard'?'selected':''}>Standard</option>
+                        <option value="minimal" ${config.style==='minimal'?'selected':''}>Minimal</option>
+                    </select>
+                </div>
+                <div class="mt-2">
+                    <label class="block text-sm">Position</label>
+                    <select name="position" class="border p-1 w-full">
+                        <option value="bottom-center" ${config.position==='bottom-center'?'selected':''}>Bottom Center</option>
+                        <option value="top-center" ${config.position==='top-center'?'selected':''}>Top Center</option>
+                        <option value="top-left" ${config.position==='top-left'?'selected':''}>Top Left</option>
+                        <option value="top-right" ${config.position==='top-right'?'selected':''}>Top Right</option>
+                        <option value="bottom-left" ${config.position==='bottom-left'?'selected':''}>Bottom Left</option>
+                        <option value="bottom-right" ${config.position==='bottom-right'?'selected':''}>Bottom Right</option>
+                    </select>
+                </div>
+                <div class="mt-2">
+                    <label class="block text-sm">Transition</label>
+                    <select name="transition" class="border p-1 w-full">
+                        <option value="fade-slide" ${config.transition==='fade-slide'?'selected':''}>Fade & Slide</option>
+                        <option value="none" ${config.transition==='none'?'selected':''}>None</option>
+                    </select>
+                </div>
+                <div class="flex gap-2 mt-4">
+                    <button type="submit" class="control-button btn-sm">Save</button>
+                    <button type="button" id="ms-cancel" class="control-button btn-sm bg-gray-400 hover:bg-gray-600">Cancel</button>
+                </div>`;
             const form = modal.querySelector('#ms-form');
             form.onsubmit = async e => {
                 e.preventDefault();
                 const included = Array.from(form.querySelectorAll('input[type="checkbox"]'))
                     .filter(ch=>ch.checked)
                     .map(ch=>ch.name);
-                await saveConfig({ included });
+                const style = form.style.value;
+                const position = form.position.value;
+                const transition = form.transition.value;
+                await saveConfig({ included, style, position, transition });
                 modal.style.display = 'none';
             };
             modal.querySelector('#ms-cancel').onclick = () => { modal.style.display='none'; };

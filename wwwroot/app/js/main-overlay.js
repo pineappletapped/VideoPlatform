@@ -920,14 +920,44 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             overlayContainer.appendChild(statOverlay);
         }
         statOverlay.style.position = 'absolute';
-        statOverlay.style.bottom = '2rem';
-        statOverlay.style.left = '50%';
-        statOverlay.style.transform = 'translateX(-50%)';
         statOverlay.style.fontFamily = branding.font;
         statOverlay.style.opacity = previewMode ? '0.6' : '1';
-        const head = `<thead><tr><th></th><th>${statData.teamA}</th><th>${statData.teamB}</th></tr></thead>`;
-        const body = `<tbody>${statData.rows.map(r=>`<tr><td>${r.label}</td><td>${r.a}</td><td>${r.b}</td></tr>`).join('')}</tbody>`;
-        statOverlay.innerHTML = `<div class='stats-box'><table>${head}${body}</table></div>`;
+
+        // Positioning
+        statOverlay.style.top = statOverlay.style.bottom = statOverlay.style.left = statOverlay.style.right = '';
+        statOverlay.style.transform = '';
+        switch(statData.position){
+            case 'top-left':
+                statOverlay.style.top = '2rem';
+                statOverlay.style.left = '2rem';
+                break;
+            case 'top-right':
+                statOverlay.style.top = '2rem';
+                statOverlay.style.right = '2rem';
+                break;
+            case 'bottom-left':
+                statOverlay.style.bottom = '2rem';
+                statOverlay.style.left = '2rem';
+                break;
+            case 'bottom-right':
+                statOverlay.style.bottom = '2rem';
+                statOverlay.style.right = '2rem';
+                break;
+            case 'top-center':
+                statOverlay.style.top = '2rem';
+                statOverlay.style.left = '50%';
+                statOverlay.style.transform = 'translateX(-50%)';
+                break;
+            default:
+                statOverlay.style.bottom = '2rem';
+                statOverlay.style.left = '50%';
+                statOverlay.style.transform = 'translateX(-50%)';
+        }
+
+        const transition = statData.transition === 'fade-slide';
+        const head = `<thead class='stat-head ${transition?'fade-in':''}'><tr><th></th><th>${statData.teamA}</th><th>${statData.teamB}</th></tr></thead>`;
+        const body = `<tbody class='stat-body ${transition?'slide-down':''}'>${statData.rows.map(r=>`<tr><td>${r.label}</td><td>${r.a}</td><td>${r.b}</td></tr>`).join('')}</tbody>`;
+        statOverlay.innerHTML = `<div class='stats-box ${statData.style || 'standard'}'><table>${head}${body}</table></div>`;
     } else if (statOverlay) {
         statOverlay.remove();
     }
