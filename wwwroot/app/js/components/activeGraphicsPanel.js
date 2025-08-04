@@ -152,9 +152,9 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
         else if(type==='stat') updateOverlayState(eventId,{statVisible:false,statPreviewVisible:false});
         else if(type==='stinger') updateOverlayState(eventId,{stingerVisible:false,stingerPreviewVisible:false});
         else if(type==='scoreboard') updateOverlayState(eventId,{scoreboardVisible:false,scoreboardPreviewVisible:false});
-        else if(type==='fixtures') updateOverlayState(eventId,{fixturesVisible:false});
-        else if(type==='formation') updateOverlayState(eventId,{formationVisible:false});
-        else if(type==='course') updateOverlayState(eventId,{courseVisible:false});
+        else if(type==='fixtures') updateOverlayState(eventId,{fixturesVisible:false,fixturesPreviewVisible:false});
+        else if(type==='formation') updateOverlayState(eventId,{formationVisible:false,formationPreviewVisible:false});
+        else if(type==='course') updateOverlayState(eventId,{courseVisible:false,coursePreviewVisible:false});
     }
 
     function renderFav() {

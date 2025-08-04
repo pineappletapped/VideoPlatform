@@ -461,7 +461,9 @@ function renderOverlayFromFirebase(state, graphics, branding) {
 
     // Fixtures Overlay
     let fixturesOverlay = overlayContainer.querySelector('#fixtures-overlay');
-    if (state && state.fixturesVisible) {
+    const fixturesData = state && state.fixtures;
+    const fixturesShow = previewMode ? state && state.fixturesPreviewVisible : state && state.fixturesVisible;
+    if (fixturesShow && fixturesData) {
         if (!fixturesOverlay) {
             fixturesOverlay = document.createElement('div');
             fixturesOverlay.id = 'fixtures-overlay';
@@ -479,14 +481,18 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         fixturesOverlay.style.justifyContent = 'center';
         fixturesOverlay.style.zIndex = '110';
         fixturesOverlay.style.fontFamily = branding.font;
-        fixturesOverlay.innerHTML = '<div style="font-size:3rem;">Fixtures coming soon</div>';
+        fixturesOverlay.style.opacity = previewMode ? '0.6' : '1';
+        const listHtml = (fixturesData.list||[]).map(f=>`<div>${f.home} vs ${f.away}</div>`).join('');
+        fixturesOverlay.innerHTML = `<div style="font-size:3rem;text-align:center;">${listHtml || 'No fixtures'}</div>`;
     } else if (fixturesOverlay) {
         fixturesOverlay.remove();
     }
 
     // Formation Overlay
     let formationOverlay = overlayContainer.querySelector('#formation-overlay');
-    if (state && state.formationVisible) {
+    const formationData = state && state.formation;
+    const formationShow = previewMode ? state && state.formationPreviewVisible : state && state.formationVisible;
+    if (formationShow && formationData) {
         if (!formationOverlay) {
             formationOverlay = document.createElement('div');
             formationOverlay.id = 'formation-overlay';
@@ -504,14 +510,17 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         formationOverlay.style.justifyContent = 'center';
         formationOverlay.style.zIndex = '110';
         formationOverlay.style.fontFamily = branding.font;
-        formationOverlay.innerHTML = '<div style="font-size:3rem;">Formation graphic</div>';
+        formationOverlay.style.opacity = previewMode ? '0.6' : '1';
+        formationOverlay.innerHTML = `<div style="font-size:3rem;">${formationData.teamName || 'Formation graphic'}</div>`;
     } else if (formationOverlay) {
         formationOverlay.remove();
     }
 
     // Course Overlay
     let courseOverlay = overlayContainer.querySelector('#course-overlay');
-    if (state && state.courseVisible) {
+    const courseData = state && state.course;
+    const courseShow = previewMode ? state && state.coursePreviewVisible : state && state.courseVisible;
+    if (courseShow && courseData) {
         if (!courseOverlay) {
             courseOverlay = document.createElement('div');
             courseOverlay.id = 'course-overlay';
@@ -529,7 +538,8 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         courseOverlay.style.justifyContent = 'center';
         courseOverlay.style.zIndex = '110';
         courseOverlay.style.fontFamily = branding.font;
-        courseOverlay.innerHTML = '<div style="font-size:3rem;">Course details</div>';
+        courseOverlay.style.opacity = previewMode ? '0.6' : '1';
+        courseOverlay.innerHTML = `<div style="font-size:3rem;text-align:center;">${courseData.name || 'Course details'}</div>`;
     } else if (courseOverlay) {
         courseOverlay.remove();
     }
