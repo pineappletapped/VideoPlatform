@@ -129,7 +129,10 @@ export function renderStingerPanel(container, eventId){
                 previewing = false;
             } else if(opt){
                 const colors = resolveColors(opt);
-                updateOverlayState(eventId,{stinger:{logo:opt.logo,text:opt.text,style:styleSel.value,colors},stingerPreviewVisible:true,stingerVisible:false});
+                const stingerData = { style: styleSel.value, colors };
+                if (opt.logo) stingerData.logo = opt.logo;
+                if (opt.text) stingerData.text = opt.text;
+                updateOverlayState(eventId,{stinger:stingerData,stingerPreviewVisible:true,stingerVisible:false});
                 previewing = true;
                 living = false;
             }
@@ -141,7 +144,10 @@ export function renderStingerPanel(container, eventId){
                 living = false;
             } else if(opt){
                 const colors = resolveColors(opt);
-                updateOverlayState(eventId,{stinger:{logo:opt.logo,text:opt.text,style:styleSel.value,colors},stingerVisible:true,stingerPreviewVisible:false});
+                const stingerData = { style: styleSel.value, colors };
+                if (opt.logo) stingerData.logo = opt.logo;
+                if (opt.text) stingerData.text = opt.text;
+                updateOverlayState(eventId,{stinger:stingerData,stingerVisible:true,stingerPreviewVisible:false});
                 living = true;
                 previewing = false;
             }
