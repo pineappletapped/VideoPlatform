@@ -166,7 +166,9 @@ export function renderSocialPanel(container, eventId) {
       wrapper.className = 'border p-2';
       const header = document.createElement('div');
       header.className = 'mb-2 text-xs font-semibold';
-      header.textContent = `${l.time || ''} ${l.eventType || l.type || ''}${l.playerName ? ' - ' + l.playerName : ''}`;
+      const playerInfo = l.playerName || l.player || '';
+      const playerLabel = playerInfo ? ` - ${l.playerNumber ? '#' + l.playerNumber + ' ' : ''}${playerInfo}` : '';
+      header.textContent = `${l.time || ''} ${l.eventType || l.type || ''}${playerLabel}`;
       wrapper.appendChild(header);
       if (l.social) {
         const grid = document.createElement('div');
@@ -253,11 +255,12 @@ export function renderSocialPanel(container, eventId) {
       this.logs.forEach(l => {
         const tr = document.createElement('tr');
         tr.dataset.id = l.id;
+        const playerText = l.playerName || l.player || '';
         const cols = [
           l.time || '',
           l.team === 'a' ? 'Home' : l.team === 'b' ? 'Away' : (l.team || ''),
           l.eventType || l.type || '',
-          l.playerName || l.player || ''
+          l.playerNumber ? `#${l.playerNumber} ${playerText}` : playerText
         ];
         cols.forEach(text => {
           const td = document.createElement('td');

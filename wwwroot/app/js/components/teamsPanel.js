@@ -31,7 +31,7 @@ export function renderTeamsPanel(container, eventId, sport='Football', tournamen
 
     function defaultData(){
         const count = cfg.playersPerTeam + (cfg.subs||0);
-        const players = Array.from({length:count}).map(()=>({name:'',pos:'',photo:''}));
+        const players = Array.from({length:count}).map(()=>({name:'',number:'',pos:'',photo:''}));
         const nameA = cfg.playersPerTeam === 1 ? 'Player 1' : 'Team A';
         const nameB = cfg.playersPerTeam === 1 ? 'Player 2' : 'Team B';
         if(!tournament){
@@ -45,7 +45,7 @@ export function renderTeamsPanel(container, eventId, sport='Football', tournamen
         const teamA = tournament ? currentData.teams[currentData.currentA||0] : currentData.teamA;
         const teamB = tournament ? currentData.teams[currentData.currentB||1] : currentData.teamB;
         const photoIcon = p=> p?'<span class="text-green-400 ml-1">✔</span>':'';
-        const list = team=>team.players.map(pl=>`<li class="flex justify-between border-b border-gray-700 py-1"><span>${pl.name}</span><span class="text-xs text-gray-400">${pl.pos}${photoIcon(pl.photo)}</span></li>`).join('');
+        const list = team=>team.players.map(pl=>`<li class="flex justify-between border-b border-gray-700 py-1"><span>${pl.number?`#${pl.number} `:''}${pl.name}</span><span class="text-xs text-gray-400">${pl.pos}${photoIcon(pl.photo)}</span></li>`).join('');
         container.innerHTML = `
             <div class='teams-panel'>
                 <h2 class="font-bold text-lg mb-2">${label}</h2>
@@ -80,7 +80,7 @@ export function renderTeamsPanel(container, eventId, sport='Football', tournamen
         const teamA = tournament ? currentData.teams[currentData.currentA||0] : currentData.teamA;
         const teamB = tournament ? currentData.teams[currentData.currentB||1] : currentData.teamB;
         const posOpts = cfg.positions.map(p=>`<option value="${p}">${p}</option>`).join('');
-        const rows = (prefix, team)=>team.players.map((pl,idx)=>`<tr><td><input class="border p-1 w-full" id="${prefix}-name-${idx}" value="${pl.name}"></td><td><select class="border p-1 w-full" id="${prefix}-pos-${idx}"><option value=""></option>${posOpts}</select></td><td><input class="border p-1 w-full mb-1" id="${prefix}-photo-${idx}" placeholder="Photo URL" value="${pl.photo||''}"><input type="file" id="${prefix}-file-${idx}" class="text-xs" accept="image/*"></td></tr>`).join('');
+        const rows = (prefix, team)=>team.players.map((pl,idx)=>`<tr><td><input class="border p-1 w-full" id="${prefix}-name-${idx}" value="${pl.name}"></td><td><input class="border p-1 w-12" id="${prefix}-num-${idx}" value="${pl.number||''}"></td><td><select class="border p-1 w-full" id="${prefix}-pos-${idx}"><option value=""></option>${posOpts}</select></td><td><input class="border p-1 w-full mb-1" id="${prefix}-photo-${idx}" placeholder="Photo URL" value="${pl.photo||''}"><input type="file" id="${prefix}-file-${idx}" class="text-xs" accept="image/*"></td></tr>`).join('');
         const nameALabel = cfg.playersPerTeam === 1 ? 'Player 1 Name' : 'Team A Name';
         const nameBLabel = cfg.playersPerTeam === 1 ? 'Player 2 Name' : 'Team B Name';
         return `
@@ -126,6 +126,7 @@ export function renderTeamsPanel(container, eventId, sport='Football', tournamen
             const slots = cfg.playersPerTeam + (cfg.subs||0);
             const getPlayers = prefix => Array.from({length:slots}).map((_,i)=>({
                 name: win.querySelector(`#${prefix}-name-${i}`).value,
+                number: win.querySelector(`#${prefix}-num-${i}`).value,
                 pos: win.querySelector(`#${prefix}-pos-${i}`).value,
                 photo: win.querySelector(`#${prefix}-photo-${i}`).value
             }));

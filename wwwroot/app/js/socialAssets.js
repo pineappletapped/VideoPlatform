@@ -40,6 +40,7 @@ export async function generateSocialAssets(eventId, logId, style, options = {}) 
     awayLogo: `/assets/logos/${meta.awaySlug}.png`,
     portrait: `/assets/portraits/${entry.playerId}.jpg`,
     playerName: entry.playerName,
+    playerNumber: entry.playerNumber || '',
     eventType: entry.eventType,
     scoreline: `${meta.scoreHome} – ${meta.scoreAway}`,
     time: entry.time

@@ -303,12 +303,20 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                 const on = playerOnSel.value;
                 let subtitle = '';
                 let playerField = '';
+                let playerName = '';
+                let playerNumber = '';
                 if (type === 'substitution') {
                     subtitle = `${off} → ${on}`;
                     playerField = subtitle;
+                    playerName = off;
+                    const offObj = teamsData[teamKey]?.players.find(p=>p.name===off);
+                    playerNumber = offObj?.number || '';
                 } else {
                     subtitle = off;
                     playerField = off;
+                    const plObj = teamsData[teamKey]?.players.find(p=>p.name===off);
+                    playerName = plObj?.name || off;
+                    playerNumber = plObj?.number || '';
                 }
                 const sb = overlayState.scoreboard || {};
                 const parseTime = str => { const [m = '0', s = '0'] = str.split(':'); return parseInt(m) * 60 + parseInt(s); };
@@ -319,7 +327,8 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                     secs = sb.timeDirection === 'down' ? Math.max(0,(sb.timerBase||0) - elapsed) : (sb.timerBase||0) + elapsed;
                 }
                 const timeStr = formatTime(secs);
-                await addMatchLog(eventId,{ ts: Date.now(), type, team: teamKey==='teamA'?'a':'b', player: playerField, time: timeStr });
+                const logEntry = { ts: Date.now(), type, team: teamKey==='teamA'?'a':'b', player: playerField, playerName, playerNumber, time: timeStr };
+                await addMatchLog(eventId, logEntry);
                 const obj = {
                     id: (Date.now()+Math.random()).toString(36),
                     title: `${teamName} ${type.charAt(0).toUpperCase()+type.slice(1)}`,
