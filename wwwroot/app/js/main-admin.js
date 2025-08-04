@@ -13,7 +13,10 @@ const PLAN_PRICING = { bronze: 3.75, silver: 6, gold: 15 };
 const PLAN_FEATURES = {
   commentator: 'Commentator Panel',
   speaker: 'Speaker Panel',
-  tournament: 'Tournament Mode'
+  tournament: 'Tournament Mode',
+  social: 'Social Panel',
+  sponsorship: 'Sponsorship Placements',
+  logging: 'Event Logging'
 };
 
 async function init() {
