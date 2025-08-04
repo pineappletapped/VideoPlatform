@@ -71,8 +71,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       const img = imgSrc ?
         `<img src="${imgSrc}" alt="thumb" class="w-24 h-16 object-cover rounded" />` :
         `<div class="w-24 h-16 bg-gray-300 flex items-center justify-center rounded text-xs text-gray-500">No image</div>`;
+      const socialBtn = ev.eventType === 'sports'
+        ? `<a class="control-button btn-sm" href="social.html?event_id=${id}">Social</a>`
+        : '';
       const actionLinks = ev.eventType === 'sports'
-        ? `${sportsLink} ${commBtn} ${speakBtn}`
+        ? `${sportsLink} ${commBtn} ${speakBtn} ${socialBtn}`
         : `${speakBtn}`;
       return `<li class="bg-white text-black p-3 rounded shadow flex items-center gap-3">
         ${img}

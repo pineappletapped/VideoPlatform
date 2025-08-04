@@ -1,23 +1,31 @@
-import { getSponsors, setSponsors, listenSponsors, getSponsorPlacements, setSponsorPlacements, listenSponsorPlacements, getSponsorLog } from '../firebase.js';
+import { getSponsors, setSponsors, listenSponsors, getSponsorPlacements, setSponsorPlacements, listenSponsorPlacements, getSponsorLog, updateOverlayState } from '../firebase.js';
 
+let csrfPromise;
+async function getCsrf(){
+    if(!csrfPromise) csrfPromise = fetch('upload.php?token',{credentials:'same-origin'}).then(r=>r.text());
+    return csrfPromise;
+}
 async function uploadFile(file, path){
     const fd = new FormData();
     fd.append('file', file);
     fd.append('path', path);
-    const resp = await fetch('upload.php', { method:'POST', body: fd });
+    fd.append('csrf', await getCsrf());
+    const resp = await fetch('upload.php', { method:'POST', body: fd, credentials:'same-origin' });
     if(!resp.ok) return null;
-    const d = await resp.json();
-    return d.url;
+    return `assets/${path}`;
 }
 
 export function renderSponsorsPanel(container, eventId){
     let sponsors = [];
     let placements = {};
+    let ltPreviewing = false;
+    let ltLiving = false;
 
     listenSponsors(eventId, data=>{ sponsors = data || []; render(); });
     listenSponsorPlacements(eventId, data=>{ placements = data || {}; render(); });
 
     function render(){
+        const ltOptions = sponsors.map((s,i)=>s.lowerThird?`<option value="${i}">${s.name}</option>`:'').join('');
         container.innerHTML = `
             <div class='sponsors-panel'>
                 <h2 class="font-bold text-lg mb-2">Sponsorship</h2>
@@ -34,6 +42,14 @@ export function renderSponsorsPanel(container, eventId){
                     <button id="save-placements" class="control-button btn-sm mt-2">Save Placements</button>
                     <button id="view-log" class="control-button btn-sm mt-2 ml-2">View Log</button>
                 </div>
+                <div class="mb-4">
+                    <strong class="block mb-1">Lower Third Banner</strong>
+                    <div class="flex items-center gap-2">
+                        <select id="lt-select" class="border p-1 flex-1"><option value="">Select</option>${ltOptions}</select>
+                        <button id="lt-preview" class="control-button btn-sm">Preview</button>
+                        <button id="lt-live" class="control-button btn-sm">Live</button>
+                    </div>
+                </div>
                 <div id="sponsor-modal" class="modal-overlay" style="display:none;">
                     <div class="modal-window">
                         <form id="sponsor-form">
@@ -42,6 +58,8 @@ export function renderSponsorsPanel(container, eventId){
                             <div class="mb-2 flex gap-2"><input type="color" name="color" value="#ffffff" class="flex-1"><input type="color" name="color2" value="#000000" class="flex-1"></div>
                             <div class="mb-2"><input type="file" id="logo-file"><button type="button" id="upload-logo" class="control-button btn-sm ml-2">Upload</button></div>
                             <div class="mb-2"><input class="border p-1 w-full" name="logo" placeholder="Logo URL"></div>
+                            <div class="mb-2"><input type="file" id="lt-file"><button type="button" id="upload-lt" class="control-button btn-sm ml-2">Upload LT</button></div>
+                            <div class="mb-2"><input class="border p-1 w-full" name="lowerThird" placeholder="Lower Third URL"></div>
                             <div class="flex gap-2"><button class="control-button btn-sm" type="submit">Save</button><button type="button" id="cancel" class="control-button btn-sm bg-gray-400">Cancel</button></div>
                         </form>
                     </div>
@@ -64,7 +82,8 @@ export function renderSponsorsPanel(container, eventId){
             ['cornerTL','Top Left Corner'],
             ['cornerTR','Top Right Corner'],
             ['cornerBL','Bottom Left Corner'],
-            ['cornerBR','Bottom Right Corner']
+            ['cornerBR','Bottom Right Corner'],
+            ['intro','Intro Graphic']
         ];
         const placeTable = container.querySelector('#place-table');
         placeTable.innerHTML = rows.map(r=>`<tr><td class="pr-2">${r[1]}</td><td><select data-place="${r[0]}" class="border p-1 w-full"><option value="">None</option>${sponsors.map((s,i)=>`<option value="${i}">${s.name}</option>`).join('')}</select></td></tr>`).join('');
@@ -89,29 +108,57 @@ export function renderSponsorsPanel(container, eventId){
         container.querySelector('#add-sponsor').onclick = ()=> showModal();
         list.querySelectorAll('button[data-edit]').forEach(btn=>btn.onclick=()=> showModal(parseInt(btn.dataset.edit,10)));
         list.querySelectorAll('button[data-remove]').forEach(btn=>btn.onclick=async ()=>{ sponsors.splice(parseInt(btn.dataset.remove,10),1); await setSponsors(eventId,sponsors); });
+
+        const ltSel = container.querySelector('#lt-select');
+        const ltPrevBtn = container.querySelector('#lt-preview');
+        const ltLiveBtn = container.querySelector('#lt-live');
+        if(ltPrevBtn) ltPrevBtn.onclick = async()=>{
+            const idx = parseInt(ltSel.value||'-1',10); const sp = sponsors[idx]; if(!sp || !sp.lowerThird) return;
+            if(ltPreviewing){ await updateOverlayState(eventId,{sponsorLtPreviewVisible:false}); ltPreviewing=false; }
+            else { await updateOverlayState(eventId,{sponsorLtUrl:sp.lowerThird,sponsorLtPreviewVisible:true,sponsorLtVisible:false}); ltPreviewing=true; ltLiving=false; }
+        };
+        if(ltLiveBtn) ltLiveBtn.onclick = async()=>{
+            const idx = parseInt(ltSel.value||'-1',10); const sp = sponsors[idx]; if(!sp || !sp.lowerThird) return;
+            if(ltLiving){ await updateOverlayState(eventId,{sponsorLtVisible:false}); ltLiving=false; }
+            else { await updateOverlayState(eventId,{sponsorLtUrl:sp.lowerThird,sponsorLtVisible:true,sponsorLtPreviewVisible:false}); ltLiving=true; ltPreviewing=false; }
+        };
     }
 
     function showModal(idx){
         const modal = container.querySelector('#sponsor-modal');
         const form = container.querySelector('#sponsor-form');
-        form.idx.value = idx!=null?idx:'';
-        form.name.value = idx!=null?sponsors[idx].name:'';
-        form.color.value = idx!=null?sponsors[idx].color||'#ffffff':'#ffffff';
-        form.color2.value = idx!=null?sponsors[idx].color2||'#000000':'#000000';
-        form.logo.value = idx!=null?sponsors[idx].logo:'';
+        const sp = idx!=null ? sponsors[idx] : null;
+        form.idx.value = idx!=null ? idx : '';
+        form.name.value = sp ? sp.name : '';
+        form.color.value = sp ? (sp.color || '#ffffff') : '#ffffff';
+        form.color2.value = sp ? (sp.color2 || '#000000') : '#000000';
+        form.logo.value = sp ? sp.logo : '';
+        form.lowerThird.value = sp ? (sp.lowerThird || '') : '';
         document.getElementById('logo-file').value='';
+        document.getElementById('lt-file').value='';
         modal.style.display='flex';
         form.onsubmit = async e=>{
             e.preventDefault();
             const data = Object.fromEntries(new FormData(form));
-            const obj = { name:data.name, logo:data.logo, color:data.color, color2:data.color2 };
-            if(data.idx!=='') sponsors[parseInt(data.idx,10)]=obj; else sponsors.push(obj);
+            const obj = { name:data.name, logo:data.logo, color:data.color, color2:data.color2, lowerThird:data.lowerThird };
+            if(data.idx!=='') sponsors[parseInt(data.idx,10)] = obj; else sponsors.push(obj);
             await setSponsors(eventId, sponsors);
             modal.style.display='none';
         };
         form.querySelector('#cancel').onclick = ()=>{ modal.style.display='none'; };
         form.querySelector('#upload-logo').onclick = async()=>{
-            const file=document.getElementById('logo-file').files[0]; if(file){ const url=await uploadFile(file,`uploads/${eventId}/sponsors/${file.name}`); if(url) form.logo.value=url; }
+            const file = document.getElementById('logo-file').files[0];
+            if(file){
+                const url = await uploadFile(file, `uploads/${eventId}/sponsors/${file.name}`);
+                if(url) form.logo.value = url;
+            }
+        };
+        form.querySelector('#upload-lt').onclick = async()=>{
+            const file = document.getElementById('lt-file').files[0];
+            if(file){
+                const url = await uploadFile(file, `uploads/${eventId}/sponsors/${file.name}`);
+                if(url) form.lowerThird.value = url;
+            }
         };
     }
 }

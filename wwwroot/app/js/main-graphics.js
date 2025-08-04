@@ -10,7 +10,7 @@ import { getTeamLabel } from './sportsConfig.js';
 import { renderBrandingModal } from './components/brandingModal.js';
 import { renderProfileWizard } from './components/profileWizard.js';
 import { renderCalendarDrawer } from './components/calendarDrawer.js';
-import { renderHoldslatePanel } from './components/holdslatePanel.js';
+import { renderIntroPanel } from './components/introPanel.js';
 import { updateOverlayState, getOverlayState, getEventMetadata, updateEventMetadata, getGraphicsData, updateGraphicsData } from './firebase.js';
 import { renderActiveGraphicsPanel } from './components/activeGraphicsPanel.js';
 import { renderBrandingPanel } from './components/brandingPanel.js';
@@ -72,7 +72,7 @@ function setupTabs() {
     document.querySelectorAll('.av-panel [data-tab]').forEach(btn => {
         btn.addEventListener('click', () => setActiveTab(btn.getAttribute('data-tab'), '.av-panel'));
     });
-    setActiveTab('holdslate','.graphics-panel');
+    setActiveTab('intro','.graphics-panel');
     setActiveTab('vts','.av-panel');
 }
 
@@ -176,7 +176,7 @@ async function initializeComponents(eventData) {
         renderProgramPreview(document.getElementById('schedule-panel'), eventData, onOverlayStateChange);
     }
 
-    renderHoldslatePanel(document.getElementById('holdslate-panel'), eventId, onOverlayStateChange);
+    renderIntroPanel(document.getElementById('intro-panel'), eventId, onOverlayStateChange);
     const { renderStingerPanel } = await import('./components/stingerPanel.js');
     renderStingerPanel(document.getElementById('stinger-panel'), eventId);
     if((eventData.eventType || 'corporate') === 'corporate') {

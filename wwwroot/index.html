@@ -4,11 +4,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>VideoPlatform</title>
-<script>window.__TAILWIND_DISABLE_CDN_WARNING = true; window.__TWCSS_DISABLE_CDN_WARNING = true;</script>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="app/css/tailwind.min.css?v=20240610">
+    <link rel="stylesheet" href="app/css/custom.css?v=20240610">
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col">
-    <header class="bg-brand-600 text-white p-4 flex justify-between items-center">
+    <header class="bg-brand text-white p-4 flex justify-between items-center">
         <h1 class="text-2xl font-bold">VideoPlatform</h1>
         <div>
             <a href="app/index.html" class="bg-white text-gray-900 font-bold px-4 py-2 rounded hover:bg-gray-200">Login</a>
@@ -18,7 +18,7 @@
         <section class="max-w-3xl mx-auto">
             <h2 class="text-4xl font-extrabold mb-4">Elevate Your Live Productions</h2>
             <p class="mb-8">Manage graphics, video playback and more from one intuitive dashboard. Perfect for corporate presentations and sporting events.</p>
-            <a href="app/index.html" class="bg-brand-600 hover:bg-brand-500 text-white font-bold px-6 py-3 rounded">Get Started</a>
+            <a href="app/index.html" class="bg-brand text-white font-bold px-6 py-3 rounded hover:opacity-90">Get Started</a>
         </section>
         <section class="max-w-5xl mx-auto" id="features">
             <h2 class="text-3xl font-bold mb-6">Key Features</h2>
@@ -56,14 +56,11 @@
                     <p class="text-sm mb-4">Best for busy production teams (eight events).</p>
                 </div>
             </div>
-            <a href="app/index.html" class="inline-block mt-8 bg-brand-600 hover:bg-brand-500 text-white font-bold px-6 py-3 rounded">Create Your Account</a>
+            <a href="app/index.html" class="inline-block mt-8 bg-brand text-white font-bold px-6 py-3 rounded hover:opacity-90">Create Your Account</a>
         </section>
     </main>
     <footer class="text-center text-gray-500 p-4">
         &copy; 2024 VideoPlatform
     </footer>
-    <script>
-        tailwind.config = { theme: { extend: { colors: { brand: { '600': '#e16316', '500': '#ff864e' } } } } };
-    </script>
 </body>
 </html>

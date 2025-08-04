@@ -1,10 +1,27 @@
 import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 import { getDatabaseInstance } from "../firebaseApp.js";
 import { sportsData } from "../sportsConfig.js";
-import { updateOverlayState, listenOverlayState, addMatchLog, listenFavorites, updateFavorites, listenMatchLog } from "../firebase.js";
+import { updateOverlayState, listenOverlayState, addMatchLog, listenFavorites, updateFavorites, listenMatchLog, resolveAssetPath } from "../firebase.js";
 import { suggestAbbreviation } from "../teamUtils.js";
 
 const DEFAULT_STYLES = [
+    // Football / Soccer
+    { id: 'football-pulse', label: 'Pitch Pulse' },
+    { id: 'football-terrace', label: 'Modern Terrace' },
+    { id: 'football-neon', label: 'Stadium Neon' },
+    // Basketball
+    { id: 'basketball-catalyst', label: 'Court Catalyst' },
+    { id: 'basketball-slick', label: 'Skyline Slick' },
+    { id: 'basketball-retro', label: 'Hardwood Retro' },
+    // American Football
+    { id: 'af-bold', label: 'Grid Iron Bold' },
+    { id: 'af-stripes', label: 'Energy Stripes' },
+    { id: 'af-horizon', label: 'Field Horizon' },
+    // Tennis
+    { id: 'ten-baseline', label: 'Baseline Burst' },
+    { id: 'ten-chic', label: 'Grand Slam Chic' },
+    { id: 'ten-digital', label: 'Court Digital' },
+    // Existing generic styles
     { id: 'football', label: 'Football Row' },
     { id: 'style1', label: 'Classic' },
     { id: 'style2', label: 'Dark Box' },
@@ -634,8 +651,8 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             const nameA = useAbbrev ? abbrA : nameAFull;
             const nameB = useAbbrev ? abbrB : nameBFull;
             const longest = Math.max(nameA.length, nameB.length);
-            const logoA = tA.logo || '';
-            const logoB = tB.logo || '';
+            const logoA = resolveAssetPath(tA.logo || '');
+            const logoB = resolveAssetPath(tB.logo || '');
             const showLogo = (showLogoChk?.checked ?? true) && logoA && logoB;
             const brand = getComputedStyle(document.documentElement).getPropertyValue('--brand-primary') || '#e16316';
             const textA = contrastColor(colA);

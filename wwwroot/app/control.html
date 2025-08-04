@@ -5,19 +5,11 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Event Control Panel</title>
 
-    <!-- Tailwind (CDN) -->
-<script>window.__TAILWIND_DISABLE_CDN_WARNING = true; window.__TWCSS_DISABLE_CDN_WARNING = true;</script>
-    <script src="https://cdn.tailwindcss.com?v=20240610"></script>
-    <script>
-        tailwind.config = {
-            theme: { extend: { colors: { brand: '#e16316' } } }
-        };
-    </script>
+    <link rel="stylesheet" href="css/tailwind.min.css?v=20240610">
+    <link rel="stylesheet" href="css/custom.css?v=20240610">
 
     <!-- GSAP (CDN) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js?v=20240610"></script>
-
-    <link rel="stylesheet" href="css/custom.css?v=20240610">
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col">
     <div id="top-bar"></div>
@@ -75,7 +67,7 @@
             <div class="bg-white rounded-lg shadow flex-1 graphics-panel">
                 <!-- Tab Headers -->
                 <div class="flex border-b" id="graphics-tabs">
-                    <button class="px-4 py-2 border-b-2 border-brand text-brand font-semibold" data-tab="holdslate">Holdslate</button>
+                    <button class="px-4 py-2 border-b-2 border-brand text-brand font-semibold" data-tab="intro">Intro Graphics</button>
                     <button class="px-4 py-2" data-tab="lower-thirds">Lower Thirds</button>
                     <button class="px-4 py-2" data-tab="schedule">Schedule</button>
                     <button class="px-4 py-2" data-tab="branding">Branding</button>
@@ -88,7 +80,7 @@
                 </div>
                 <!-- Tab Content -->
                 <div class="p-4">
-                    <div id="holdslate-panel" class="tab-content"></div>
+                    <div id="intro-panel" class="tab-content"></div>
                     <div id="lower-thirds-panel" class="tab-content hidden"></div>
                     <div id="schedule-panel" class="tab-content hidden program-preview"></div>
                     <div id="branding-panel" class="tab-content hidden"></div>

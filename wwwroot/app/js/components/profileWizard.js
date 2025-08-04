@@ -1,4 +1,4 @@
-import { setBranding, getBranding } from '../firebase.js';
+import { setBranding, getBranding, resolveAssetPath } from '../firebase.js';
 import { getDatabaseInstance } from '../firebaseApp.js';
 import { ref, set, get } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
 import { sportsData, getTeamLabel } from '../sportsConfig.js';
@@ -55,7 +55,7 @@ export function renderProfileWizard(container, eventData) {
                         <div class="mb-2">
                             <label class="block text-sm">Organiser Logo</label>
                             <input type="file" id="brand-logo-file" accept="image/*" class="mb-1" />
-                            ${branding.logoPrimary ? `<img src="${branding.logoPrimary}" class="h-10" />` : ''}
+                            ${branding.logoPrimary ? `<img src="${resolveAssetPath(branding.logoPrimary)}" class="h-10" />` : ''}
                         </div>
                         <input type="hidden" id="brand-logo" value="${branding.logoPrimary || ''}" />
                         <div class="flex gap-2 mt-4">

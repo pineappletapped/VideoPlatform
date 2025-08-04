@@ -34,6 +34,15 @@ export function getAllEventsMetadata() {
   return get(ref(db, 'events')).then(snap => snap.val());
 }
 
+// Resolve relative asset paths for logos/images
+export function resolveAssetPath(path) {
+  if (!path) return '';
+  if (/^https?:\/\//.test(path) || path.startsWith('assets/') || path.startsWith('/')) {
+    return path;
+  }
+  return `assets/${path}`;
+}
+
 export function deleteEvent(eventId) {
   return Promise.all([
     remove(ref(db, `events/${eventId}`)),
@@ -197,6 +206,9 @@ export function addMatchLog(eventId, entry) {
 }
 export function updateMatchLogEntry(eventId, id, entry) {
   return set(ref(db, `matchLog/${eventId}/${id}`), entry);
+}
+export function getMatchLogEntry(eventId, id) {
+  return get(ref(db, `matchLog/${eventId}/${id}`)).then(snap => ({ id, ...snap.val() }));
 }
 export function listenMatchLog(eventId, cb) {
   return onValue(ref(db, `matchLog/${eventId}`), snap => {
