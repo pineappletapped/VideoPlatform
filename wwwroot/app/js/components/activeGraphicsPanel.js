@@ -103,7 +103,14 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
         const pid = e.target.getAttribute('data-player');
         if(pid){
             const entry = matchLogs.find(l=>l.id===pid);
-            if(entry){ entry.player = e.target.value; updateMatchLogEntry(eventId,pid,entry); }
+            if(entry){
+                entry.player = e.target.value;
+                entry.playerName = e.target.value;
+                const teamPlayers = entry.team==='a'?teamsData?.teamA?.players||[]:teamsData?.teamB?.players||[];
+                const pl = teamPlayers.find(p=>p.name===e.target.value);
+                entry.playerNumber = pl?.number || '';
+                updateMatchLogEntry(eventId,pid,entry);
+            }
         }
     });
 
@@ -152,9 +159,9 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
         else if(type==='stat') updateOverlayState(eventId,{statVisible:false,statPreviewVisible:false});
         else if(type==='stinger') updateOverlayState(eventId,{stingerVisible:false,stingerPreviewVisible:false});
         else if(type==='scoreboard') updateOverlayState(eventId,{scoreboardVisible:false,scoreboardPreviewVisible:false});
-        else if(type==='fixtures') updateOverlayState(eventId,{fixturesVisible:false});
-        else if(type==='formation') updateOverlayState(eventId,{formationVisible:false});
-        else if(type==='course') updateOverlayState(eventId,{courseVisible:false});
+        else if(type==='fixtures') updateOverlayState(eventId,{fixturesVisible:false,fixturesPreviewVisible:false});
+        else if(type==='formation') updateOverlayState(eventId,{formationVisible:false,formationPreviewVisible:false});
+        else if(type==='course') updateOverlayState(eventId,{courseVisible:false,coursePreviewVisible:false});
     }
 
     function renderFav() {
@@ -175,7 +182,8 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
         const rows = (matchLogs||[]).map(e=>{
             const team = e.team==='a'?teamsData?.teamA?.name||'Team A':teamsData?.teamB?.name||'Team B';
             const players = e.team==='a'?teamsData?.teamA?.players||[]:teamsData?.teamB?.players||[];
-            const opts = ['<option value="">-</option>', ...players.map(p=>`<option ${e.player===p.name?'selected':''} value="${p.name}">${p.name}</option>`)].join('');
+            const selectedName = e.playerName || e.player || '';
+            const opts = ['<option value="">-</option>', ...players.map(p=>`<option ${selectedName===p.name?'selected':''} value="${p.name}">${p.number?`#${p.number} `:''}${p.name}</option>`)].join('');
             return `<tr data-id="${e.id}"><td class='pr-2'>${e.time}</td><td>${team}</td><td>${e.type}</td><td><select data-player="${e.id}" class='border p-1'>${opts}</select></td></tr>`;
         }).join('');
         logsTable.innerHTML = `<thead><tr><th class='pr-2'>Time</th><th>Team</th><th>Type</th><th>Player</th></tr></thead><tbody>${rows}</tbody>`;

@@ -95,7 +95,7 @@ export function renderProfileWizard(container, eventData) {
         const cfg = sportsData[sport] || sportsData['Football'];
         const label = getTeamLabel(sport);
         const playerSlots = cfg.playersPerTeam + (cfg.subs || 0);
-        const players = Array.from({ length: playerSlots }).map(() => ({ name: '', pos: '' }));
+        const players = Array.from({ length: playerSlots }).map(() => ({ name: '', number: '', pos: '' }));
         const nameA = cfg.playersPerTeam === 1 ? 'Player 1' : 'Team A';
         const nameB = cfg.playersPerTeam === 1 ? 'Player 2' : 'Team B';
         const data = snap.val() || { teamA:{ name:nameA, logo:'', players: players.slice() }, teamB:{ name:nameB, logo:'', players: players.slice() } };

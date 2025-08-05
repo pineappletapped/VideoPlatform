@@ -1,5 +1,5 @@
 import { setGraphicsData, updateGraphicsData, getGraphicsData, listenGraphicsData, listenFavorites, updateFavorites, addMatchLog, listenOverlayState } from '../firebase.js';
-import { ref, onValue } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
+import { ref, onValue, set } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
 import { getDatabaseInstance } from '../firebaseApp.js';
 import { sportsData } from '../sportsConfig.js';
 
@@ -52,10 +52,12 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
     const sportsMode = eventType === 'sports';
     let teamsData = null;
     let logEvents = [];
+    let db;
+    let teamsRef;
 
     if (sportsMode) {
-        const db = getDatabaseInstance();
-        const teamsRef = ref(db, `teams/${eventId}`);
+        db = getDatabaseInstance();
+        teamsRef = ref(db, `teams/${eventId}`);
         onValue(teamsRef, snap => { teamsData = snap.val(); renderPanel(); });
         logEvents = getLogEventsForSport(eventData.sport);
     }
@@ -282,10 +284,13 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
 
             const fillPlayers = () => {
                 const teamKey = teamSel.value;
-                const players = (teamsData[teamKey]?.players || []).map(p => p.name);
-                const opts = ['<option value=""></option>', ...players.map(p=>`<option value="${p}">${p}</option>`)];
-                playerSel.innerHTML = opts.join('');
-                playerOnSel.innerHTML = opts.join('');
+                const team = teamsData[teamKey];
+                const starters = (team?.players || []).filter(p=>(p.status||'starting')==='starting').map(p=>p.name);
+                const subs = (team?.players || []).filter(p=>p.status==='sub').map(p=>p.name);
+                const offOpts = ['<option value=""></option>', ...starters.map(p=>`<option value="${p}">${p}</option>`)];
+                const onOpts = ['<option value=""></option>', ...subs.map(p=>`<option value="${p}">${p}</option>`)];
+                playerSel.innerHTML = offOpts.join('');
+                playerOnSel.innerHTML = onOpts.join('');
             };
             const updateType = () => {
                 playerOnSel.style.display = typeSel.value === 'substitution' ? '' : 'none';
@@ -303,12 +308,20 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                 const on = playerOnSel.value;
                 let subtitle = '';
                 let playerField = '';
+                let playerName = '';
+                let playerNumber = '';
                 if (type === 'substitution') {
                     subtitle = `${off} → ${on}`;
                     playerField = subtitle;
+                    playerName = off;
+                    const offObj = teamsData[teamKey]?.players.find(p=>p.name===off);
+                    playerNumber = offObj?.number || '';
                 } else {
                     subtitle = off;
                     playerField = off;
+                    const plObj = teamsData[teamKey]?.players.find(p=>p.name===off);
+                    playerName = plObj?.name || off;
+                    playerNumber = plObj?.number || '';
                 }
                 const sb = overlayState.scoreboard || {};
                 const parseTime = str => { const [m = '0', s = '0'] = str.split(':'); return parseInt(m) * 60 + parseInt(s); };
@@ -319,7 +332,17 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                     secs = sb.timeDirection === 'down' ? Math.max(0,(sb.timerBase||0) - elapsed) : (sb.timerBase||0) + elapsed;
                 }
                 const timeStr = formatTime(secs);
-                await addMatchLog(eventId,{ ts: Date.now(), type, team: teamKey==='teamA'?'a':'b', player: playerField, time: timeStr });
+                const logEntry = { ts: Date.now(), type, team: teamKey==='teamA'?'a':'b', player: playerField, playerName, playerNumber, time: timeStr };
+                await addMatchLog(eventId, logEntry);
+                if(type === 'substitution'){
+                    const teamObj = teamsData[teamKey];
+                    const offIdx = teamObj.players.findIndex(p=>p.name===off);
+                    const onIdx = teamObj.players.findIndex(p=>p.name===on);
+                    if(offIdx >= 0) teamObj.players[offIdx].status = 'sub';
+                    if(onIdx >= 0) teamObj.players[onIdx].status = 'starting';
+                    if(teamsRef) await set(teamsRef, teamsData);
+                    fillPlayers();
+                }
                 const obj = {
                     id: (Date.now()+Math.random()).toString(36),
                     title: `${teamName} ${type.charAt(0).toUpperCase()+type.slice(1)}`,

@@ -43,7 +43,7 @@ export function renderBrandingModal(container, opts) {
             <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
                 <div class="bg-white text-black p-6 rounded shadow-lg min-w-[340px] max-w-[95vw] max-h-[90vh] overflow-y-auto">
                     <h2 class="font-bold text-xl mb-4">${isUser ? 'Account Branding' : 'Event Branding'}</h2>
-                    <form id="branding-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <form id="branding-form" class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-semibold mb-1">Primary Color</label>
                             <input type="color" name="primaryColor" value="${branding.primaryColor}" />
@@ -62,12 +62,12 @@ export function renderBrandingModal(container, opts) {
                                 ${FONT_OPTIONS.map(f => `<option value="${f}"${branding.font === f ? ' selected' : ''}>${f}</option>`).join('')}
                             </select>
                         </div>
-                        <div class="sm:col-span-2">
+                        <div class="col-span-2">
                             <label class="block text-sm font-semibold mb-1">Primary Logo</label>
                             <input type="file" name="logoPrimary" accept="image/*" class="mb-1" />
                             ${branding.logoPrimary ? `<img src="${resolveAssetPath(branding.logoPrimary)}" alt="Primary Logo" class="h-10 mt-1" />` : ''}
                         </div>
-                        <div class="sm:col-span-2">
+                        <div class="col-span-2">
                             <label class="block text-sm font-semibold mb-1">Secondary Logo</label>
                             <input type="file" name="logoSecondary" accept="image/*" class="mb-1" />
                             ${branding.logoSecondary ? `<img src="${resolveAssetPath(branding.logoSecondary)}" alt="Secondary Logo" class="h-10 mt-1" />` : ''}
@@ -88,7 +88,7 @@ export function renderBrandingModal(container, opts) {
                                 <option value="center"${branding.scheduleLayout==='center'?' selected':''}>Center Box</option>
                             </select>
                         </div>
-                        <div class="sm:col-span-2">
+                        <div class="col-span-2">
                             <label class="block text-sm font-semibold mb-1">Social Template Style</label>
                             <select name="socialTemplateStyle" class="border p-1 w-full">
                                 <option value="style1"${!branding.socialTemplateStyle || branding.socialTemplateStyle==='style1'?' selected':''}>Style 1</option>
@@ -96,7 +96,15 @@ export function renderBrandingModal(container, opts) {
                                 <option value="style3"${branding.socialTemplateStyle==='style3'?' selected':''}>Style 3</option>
                             </select>
                         </div>
-                        <div class="col-span-1 sm:col-span-2 flex gap-2 mt-4">
+                        <div class="col-span-2">
+                            <label class="block text-sm font-semibold mb-1">Preview</label>
+                            <div id="branding-preview" class="p-4 rounded border" style="background:${branding.primaryColor}; color:${branding.secondaryColor2}; font-family:${branding.font};">Sample Text</div>
+                        </div>
+                        <label class="col-span-2 flex items-center gap-2 mt-2">
+                            <input type="checkbox" name="applyAll" />
+                            <span class="text-sm">Override existing graphics</span>
+                        </label>
+                        <div class="col-span-2 flex gap-2 mt-4">
                             <button type="submit" class="control-button btn-sm">Save</button>
                             <button type="button" id="branding-cancel" class="control-button btn-sm bg-gray-400 hover:bg-gray-600">Cancel</button>
                         </div>
@@ -134,12 +142,25 @@ export function renderBrandingModal(container, opts) {
                 sponsors: branding.sponsors || [],
                 scheduleSponsorPlacement: data.scheduleSponsorPlacement || branding.scheduleSponsorPlacement || 'bottom-spaced',
                 scheduleLayout: data.scheduleLayout || branding.scheduleLayout || 'corner',
-                socialTemplateStyle: data.socialTemplateStyle || branding.socialTemplateStyle || 'style1'
+                socialTemplateStyle: data.socialTemplateStyle || branding.socialTemplateStyle || 'style1',
+                overrideAll: form.applyAll.checked
             };
             saveBranding(targetId, newBranding, isUser);
             container.classList.add('hidden');
         };
         container.querySelector('#branding-cancel').onclick = () => container.classList.add('hidden');
+
+        const preview = form.querySelector('#branding-preview');
+        const updatePreview = () => {
+            preview.style.background = form.primaryColor.value;
+            preview.style.color = form.secondaryColor2.value;
+            preview.style.fontFamily = form.font.value;
+        };
+        ['primaryColor','secondaryColor2','font'].forEach(name => {
+            form[name].addEventListener('input', updatePreview);
+            form[name].addEventListener('change', updatePreview);
+        });
+        updatePreview();
     });
 }
 
