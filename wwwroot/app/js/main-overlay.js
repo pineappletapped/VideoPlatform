@@ -546,6 +546,36 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         courseOverlay.remove();
     }
 
+    // Weather Overlay
+    let weatherOverlay = overlayContainer.querySelector('#weather-overlay');
+    const weatherData = state && state.weather;
+    const weatherShow = previewMode ? state && state.weatherPreviewVisible : state && state.weatherVisible;
+    if (weatherShow && weatherData) {
+        if (!weatherOverlay) {
+            weatherOverlay = document.createElement('div');
+            weatherOverlay.id = 'weather-overlay';
+            overlayContainer.appendChild(weatherOverlay);
+        }
+        weatherOverlay.style.position = 'absolute';
+        weatherOverlay.style.top = '0';
+        weatherOverlay.style.left = '0';
+        weatherOverlay.style.width = '100vw';
+        weatherOverlay.style.height = '100vh';
+        weatherOverlay.style.background = 'rgba(0,0,0,0.8)';
+        weatherOverlay.style.color = '#fff';
+        weatherOverlay.style.display = 'flex';
+        weatherOverlay.style.alignItems = 'center';
+        weatherOverlay.style.justifyContent = 'center';
+        weatherOverlay.style.zIndex = '110';
+        weatherOverlay.style.fontFamily = branding.font;
+        weatherOverlay.style.opacity = previewMode ? '0.6' : '1';
+        const header = weatherData.loc ? `<div style="text-align:center;font-size:2rem;margin-bottom:0.5rem;">${weatherData.loc}</div>` : '';
+        const slotHtml = (weatherData.slots||[]).map(s=>`<div style='display:flex;flex-direction:column;align-items:center;padding:0 0.5rem;'><div>${s.time}</div><div>${s.icon}</div><div>${s.temp}</div></div>`).join('');
+        weatherOverlay.innerHTML = `<div style="font-size:3rem;text-align:center;">${header}<div style='display:flex;justify-content:center;'>${slotHtml}</div></div>`;
+    } else if (weatherOverlay) {
+        weatherOverlay.remove();
+    }
+
     // Scoreboard Overlay
     let scoreboardOverlay = overlayContainer.querySelector('#scoreboard-overlay');
     const scoreboardData = state && state.scoreboard;

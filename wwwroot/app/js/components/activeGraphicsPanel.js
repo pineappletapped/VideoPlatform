@@ -133,6 +133,7 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live', can
         if (overlayState.fixturesVisible) items.push({ key:'fixtures', label:'Fixtures', type:'fixtures' });
         if (overlayState.formationVisible) items.push({ key:'formation', label:'Formation', type:'formation' });
         if (overlayState.courseVisible) items.push({ key:'course', label:'Course Details', type:'course' });
+        if (overlayState.weatherVisible) items.push({ key:'weather', label:'Weather', type:'weather' });
         if (overlayState.stingerVisible) items.push({ key:'stinger', label:'Stinger', type:'stinger' });
         if (overlayState.liveProgramVisible) items.push({ key:'program', label:'Program', type:'program' });
         if (overlayState.statVisible) items.push({ key:'stat', label:'Stat', type:'stat' });
@@ -162,6 +163,7 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live', can
         else if(type==='fixtures') updateOverlayState(eventId,{fixturesVisible:false,fixturesPreviewVisible:false});
         else if(type==='formation') updateOverlayState(eventId,{formationVisible:false,formationPreviewVisible:false});
         else if(type==='course') updateOverlayState(eventId,{courseVisible:false,coursePreviewVisible:false});
+        else if(type==='weather') updateOverlayState(eventId,{weatherVisible:false,weatherPreviewVisible:false});
     }
 
     function renderFav() {
