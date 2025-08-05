@@ -74,6 +74,7 @@ export function renderSocialPanel(container, eventId) {
               <option value="style1">Style 1</option>
               <option value="style2">Style 2</option>
               <option value="style3">Style 3</option>
+              <option value="bold">Bold</option>
             </select>
             <button id="edit-style" class="control-button btn-sm">Edit Style</button>
           </div>
@@ -135,6 +136,22 @@ export function renderSocialPanel(container, eventId) {
       } catch (e) {
         console.error(e);
         this.generating.delete(id);
+        const miss = e.message?.match(/^missing:(.+)$/);
+        if (miss) {
+          if (confirm(`Missing image: ${miss[1]}. Generate without it?`)) {
+            const opts = { ...this.styleSettings, ignoreMissing: true };
+            if (miss[1].includes('/portraits/')) opts.includePlayerPhotos = false;
+            if (miss[1].includes('/logos/')) opts.includeTeamLogos = false;
+            try {
+              const urls = await generateSocialAssets(this.eventId, id, this.templateStyle, opts);
+              await updateMatchLogEntry(this.eventId, id, { ...log, social: urls });
+            } catch (e2) {
+              alert(`Failed to generate post: ${e2.message}`);
+            }
+          }
+        } else {
+          alert(`Failed to generate post: ${e.message}`);
+        }
       }
       this.updateLogs();
       this.updatePosts();
@@ -148,7 +165,20 @@ export function renderSocialPanel(container, eventId) {
         this.finalPost = await generateFinalScoreAssets(this.eventId, this.templateStyle, this.styleSettings);
       }catch(e){
         console.error(e);
-        this.finalPost = null;
+        const miss = e.message?.match(/^missing:(.+)$/);
+        if (miss && confirm(`Missing image: ${miss[1]}. Generate without it?`)) {
+          const opts = { ...this.styleSettings, ignoreMissing: true };
+          if (miss[1].includes('/logos/')) opts.includeTeamLogos = false;
+          try {
+            this.finalPost = await generateFinalScoreAssets(this.eventId, this.templateStyle, opts);
+          } catch (e2) {
+            alert(`Failed to generate final post: ${e2.message}`);
+            this.finalPost = null;
+          }
+        } else {
+          alert(`Failed to generate final post: ${e.message}`);
+          this.finalPost = null;
+        }
       }
       this.generatingFinal = false;
       this.updatePosts();

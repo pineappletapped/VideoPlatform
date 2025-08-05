@@ -2,7 +2,9 @@ import { getEventMetadata, getMatchLogEntry } from './firebase.js';
 import { getDatabaseInstance } from './firebaseApp.js';
 import { ref, get } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
 
-const worker = new Worker('./graphicsWorker.js', { type: 'module' });
+// Resolve worker relative to this module so social page can locate it regardless
+// of the current document path.
+const worker = new Worker(new URL('./graphicsWorker.js', import.meta.url), { type: 'module' });
 const pending = new Map();
 let wid = 0;
 
@@ -36,9 +38,9 @@ export async function generateSocialAssets(eventId, logId, style, options = {}) 
   const entry = await getMatchLogEntry(eventId, logId);
   const meta = await getCachedEventMeta(eventId);
   const dyn = {
-    homeLogo: `/assets/logos/${meta.homeSlug}.png`,
-    awayLogo: `/assets/logos/${meta.awaySlug}.png`,
-    portrait: `/assets/portraits/${entry.playerId}.jpg`,
+    homeLogo: options.includeTeamLogos === false ? '' : `/assets/logos/${meta.homeSlug}.png`,
+    awayLogo: options.includeTeamLogos === false ? '' : `/assets/logos/${meta.awaySlug}.png`,
+    portrait: options.includePlayerPhotos === false ? '' : `/assets/portraits/${entry.playerId}.jpg`,
     playerName: entry.playerName,
     playerNumber: entry.playerNumber || '',
     eventType: entry.eventType,
@@ -63,8 +65,8 @@ export async function generateFinalScoreAssets(eventId, style, options = {}) {
   ]);
   const scores = sbSnap?.scores || [meta.scoreHome, meta.scoreAway];
   const dyn = {
-    homeLogo: `/assets/logos/${meta.homeSlug}.png`,
-    awayLogo: `/assets/logos/${meta.awaySlug}.png`,
+    homeLogo: options.includeTeamLogos === false ? '' : `/assets/logos/${meta.homeSlug}.png`,
+    awayLogo: options.includeTeamLogos === false ? '' : `/assets/logos/${meta.awaySlug}.png`,
     eventType: 'Full Time',
     scoreline: `${scores[0]} – ${scores[1]}`,
     playerName: '',
