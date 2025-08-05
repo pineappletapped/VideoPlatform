@@ -11,7 +11,7 @@ import { renderBrandingModal } from './components/brandingModal.js';
 import { renderProfileWizard } from './components/profileWizard.js';
 import { renderCalendarDrawer } from './components/calendarDrawer.js';
 import { renderIntroPanel } from './components/introPanel.js';
-import { updateOverlayState, getOverlayState, getEventMetadata, updateEventMetadata, getGraphicsData, updateGraphicsData } from './firebase.js';
+import { updateOverlayState, getOverlayState, getEventMetadata, updateEventMetadata, getGraphicsData, updateGraphicsData, getUser, getPlanFeatures } from './firebase.js';
 import { renderActiveGraphicsPanel } from './components/activeGraphicsPanel.js';
 import { renderBrandingPanel } from './components/brandingPanel.js';
 import { requireAuth, logout } from './auth.js';
@@ -118,6 +118,13 @@ function updateGraphicsTabs(type, tournament) {
 }
 
 async function initializeComponents(eventData) {
+    const [ownerInfo, planFeatures] = await Promise.all([
+        getUser(eventData.owner).catch(()=>({})),
+        getPlanFeatures().catch(()=>({}))
+    ]);
+    const ownerTier = ownerInfo.tier || 'bronze';
+    const canRotate = planFeatures?.[ownerTier]?.sponsorRotation;
+
     setupTabs();
     const preview = document.getElementById('video-preview');
     const program = document.getElementById('video-program');
@@ -185,7 +192,7 @@ async function initializeComponents(eventData) {
     }
     renderGraphicsPanel(document.getElementById('events-panel'), eventData, graphicsMode);
 
-    renderActiveGraphicsPanel(document.getElementById('active-graphics'), eventId, graphicsMode);
+    renderActiveGraphicsPanel(document.getElementById('active-graphics'), eventId, graphicsMode, canRotate);
 
 
     const brandingModal = document.getElementById('branding-modal');
@@ -240,4 +247,11 @@ async function cutToProgram() {
     }
 }
 
-requireAuth(`graphics.html?event_id=${eventId}`).then(u => initializeApp(u));
+requireAuth(`graphics.html?event_id=${eventId}`).then(u => {
+  if (u && u.role === 'sportsAdmin') {
+    alert('Access denied');
+    window.location.href = 'index.html';
+    return;
+  }
+  initializeApp(u);
+});

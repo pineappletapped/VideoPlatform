@@ -4,7 +4,7 @@ import { renderSponsorsPanel } from './sponsorsPanel.js';
 import { getDatabaseInstance } from '../firebaseApp.js';
 import { ref, onValue } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
 
-export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
+export function renderActiveGraphicsPanel(container, eventId, mode = 'live', canRotate = false) {
     let overlayState = {};
     let graphicsData = {};
     let favorites = { lowerThirds: [], titleSlides: [], scoreboard: false };
@@ -42,7 +42,7 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
     renderLog();
     const sponsorsContainer = container.querySelector('#sponsors-tab');
     if (sponsorsContainer) {
-        renderSponsorsPanel(sponsorsContainer, eventId);
+        renderSponsorsPanel(sponsorsContainer, eventId, canRotate);
     }
 
     function setTab(name){
