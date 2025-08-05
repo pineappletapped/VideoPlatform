@@ -1,4 +1,4 @@
-import { listenOverlayState, listenGraphicsData, listenBranding, listenSponsors, listenSponsorPlacements, addSponsorLog, updateEventMetadata, resolveAssetPath } from './firebase.js';
+import { listenOverlayState, listenGraphicsData, listenBranding, listenSponsors, listenSponsorPlacements, addSponsorLog, updateEventMetadata, resolveAssetPath, updateOverlayState } from './firebase.js';
 import { getDatabaseInstance } from './firebaseApp.js';
 import { suggestAbbreviation } from './teamUtils.js';
 import { ref, onValue, set } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
@@ -26,6 +26,8 @@ let prevStingerVisible = false;
 let prevStingerData = null;
 let prevPresentationVisible = false;
 let prevPresentationData = null;
+
+let stingerHideTimer = null;
 
 function contrastColor(hex) {
     let c = hex.replace('#', '');
@@ -1021,8 +1023,17 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         } else {
             stingerOverlay.innerHTML = logoUrl ? `<img src='${logoUrl}'>` : stingerData.text ? `<div class='stinger-text' style='color:${textColor}'>${stingerData.text}</div>` : '';
         }
-    } else if (stingerOverlay) {
-        stingerOverlay.remove();
+        if (!prevStingerVisible) {
+            clearTimeout(stingerHideTimer);
+            stingerHideTimer = setTimeout(() => {
+                updateOverlayState(eventId, { stingerVisible: false, stingerPreviewVisible: false });
+            }, 2100);
+        }
+        prevStingerVisible = true;
+    } else {
+        if (stingerOverlay) stingerOverlay.remove();
+        prevStingerVisible = false;
+        clearTimeout(stingerHideTimer);
     }
 
     // Presentation Overlay

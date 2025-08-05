@@ -87,6 +87,7 @@ export function renderStingerPanel(container, eventId){
         const liveBtn = container.querySelector('#stinger-live');
         let previewing = false;
         let living = false;
+        const STINGER_DURATION = 2100;
         function updateColorControls(){
             const opt = options[parseInt(sel.value||'0',10)];
             if(opt && opt.type==='replay') colorControls.classList.remove('hidden');
@@ -135,6 +136,7 @@ export function renderStingerPanel(container, eventId){
                 updateOverlayState(eventId,{stinger:stingerData,stingerPreviewVisible:true,stingerVisible:false});
                 previewing = true;
                 living = false;
+                setTimeout(()=>{ previewing = false; }, STINGER_DURATION);
             }
         };
         if(liveBtn) liveBtn.onclick = () => {
@@ -150,6 +152,7 @@ export function renderStingerPanel(container, eventId){
                 updateOverlayState(eventId,{stinger:stingerData,stingerVisible:true,stingerPreviewVisible:false});
                 living = true;
                 previewing = false;
+                setTimeout(()=>{ living = false; }, STINGER_DURATION);
             }
         };
     }
