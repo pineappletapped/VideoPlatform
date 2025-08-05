@@ -627,7 +627,10 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         }
         const info = [];
         if (timeStr) info.push(timeStr);
-        if (scoreboardData.period) info.push('P' + scoreboardData.period);
+        if (scoreboardData.period) {
+            if(scoreboardData.extraTime && scoreboardData.period > 2) info.push('ET' + (scoreboardData.period - 2));
+            else info.push('P' + scoreboardData.period);
+        }
         if (scoreboardData.round) info.push('R' + scoreboardData.round);
         if (scoreboardData.sets) info.push('Sets ' + scoreboardData.sets.join('-'));
         if (scoreboardData.games) info.push('Games ' + scoreboardData.games.join('-'));
@@ -642,6 +645,11 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         if (scoreboardData.points) info.push('Pts ' + scoreboardData.points.join('-'));
         if (scoreboardData.overs) info.push('Ov ' + scoreboardData.overs.join('-'));
         if (scoreboardData.wickets) info.push('Wk ' + scoreboardData.wickets.join('-'));
+        if (scoreboardData.showPens) {
+            const pA = scoreboardData.pens?.[0] ?? 0;
+            const pB = scoreboardData.pens?.[1] ?? 0;
+            info.push('Pens ' + pA + '-' + pB);
+        }
         const infoHtml = info.length ? `<div class='sb-info'>${info.join(' | ')}</div>` : '';
         const brand = branding.primaryColor || '#e16316';
         const textA = contrastColor(colors[0]);
@@ -690,6 +698,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         } else if(style==='football' || style.startsWith('football-')){
             const timePart = timeStr ? `<span class="sb-time">${timeStr}</span>` : '';
             const stopPart = scoreboardData.showStoppage && scoreboardData.stoppage ? `<span class="sb-time">+${scoreboardData.stoppage}</span>` : '';
+            const pensPart = scoreboardData.showPens ? `<span class=\"sb-time\">Pens ${scoreboardData.pens?.[0]||0}-${scoreboardData.pens?.[1]||0}</span>` : '';
             scoreboardOverlay.innerHTML = `
             ${topImg}
             <div class="sb-row">
@@ -698,6 +707,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
                 <span class="sb-team${aClassB}" style="background:${colors[1]};color:${textB}">${showLogos ? `<img src='${logos[1]}' class='sb-team-logo'>` : ''}${names[1]}</span>
                 ${timePart}
                 ${stopPart}
+                ${pensPart}
             </div>
             ${sbSponsorHtml}
             ${bottomImg}`;
