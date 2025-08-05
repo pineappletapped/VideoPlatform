@@ -16,7 +16,9 @@ const PLAN_FEATURES = {
   tournament: 'Tournament Mode',
   social: 'Social Panel',
   sponsorship: 'Sponsorship Placements',
-  logging: 'Event Logging'
+  logging: 'Event Logging',
+  subAccounts: 'Sub User Accounts',
+  sponsorRotation: 'Sponsor Rotation Scheduler'
 };
 
 async function init() {

@@ -1,4 +1,4 @@
-import { getSponsors, setSponsors, listenSponsors, getSponsorPlacements, setSponsorPlacements, listenSponsorPlacements, getSponsorLog, updateOverlayState } from '../firebase.js';
+import { getSponsors, setSponsors, listenSponsors, getSponsorPlacements, setSponsorPlacements, listenSponsorPlacements, getSponsorLog, updateOverlayState, addSponsorLog } from '../firebase.js';
 
 let csrfPromise;
 async function getCsrf(){
@@ -15,11 +15,15 @@ async function uploadFile(file, path){
     return `assets/${path}`;
 }
 
-export function renderSponsorsPanel(container, eventId){
+export function renderSponsorsPanel(container, eventId, canRotate=false){
     let sponsors = [];
     let placements = {};
     let ltPreviewing = false;
     let ltLiving = false;
+    let rotationTimer = null;
+    let rotationPlacement = '';
+    let rotationSponsors = [];
+    let rotationIndex = 0;
 
     listenSponsors(eventId, data=>{ sponsors = data || []; render(); });
     listenSponsorPlacements(eventId, data=>{ placements = data || {}; render(); });
@@ -41,6 +45,7 @@ export function renderSponsorsPanel(container, eventId){
                     <table class="text-sm w-full" id="place-table"></table>
                     <button id="save-placements" class="control-button btn-sm mt-2">Save Placements</button>
                     <button id="view-log" class="control-button btn-sm mt-2 ml-2">View Log</button>
+                    ${canRotate ? '<button id="auto-rotate" class="control-button btn-sm mt-2 ml-2">'+(rotationTimer?'Stop Auto':'Auto Rotate')+'</button>' : ''}
                 </div>
                 <div class="mb-4">
                     <strong class="block mb-1">Lower Third Banner</strong>
@@ -71,6 +76,34 @@ export function renderSponsorsPanel(container, eventId){
                         <button id="close-log" class="control-button btn-sm mt-2">Close</button>
                     </div>
                 </div>
+                ${canRotate ? `
+                <div id="rotate-modal" class="modal-overlay" style="display:none;">
+                    <div class="modal-window">
+                        <form id="rotate-form">
+                            <div class="mb-2">
+                                <label class="block mb-1">Placement</label>
+                                <select name="placement" class="border p-1 w-full">
+                                    <option value="cornerTL">Top Left Corner</option>
+                                    <option value="cornerTR">Top Right Corner</option>
+                                    <option value="cornerBL">Bottom Left Corner</option>
+                                    <option value="cornerBR">Bottom Right Corner</option>
+                                </select>
+                            </div>
+                            <div class="mb-2">
+                                <label class="block mb-1">Sponsors</label>
+                                <div id="rotate-sponsor-list" class="max-h-40 overflow-y-auto border p-1"></div>
+                            </div>
+                            <div class="mb-2">
+                                <label class="block mb-1">Rotate every (minutes)</label>
+                                <input type="number" name="minutes" value="5" min="1" class="border p-1 w-full" />
+                            </div>
+                            <div class="flex gap-2">
+                                <button class="control-button btn-sm" type="submit">Start</button>
+                                <button type="button" id="rotate-cancel" class="control-button btn-sm bg-gray-400">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>` : ''}
             </div>`;
         const list = container.querySelector('#sponsor-list');
         list.innerHTML = sponsors.map((s,i)=>`<li class="flex items-center gap-2"><span class="flex-1">${s.name}</span><button class="control-button btn-xs" data-edit="${i}">Edit</button><button class="control-button btn-xs btn-remove" data-remove="${i}">Remove</button></li>`).join('') || '<li class="text-gray-500">None</li>';
@@ -122,6 +155,22 @@ export function renderSponsorsPanel(container, eventId){
             if(ltLiving){ await updateOverlayState(eventId,{sponsorLtVisible:false}); ltLiving=false; }
             else { await updateOverlayState(eventId,{sponsorLtUrl:sp.lowerThird,sponsorLtVisible:true,sponsorLtPreviewVisible:false}); ltLiving=true; ltPreviewing=false; }
         };
+
+        const rotateList = container.querySelector('#rotate-sponsor-list');
+        if(rotateList){
+            rotateList.innerHTML = sponsors.map((s,i)=>`<label class='block text-sm'><input type='checkbox' value='${i}' name='sponsors'> ${s.name}</label>`).join('');
+        }
+
+        const autoBtn = container.querySelector('#auto-rotate');
+        if(autoBtn){
+            autoBtn.onclick = ()=>{
+                if(rotationTimer){
+                    stopRotation();
+                } else {
+                    showRotateModal();
+                }
+            };
+        }
     }
 
     function showModal(idx){
@@ -160,5 +209,50 @@ export function renderSponsorsPanel(container, eventId){
                 if(url) form.lowerThird.value = url;
             }
         };
+    }
+
+    function showRotateModal(){
+        const modal = container.querySelector('#rotate-modal');
+        if(!modal) return;
+        const form = modal.querySelector('#rotate-form');
+        form.onsubmit = e=>{
+            e.preventDefault();
+            const data = new FormData(form);
+            const placement = data.get('placement');
+            const minutes = parseInt(data.get('minutes')||'1',10);
+            const selected = Array.from(form.querySelectorAll('input[name="sponsors"]:checked')).map(cb=>parseInt(cb.value,10));
+            if(!selected.length) { modal.style.display='none'; return; }
+            modal.style.display='none';
+            startRotation(selected, placement, minutes);
+        };
+        form.querySelector('#rotate-cancel').onclick = ()=>{ modal.style.display='none'; };
+        modal.style.display='flex';
+    }
+
+    function startRotation(list, place, minutes){
+        rotationSponsors = list;
+        rotationPlacement = place;
+        rotationIndex = 0;
+        const interval = Math.max(1, minutes) * 60000;
+        const apply = async () => {
+            const prev = placements[rotationPlacement];
+            const sponsor = rotationSponsors[rotationIndex];
+            placements[rotationPlacement] = sponsor;
+            await setSponsorPlacements(eventId, placements);
+            if(prev!==undefined && prev!=='') await addSponsorLog(eventId,{ts:Date.now(),placement:rotationPlacement,sponsor:prev,action:'hide'});
+            await addSponsorLog(eventId,{ts:Date.now(),placement:rotationPlacement,sponsor,action:'show'});
+            rotationIndex = (rotationIndex + 1) % rotationSponsors.length;
+        };
+        apply();
+        rotationTimer = setInterval(apply, interval);
+        render();
+    }
+
+    function stopRotation(){
+        if(rotationTimer){
+            clearInterval(rotationTimer);
+            rotationTimer = null;
+            render();
+        }
     }
 }

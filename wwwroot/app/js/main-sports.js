@@ -7,7 +7,7 @@ import { renderGolfPanel } from './components/golfPanel.js';
 import { renderStatsPanel } from './components/statsPanel.js';
 import { renderBrandingModal } from './components/brandingModal.js';
 import { renderSponsorsPanel } from './components/sponsorsPanel.js';
-import { getEventMetadata, updateEventMetadata, listenOverlayState, listenMatchLog } from './firebase.js';
+import { getEventMetadata, updateEventMetadata, listenOverlayState, listenMatchLog, getUser, getPlanFeatures } from './firebase.js';
 import { getTeamLabel } from './sportsConfig.js';
 import { getDatabaseInstance } from './firebaseApp.js';
 import { ref, onValue } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
@@ -102,6 +102,13 @@ async function init() {
   if (!meta.sport) meta.sport = 'Football';
   updateEventMetadata(eventId, { lastOpened: Date.now() }).catch(()=>{});
 
+  const [ownerInfo, planFeatures] = await Promise.all([
+    getUser(meta.owner).catch(()=>({})),
+    getPlanFeatures().catch(()=>({}))
+  ]);
+  const ownerTier = ownerInfo.tier || 'bronze';
+  const canRotate = planFeatures?.[ownerTier]?.sponsorRotation;
+
   const topBar = document.createElement('top-bar');
   if (user && user.email === 'ryanadmin') topBar.setAttribute('is-admin','true');
   topBar.setAttribute('event-name', meta.title || eventId);
@@ -136,12 +143,12 @@ async function init() {
       renderGolfPanel(scoreboardPanel, eventId);
       teamsTab.classList.add('hidden');
       renderStatsPanel(statsPanel, eventId);
-      renderSponsorsPanel(sponsorsPanel, eventId);
+      renderSponsorsPanel(sponsorsPanel, eventId, canRotate);
     } else {
       renderScoreboardPanel(scoreboardPanel, s, eventId);
       renderTeamsPanel(teamsPanel, eventId, s);
       renderStatsPanel(statsPanel, eventId);
-      renderSponsorsPanel(sponsorsPanel, eventId);
+      renderSponsorsPanel(sponsorsPanel, eventId, canRotate);
       teamsTab.classList.remove('hidden');
     }
   }

@@ -48,7 +48,13 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
 
     function render(){
         const highlight = visible ? 'ring-4 ring-green-400' : preview ? 'ring-4 ring-brand' : '';
-        const weatherSection = introSettings.weatherLoc ? `<div class="mb-2"><button class="control-button btn-sm" id="hs-edit-weather">Weather Graphic</button></div>` : '';
+        const weatherIconOptions = `
+            <option value="☀️">Sun</option>
+            <option value="⛅">Partly Cloudy</option>
+            <option value="☁️">Cloudy</option>
+            <option value="🌧️">Rain</option>
+            <option value="❄️">Snow</option>
+        `;
         const teamOptions = teamsData ? (teamsData.teams ? teamsData.teams.map((t,i)=>`<option value="${i}">${t.name}</option>`).join('') : ['a','b'].map(k=>`<option value="${k}">${teamsData[k==='a'?'teamA':'teamB']?.name || ('Team '+k.toUpperCase())}</option>`).join('')) : '';
         const formationRow = teamsData ? `<div class="flex items-center gap-2"><span class="flex-1">Formation Graphic</span><select id="formation-team" class="border p-1 flex-1">${teamOptions}</select><button class="control-button btn-sm" id="formation-preview">Preview</button><button class="control-button btn-sm" id="formation-live">Live</button><button class="control-button btn-sm" id="formation-edit">Edit</button></div>` : '';
         container.innerHTML = `
@@ -71,8 +77,13 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
                         <button class="control-button btn-sm" id="course-live">Live</button>
                         <button class="control-button btn-sm" id="course-edit">Edit</button>
                     </div>
+                    <div class="flex items-center gap-2">
+                        <span class="flex-1">Weather</span>
+                        <button class="control-button btn-sm" id="weather-preview">Preview</button>
+                        <button class="control-button btn-sm" id="weather-live">Live</button>
+                        <button class="control-button btn-sm" id="weather-edit">Edit</button>
+                    </div>
                 </div>
-                ${weatherSection}
                 <div class="flex items-center justify-between mb-2">
                     <h3 class="font-bold text-md">Holdslates</h3>
                     <button class="control-button btn-sm" id="hs-add">Add</button>
@@ -136,10 +147,6 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
                                 <label class="block text-sm">Event Date</label>
                                 <input class="border p-1 w-full" type="date" name="eventDate" />
                             </div>
-                            <div class="mb-2">
-                                <label class="block text-sm">Weather Location</label>
-                                <input class="border p-1 w-full" name="weatherLoc" />
-                            </div>
                             <div class="flex gap-2 mt-4">
                                 <button type="submit" class="control-button btn-sm">Save</button>
                                 <button type="button" id="hs-input-cancel" class="control-button btn-sm bg-gray-400 hover:bg-gray-600">Cancel</button>
@@ -151,19 +158,23 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
                     <div class="modal-window">
                         <h3 class="font-bold text-lg mb-2">Weather Graphic</h3>
                         <form id="hs-weather-form">
+                            <div class="mb-2">
+                                <label class="block text-sm">Weather Location</label>
+                                <input class="border p-1 w-full" name="weatherLoc" />
+                            </div>
                             <div class="mb-2 flex gap-2">
                                 <input class="border p-1 flex-1" name="time1" placeholder="Time 1" />
-                                <input class="border p-1 flex-1" name="icon1" placeholder="Icon" />
+                                <select class="border p-1 flex-1" name="icon1">${weatherIconOptions}</select>
                                 <input class="border p-1 flex-1" name="temp1" placeholder="Temp" />
                             </div>
                             <div class="mb-2 flex gap-2">
                                 <input class="border p-1 flex-1" name="time2" placeholder="Time 2" />
-                                <input class="border p-1 flex-1" name="icon2" placeholder="Icon" />
+                                <select class="border p-1 flex-1" name="icon2">${weatherIconOptions}</select>
                                 <input class="border p-1 flex-1" name="temp2" placeholder="Temp" />
                             </div>
                             <div class="mb-2 flex gap-2">
                                 <input class="border p-1 flex-1" name="time3" placeholder="Time 3" />
-                                <input class="border p-1 flex-1" name="icon3" placeholder="Icon" />
+                                <select class="border p-1 flex-1" name="icon3">${weatherIconOptions}</select>
                                 <input class="border p-1 flex-1" name="temp3" placeholder="Temp" />
                             </div>
                             <div class="mb-2 flex gap-2">
@@ -338,6 +349,21 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
         const courseEdit = container.querySelector('#course-edit');
         if(courseEdit) courseEdit.onclick = () => showCourseModal();
 
+        const weatherPrev = container.querySelector('#weather-preview');
+        if(weatherPrev) weatherPrev.onclick = () => {
+            const data = { loc:introSettings.weatherLoc || '', slots:introSettings.weatherSlots || [] };
+            updateOverlayState(eid,{ weather:data, weatherPreviewVisible:true, weatherVisible:false });
+            if(onOverlayStateChange) onOverlayStateChange({ weatherPreviewVisible:true, weather:data });
+        };
+        const weatherLive = container.querySelector('#weather-live');
+        if(weatherLive) weatherLive.onclick = () => {
+            const data = { loc:introSettings.weatherLoc || '', slots:introSettings.weatherSlots || [] };
+            updateOverlayState(eid,{ weather:data, weatherVisible:true, weatherPreviewVisible:false });
+            if(onOverlayStateChange) onOverlayStateChange({ weatherVisible:true, weather:data, weatherPreviewVisible:false });
+        };
+        const weatherEdit = container.querySelector('#weather-edit');
+        if(weatherEdit) weatherEdit.onclick = () => showWeatherModal();
+
         container.querySelectorAll('button[data-action]').forEach(btn=>{
             const idx = parseInt(btn.getAttribute('data-idx'));
             const act = btn.getAttribute('data-action');
@@ -355,8 +381,6 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
 
         const inputBtn = container.querySelector('#hs-input');
         if(inputBtn) inputBtn.onclick = () => showInputModal();
-        const weatherBtn = container.querySelector('#hs-edit-weather');
-        if(weatherBtn) weatherBtn.onclick = () => showWeatherModal();
 
         const modal = container.querySelector('#hs-modal');
         const form = container.querySelector('#hs-form');
@@ -416,14 +440,12 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
         if(!modal || !form) return;
         form.venue.value = introSettings.venue || '';
         form.eventDate.value = introSettings.eventDate || '';
-        form.weatherLoc.value = introSettings.weatherLoc || '';
         modal.style.display='flex';
         form.onsubmit = async e=>{
             e.preventDefault();
             const data = Object.fromEntries(new FormData(form));
             introSettings.venue = data.venue || '';
             introSettings.eventDate = data.eventDate || '';
-            introSettings.weatherLoc = data.weatherLoc || '';
             await set(getIntroSettingsRef(eid), introSettings);
             await updateOverlayState(eid,{ holdslateSettings:introSettings });
             modal.style.display='none';
@@ -436,14 +458,15 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
         const form = container.querySelector('#hs-weather-form');
         if(!modal || !form) return;
         const slots = introSettings.weatherSlots || [];
+        form.weatherLoc.value = introSettings.weatherLoc || '';
         form.time1.value = slots[0]?.time || '';
-        form.icon1.value = slots[0]?.icon || '';
+        form.icon1.value = slots[0]?.icon || '☀️';
         form.temp1.value = slots[0]?.temp || '';
         form.time2.value = slots[1]?.time || '';
-        form.icon2.value = slots[1]?.icon || '';
+        form.icon2.value = slots[1]?.icon || '☀️';
         form.temp2.value = slots[1]?.temp || '';
         form.time3.value = slots[2]?.time || '';
-        form.icon3.value = slots[2]?.icon || '';
+        form.icon3.value = slots[2]?.icon || '☀️';
         form.temp3.value = slots[2]?.temp || '';
         form.color1.value = introSettings.color1 || '#ffffff';
         form.color2.value = introSettings.color2 || '#000000';
@@ -451,6 +474,7 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
         modal.style.display='flex';
         form.onsubmit = async e=>{
             e.preventDefault();
+            introSettings.weatherLoc = form.weatherLoc.value || '';
             introSettings.weatherSlots = [
                 {time:form.time1.value, icon:form.icon1.value, temp:form.temp1.value},
                 {time:form.time2.value, icon:form.icon2.value, temp:form.temp2.value},

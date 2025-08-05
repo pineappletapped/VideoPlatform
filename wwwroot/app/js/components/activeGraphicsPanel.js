@@ -4,7 +4,7 @@ import { renderSponsorsPanel } from './sponsorsPanel.js';
 import { getDatabaseInstance } from '../firebaseApp.js';
 import { ref, onValue } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
 
-export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
+export function renderActiveGraphicsPanel(container, eventId, mode = 'live', canRotate = false) {
     let overlayState = {};
     let graphicsData = {};
     let favorites = { lowerThirds: [], titleSlides: [], scoreboard: false };
@@ -42,7 +42,7 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
     renderLog();
     const sponsorsContainer = container.querySelector('#sponsors-tab');
     if (sponsorsContainer) {
-        renderSponsorsPanel(sponsorsContainer, eventId);
+        renderSponsorsPanel(sponsorsContainer, eventId, canRotate);
     }
 
     function setTab(name){
@@ -133,6 +133,7 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
         if (overlayState.fixturesVisible) items.push({ key:'fixtures', label:'Fixtures', type:'fixtures' });
         if (overlayState.formationVisible) items.push({ key:'formation', label:'Formation', type:'formation' });
         if (overlayState.courseVisible) items.push({ key:'course', label:'Course Details', type:'course' });
+        if (overlayState.weatherVisible) items.push({ key:'weather', label:'Weather', type:'weather' });
         if (overlayState.stingerVisible) items.push({ key:'stinger', label:'Stinger', type:'stinger' });
         if (overlayState.liveProgramVisible) items.push({ key:'program', label:'Program', type:'program' });
         if (overlayState.statVisible) items.push({ key:'stat', label:'Stat', type:'stat' });
@@ -162,6 +163,7 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
         else if(type==='fixtures') updateOverlayState(eventId,{fixturesVisible:false,fixturesPreviewVisible:false});
         else if(type==='formation') updateOverlayState(eventId,{formationVisible:false,formationPreviewVisible:false});
         else if(type==='course') updateOverlayState(eventId,{courseVisible:false,coursePreviewVisible:false});
+        else if(type==='weather') updateOverlayState(eventId,{weatherVisible:false,weatherPreviewVisible:false});
     }
 
     function renderFav() {
@@ -191,63 +193,4 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
         if(btn) btn.textContent = logVisible ? 'Hide Overlay' : 'Show Overlay';
     }
 
-    function setTab(name){
-        ['active','favourites','logs','sponsors'].forEach(t=>{
-            const btn = container.querySelector(`[data-tab="${t}"]`);
-            if(btn){
-                btn.classList.toggle('border-b-2', t===name);
-                btn.classList.toggle('border-brand', t===name);
-                btn.classList.toggle('text-brand', t===name);
-            }
-            const panelId = t==='active'?'active':t==='favourites'?'fav':t==='logs'?'logs':'sponsors';
-            const panel = container.querySelector(`#${panelId}-tab`);
-            if(panel) panel.classList.toggle('hidden', t!==name);
-        });
-    }
-    container.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>setTab(btn.getAttribute('data-tab'))));
-    setTab('active');
-
-    container.addEventListener('click', e=>{
-        const hideType = e.target.getAttribute('data-hide');
-        if(hideType){ hideItem(hideType); }
-        const liveType = e.target.getAttribute('data-live');
-        const id = e.target.getAttribute('data-id');
-        if(liveType && id){
-            if(liveType==='lowerThird') updateGraphicsData(eventId,{liveLowerThirdId:id}, mode);
-            else if(liveType==='titleSlide') updateGraphicsData(eventId,{liveTitleSlideId:id}, mode);
-        }
-        const remType = e.target.getAttribute('data-remove');
-        if(remType && id){
-            if(remType==='lowerThird'){ favorites.lowerThirds=favorites.lowerThirds.filter(x=>x!==id); }
-            else if(remType==='titleSlide'){ favorites.titleSlides=favorites.titleSlides.filter(x=>x!==id); }
-            else if(remType==='scoreboard'){ favorites.scoreboard=false; }
-            updateFavorites(eventId,favorites);
-        }
-    });
-
-    container.querySelector('#hide-selected').addEventListener('click', ()=>{
-        const checks = container.querySelectorAll('#active-list input[type="checkbox"]');
-        checks.forEach((ch,i)=>{ if(ch.checked){ const itemIndex=i; const items=[]; if(overlayState.holdslateVisible) items.push({type:'holdslate'}); if(overlayState.stingerVisible) items.push({type:'stinger'}); if(overlayState.liveProgramVisible) items.push({type:'program'}); if(overlayState.scoreboardVisible||overlayState.scoreboardPreviewVisible) items.push({type:'scoreboard'}); if(graphicsData.liveLowerThirdId) items.push({type:'lowerThird'}); if(graphicsData.liveTitleSlideId) items.push({type:'titleSlide'}); if(overlayState.statVisible) items.push({type:'stat'}); const item=items[itemIndex]; if(item) hideItem(item.type); }});
-    });
-    container.querySelector('#fav-live').addEventListener('click', ()=>{
-        const favChecks = container.querySelectorAll('#fav-list input[type="checkbox"]');
-        const favItems = [];
-        favorites.lowerThirds.forEach(id=>{ favItems.push({type:'lowerThird', id}); });
-        favorites.titleSlides.forEach(id=>{ favItems.push({type:'titleSlide', id}); });
-        if(favorites.scoreboard) favItems.push({type:'scoreboard', id:'scoreboard'});
-        favChecks.forEach((ch,i)=>{ if(ch.checked){ const item=favItems[i]; if(item.type==='lowerThird') updateGraphicsData(eventId,{liveLowerThirdId:item.id}, mode); else if(item.type==='titleSlide') updateGraphicsData(eventId,{liveTitleSlideId:item.id}, mode); else if(item.type==='scoreboard') updateOverlayState(eventId,{scoreboardVisible:true,scoreboardPreviewVisible:false}); }});
-    });
-
-    container.querySelector('#logs-toggle').addEventListener('click', ()=>{
-        logVisible = !logVisible;
-        updateOverlayState(eventId,{matchLogVisible:logVisible});
-        renderLog();
-    });
-    container.addEventListener('change', e=>{
-        const pid = e.target.getAttribute('data-player');
-        if(pid){
-            const entry = matchLogs.find(l=>l.id===pid);
-            if(entry){ entry.player = e.target.value; updateMatchLogEntry(eventId,pid,entry); }
-        }
-    });
 }
