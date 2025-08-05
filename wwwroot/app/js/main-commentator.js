@@ -57,8 +57,8 @@ function buildFormation(key){
         const y = key==='a'? startY - r*step : startY + r*step;
         for(let i=0;i<count;i++){
             const x = (i+1)/(count+1)*100;
-            const pl = players[idx++] || {name:'',pos:'',photo:''};
-            res.push({name:pl.name,pos:pl.pos,photo:pl.photo,x,y});
+            const pl = players[idx++] || {name:'',number:'',pos:'',photo:''};
+            res.push({name:pl.name,number:pl.number,pos:pl.pos,photo:pl.photo,x,y});
         }
     });
     return res;
@@ -117,7 +117,7 @@ function renderTeamColumn(key){
     const showPhoto = teams.showPhotosFormation;
     const formHtml = formation.length ? `<div class='relative w-full' style='padding-top:60%;'>
             <div class='formation-pitch'></div>
-            ${formation.map(pl=>`<div class='formation-player' style='top:${pl.y}%;left:${pl.x}%;'>${showPhoto && pl.photo?`<img src='${pl.photo}' class='formation-photo'>`:''}<span>${pl.name}</span></div>`).join('')}
+            ${formation.map(pl=>`<div class='formation-player' style='top:${pl.y}%;left:${pl.x}%;'>${showPhoto && pl.photo?`<img src='${pl.photo}' class='formation-photo'>`:''}<span>${pl.number?`#${pl.number} `:''}${pl.name}</span>${pl.pos?`<div class='text-xs'>${pl.pos}</div>`:''}</div>`).join('')}
         </div>` : '<div class="text-gray-400">No formation</div>';
     const statsHtml = statsList.length ? `<ul class='list-disc list-inside text-sm space-y-1'>${statsList.map(s=>`<li>${s.fact}${s.player?` - ${s.player}`:''}</li>`).join('')}</ul>` : '<div class="text-gray-400">No stats</div>';
     const logHtml = logList.length ? `<ul class='text-sm space-y-1'>${logList.map(e=>`<li>${e.time||''} ${e.type||''} ${e.player||''}</li>`).join('')}</ul>` : '<div class="text-gray-400">No log</div>';

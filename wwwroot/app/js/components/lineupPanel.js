@@ -125,8 +125,8 @@ export function renderLineupPanel(container, eventId = 'demo', sport = 'Football
                     const y = teamKey==='a'? startY - r*step : startY + r*step;
                     for(let i=0;i<count;i++){
                         const x = (i+1)/(count+1)*100;
-                        const pl = players[idx++] || {name:'',pos:'',photo:''};
-                        res.push({name:pl.name,pos:pl.pos,photo:pl.photo,x,y});
+                        const pl = players[idx++] || {name:'',number:'',pos:'',photo:''};
+                        res.push({name:pl.name,number:pl.number,pos:pl.pos,photo:pl.photo,x,y});
                     }
                 });
                 return {team:teamKey,players:res};
@@ -135,7 +135,7 @@ export function renderLineupPanel(container, eventId = 'demo', sport = 'Football
                 const team = teamKey==='a'
                     ? (teamsData.teams ? teamsData.teams[teamsData.currentA||0] : teamsData.teamA)
                     : (teamsData.teams ? teamsData.teams[teamsData.currentB||1] : teamsData.teamB);
-                return {team:teamKey, players: team.players.map(p=>({name:p.name,pos:p.pos,photo:p.photo}))};
+                return {team:teamKey, players: team.players.map(p=>({name:p.name,number:p.number,pos:p.pos,photo:p.photo}))};
             }
             function toggleFormation(teamKey){
                 if(formationVisible && formationTeam===teamKey){

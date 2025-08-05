@@ -101,21 +101,43 @@ export function renderTeamsPanel(container, eventId, sport='Football', tournamen
         const teamA = tournament ? currentData.teams[currentData.currentA||0] : currentData.teamA;
         const teamB = tournament ? currentData.teams[currentData.currentB||1] : currentData.teamB;
         const posOpts = cfg.positions.map(p=>`<option value="${p}">${p}</option>`).join('');
-        const rows = (prefix, team)=>team.players.map((pl,idx)=>`<tr><td><input class="border p-1 w-full" id="${prefix}-name-${idx}" value="${pl.name}"></td><td><input class="border p-1 w-12" id="${prefix}-num-${idx}" value="${pl.number||''}"></td><td><select class="border p-1 w-full" id="${prefix}-pos-${idx}"><option value=""></option>${posOpts}</select></td><td><select class="border p-1 w-full" id="${prefix}-status-${idx}"><option value="starting" ${pl.status==='starting'? 'selected':''}>Starting</option><option value="sub" ${pl.status==='sub'? 'selected':''}>Sub</option><option value="not" ${pl.status==='not'? 'selected':''}>Not playing</option></select></td><td><input class="border p-1 w-full mb-1" id="${prefix}-photo-${idx}" placeholder="Photo URL" value="${pl.photo||''}"><input type="file" id="${prefix}-file-${idx}" class="text-xs" accept="image/*"></td></tr>`).join('');
+        const rowTpl = (prefix, pl) => `
+            <tr draggable="true" data-status="${pl.status}" data-prefix="${prefix}">
+                <td><input data-field="name" class="border p-1 w-full" value="${pl.name}"></td>
+                <td><input data-field="num" class="border p-1 w-12" value="${pl.number||''}"></td>
+                <td><select data-field="pos" class="border p-1 w-full"><option value=""></option>${posOpts}</select></td>
+                <td><select data-field="status" class="border p-1 w-full"><option value="starting">Starting</option><option value="sub">Sub</option><option value="not">Not playing</option></select></td>
+                <td><input data-field="photo" class="border p-1 w-full mb-1" placeholder="Photo URL" value="${pl.photo||''}"><input type="file" data-field="file" class="text-xs" accept="image/*"></td>
+            </tr>`;
         const nameALabel = cfg.playersPerTeam === 1 ? 'Player 1 Name' : 'Team A Name';
         const nameBLabel = cfg.playersPerTeam === 1 ? 'Player 2 Name' : 'Team B Name';
+        const buildRows = (prefix, team) => team.players.map(pl=>rowTpl(prefix, pl)).join('');
         return `
             <h3 class="font-bold text-lg mb-2">Edit ${label}</h3>
             <div class="flex gap-4 text-sm mb-4">
                 <div class="flex-1 min-w-0">
                     <label class="block text-sm mb-1">${nameALabel}</label>
                     <input class="border p-1 w-full mb-2" id="team-a-name" value="${teamA.name}">
-                    <table class="w-full text-xs mb-2"><tbody>${rows('a', teamA)}</tbody></table>
+                    <div class="flex gap-2 mb-2">
+                        <button id="a-show-start" class="control-button btn-xs">Starters</button>
+                        <button id="a-show-bench" class="control-button btn-xs">Bench</button>
+                        <button id="a-import" class="control-button btn-xs">Import CSV</button>
+                        <button id="a-export" class="control-button btn-xs">Export CSV</button>
+                        <input type="file" accept=".csv" id="a-csv" class="hidden">
+                    </div>
+                    <table class="w-full text-xs mb-2"><tbody id="a-body">${buildRows('a',teamA)}</tbody></table>
                 </div>
                 <div class="flex-1 min-w-0">
                     <label class="block text-sm mb-1">${nameBLabel}</label>
                     <input class="border p-1 w-full mb-2" id="team-b-name" value="${teamB.name}">
-                    <table class="w-full text-xs mb-2"><tbody>${rows('b', teamB)}</tbody></table>
+                    <div class="flex gap-2 mb-2">
+                        <button id="b-show-start" class="control-button btn-xs">Starters</button>
+                        <button id="b-show-bench" class="control-button btn-xs">Bench</button>
+                        <button id="b-import" class="control-button btn-xs">Import CSV</button>
+                        <button id="b-export" class="control-button btn-xs">Export CSV</button>
+                        <input type="file" accept=".csv" id="b-csv" class="hidden">
+                    </div>
+                    <table class="w-full text-xs mb-2"><tbody id="b-body">${buildRows('b',teamB)}</tbody></table>
                 </div>
             </div>
             <div class="flex gap-2 mt-4">
@@ -129,29 +151,111 @@ export function renderTeamsPanel(container, eventId, sport='Football', tournamen
         const bIdx = tournament ? (currentData.currentB||1) : null;
         const tA = tournament ? currentData.teams[aIdx] : currentData.teamA;
         const tB = tournament ? currentData.teams[bIdx] : currentData.teamB;
-        tA.players.forEach((pl,i)=>{ const sel=win.querySelector(`#a-pos-${i}`); if(sel) sel.value=pl.pos; const st=win.querySelector(`#a-status-${i}`); if(st) st.value=pl.status||'not'; });
-        tB.players.forEach((pl,i)=>{ const sel=win.querySelector(`#b-pos-${i}`); if(sel) sel.value=pl.pos; const st=win.querySelector(`#b-status-${i}`); if(st) st.value=pl.status||'not'; });
-        win.querySelectorAll('input[type="file"]').forEach(inp=>{
-            inp.addEventListener('change', async ()=>{
-                const [teamKey,,idx] = inp.id.split('-');
-                const file = inp.files[0];
-                if(file){
-                    const path = `uploads/${eventId}/teams/${teamKey}_${idx}_${file.name}`;
-                    const url = await uploadToServer(file, path);
-                    if(url) win.querySelector(`#${teamKey}-photo-${idx}`).value = url;
-                }
+        const posOpts = cfg.positions.map(p=>`<option value="${p}">${p}</option>`).join('');
+
+        function renderBody(prefix, team){
+            const body = win.querySelector(`#${prefix}-body`);
+            body.innerHTML = team.players.map(pl=>`
+                <tr draggable="true" data-status="${pl.status}" data-prefix="${prefix}">
+                    <td><input data-field="name" class="border p-1 w-full" value="${pl.name}"></td>
+                    <td><input data-field="num" class="border p-1 w-12" value="${pl.number||''}"></td>
+                    <td><select data-field="pos" class="border p-1 w-full"><option value=""></option>${posOpts}</select></td>
+                    <td><select data-field="status" class="border p-1 w-full"><option value="starting">Starting</option><option value="sub">Sub</option><option value="not">Not playing</option></select></td>
+                    <td><input data-field="photo" class="border p-1 w-full mb-1" placeholder="Photo URL" value="${pl.photo||''}"><input type="file" data-field="file" class="text-xs" accept="image/*"></td>
+                </tr>`).join('');
+            body.querySelectorAll('tr').forEach((tr,i)=>{
+                const p = team.players[i];
+                const posSel = tr.querySelector('select[data-field="pos"]');
+                if(posSel) posSel.value = p.pos || '';
+                const stSel = tr.querySelector('select[data-field="status"]');
+                if(stSel) stSel.value = p.status || 'not';
+                const fileInp = tr.querySelector('input[data-field="file"]');
+                fileInp.addEventListener('change', async ()=>{
+                    const file = fileInp.files[0];
+                    if(file){
+                        const path = `uploads/${eventId}/teams/${prefix}_${i}_${file.name}`;
+                        const url = await uploadToServer(file, path);
+                        if(url) tr.querySelector('input[data-field="photo"]').value = url;
+                    }
+                });
+                tr.addEventListener('dragstart', e=>{ dragSrc = tr; e.dataTransfer.effectAllowed='move'; });
+                tr.addEventListener('dragover', e=>{ e.preventDefault(); });
+                tr.addEventListener('drop', e=>{
+                    e.preventDefault();
+                    if(dragSrc!==tr){
+                        const tb = tr.parentNode;
+                        const children = Array.from(tb.children);
+                        const srcIdx = children.indexOf(dragSrc);
+                        const destIdx = children.indexOf(tr);
+                        if(srcIdx<destIdx) tb.insertBefore(dragSrc, tr.nextSibling); else tb.insertBefore(dragSrc, tr);
+                    }
+                });
+                stSel.addEventListener('change', ()=>{ tr.dataset.status = stSel.value; });
             });
-        });
+        }
+
+        let dragSrc = null;
+        renderBody('a', tA);
+        renderBody('b', tB);
+
+        function filterRows(prefix, status){
+            const body = win.querySelector(`#${prefix}-body`);
+            body.querySelectorAll('tr').forEach(tr=>{ tr.style.display = tr.dataset.status===status ? '' : 'none'; });
+        }
+        win.querySelector('#a-show-start').onclick = ()=>filterRows('a','starting');
+        win.querySelector('#a-show-bench').onclick = ()=>filterRows('a','sub');
+        win.querySelector('#b-show-start').onclick = ()=>filterRows('b','starting');
+        win.querySelector('#b-show-bench').onclick = ()=>filterRows('b','sub');
+
+        function getPlayers(prefix){
+            return Array.from(win.querySelectorAll(`#${prefix}-body tr`)).map(tr=>({
+                name: tr.querySelector('input[data-field="name"]').value,
+                number: tr.querySelector('input[data-field="num"]').value,
+                pos: tr.querySelector('select[data-field="pos"]').value,
+                status: tr.querySelector('select[data-field="status"]').value,
+                photo: tr.querySelector('input[data-field="photo"]').value
+            }));
+        }
+
+        function importCsv(prefix, team){
+            const inp = win.querySelector(`#${prefix}-csv`);
+            inp.addEventListener('change', e=>{
+                const file = e.target.files[0];
+                if(!file) return;
+                const reader = new FileReader();
+                reader.onload = ev=>{
+                    const lines = ev.target.result.split(/\r?\n/).filter(Boolean);
+                    const players = lines.map(line=>{
+                        const [name='',number='',pos='',status='starting',photo=''] = line.split(',');
+                        return {name,number,pos,status,photo};
+                    });
+                    team.players = players.concat(team.players.slice(players.length));
+                    renderBody(prefix, team);
+                };
+                reader.readAsText(file);
+            });
+        }
+        importCsv('a', tA);
+        importCsv('b', tB);
+
+        function exportCsv(prefix){
+            const players = getPlayers(prefix);
+            const csv = players.map(p=>[p.name,p.number,p.pos,p.status,p.photo].join(',')).join('\n');
+            const blob = new Blob([csv],{type:'text/csv'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${prefix}-squad.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        win.querySelector('#a-import').onclick = ()=>win.querySelector('#a-csv').click();
+        win.querySelector('#b-import').onclick = ()=>win.querySelector('#b-csv').click();
+        win.querySelector('#a-export').onclick = ()=>exportCsv('a');
+        win.querySelector('#b-export').onclick = ()=>exportCsv('b');
+
         win.querySelector('#teams-modal-cancel').onclick = ()=>{ modal.style.display='none'; };
         win.querySelector('#teams-modal-save').onclick = async ()=>{
-            const slots = cfg.playersPerTeam + (cfg.subs||0);
-            const getPlayers = prefix => Array.from({length:slots}).map((_,i)=>({
-                name: win.querySelector(`#${prefix}-name-${i}`).value,
-                number: win.querySelector(`#${prefix}-num-${i}`).value,
-                pos: win.querySelector(`#${prefix}-pos-${i}`).value,
-                status: win.querySelector(`#${prefix}-status-${i}`).value,
-                photo: win.querySelector(`#${prefix}-photo-${i}`).value
-            }));
             const aPlayers = getPlayers('a');
             const bPlayers = getPlayers('b');
             if(aPlayers.filter(p=>p.status==='starting').length !== cfg.playersPerTeam || bPlayers.filter(p=>p.status==='starting').length !== cfg.playersPerTeam){

@@ -834,7 +834,9 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         formOverlay.innerHTML = `<div class='formation-pitch'></div>` +
             formData.players.map(p=>{
                 const photo = showPhoto && p.photo ? `<img src='${p.photo}' class='formation-photo'>` : '';
-                return `<div class='formation-player' style='top:${p.y}%;left:${p.x}%;font-family:${branding.font};'>${photo}<span>${p.name}</span></div>`;
+                const num = p.number ? `#${p.number} ` : '';
+                const pos = p.pos ? `<div class='text-xs'>${p.pos}</div>` : '';
+                return `<div class='formation-player' style='top:${p.y}%;left:${p.x}%;font-family:${branding.font};'>${photo}<span>${num}${p.name}</span>${pos}</div>`;
             }).join('') + bottomImg;
         if(!prevFormationVisible){
             if(bottomSp) addSponsorLog(eventId,{ts:Date.now(),placement:'formationBottom',sponsor:sponsorPlacements.formationBottom,action:'show'});
