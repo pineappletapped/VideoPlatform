@@ -22,7 +22,7 @@ let previewLowerThirdId = null;
 let liveTitleSlideId = null;
 let previewTitleSlideId = null;
 let graphicsData = { lowerThirds: [], titleSlides: [], teams: {} };
-let favorites = { lowerThirds: [], titleSlides: [], scoreboard: false, stingers: [], shortcuts: {} };
+let favorites = { lowerThirds: [], titleSlides: [], scoreboard: false, stingers: [], shortcuts: {}, sponsors: [] };
 let overlayState = {};
 
 function saveLiveState(eventId, mode) {
@@ -75,7 +75,7 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
         previewTitleSlideId = graphicsData.previewTitleSlideId || null;
         renderPanel();
     }, mode);
-    listenFavorites(eventId, (fav) => { favorites = { lowerThirds: [], titleSlides: [], scoreboard: false, stingers: [], shortcuts: {}, ...(fav || {}) }; renderPanel(); });
+    listenFavorites(eventId, (fav) => { favorites = { lowerThirds: [], titleSlides: [], scoreboard: false, stingers: [], shortcuts: {}, sponsors: [], ...(fav || {}) }; renderPanel(); });
     listenOverlayState(eventId, state => { overlayState = state || {}; });
 
     function renderPanel() {

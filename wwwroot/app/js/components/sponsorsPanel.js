@@ -1,4 +1,4 @@
-import { getSponsors, setSponsors, listenSponsors, getSponsorPlacements, setSponsorPlacements, listenSponsorPlacements, getSponsorLog, updateOverlayState } from '../firebase.js';
+import { getSponsors, setSponsors, listenSponsors, getSponsorPlacements, setSponsorPlacements, listenSponsorPlacements, getSponsorLog, updateOverlayState, listenFavorites, updateFavorites, listenOverlayState } from '../firebase.js';
 
 let csrfPromise;
 async function getCsrf(){
@@ -18,11 +18,15 @@ async function uploadFile(file, path){
 export function renderSponsorsPanel(container, eventId){
     let sponsors = [];
     let placements = {};
+    let favorites = { lowerThirds: [], titleSlides: [], scoreboard: false, stingers: [], shortcuts: {}, sponsors: [] };
+    let livePlacements = {};
     let ltPreviewing = false;
     let ltLiving = false;
 
     listenSponsors(eventId, data=>{ sponsors = data || []; render(); });
     listenSponsorPlacements(eventId, data=>{ placements = data || {}; render(); });
+    listenFavorites(eventId, fav=>{ favorites = { lowerThirds: [], titleSlides: [], scoreboard: false, stingers: [], shortcuts:{}, sponsors: [], ...(fav||{}) }; render(); });
+    listenOverlayState(eventId, state=>{ livePlacements = (state && state.sponsorPlacementsLive) || {}; render(); });
 
     function render(){
         const ltOptions = sponsors.map((s,i)=>s.lowerThird?`<option value="${i}">${s.name}</option>`:'').join('');
@@ -86,10 +90,30 @@ export function renderSponsorsPanel(container, eventId){
             ['intro','Intro Graphic']
         ];
         const placeTable = container.querySelector('#place-table');
-        placeTable.innerHTML = rows.map(r=>`<tr><td class="pr-2">${r[1]}</td><td><select data-place="${r[0]}" class="border p-1 w-full"><option value="">None</option>${sponsors.map((s,i)=>`<option value="${i}">${s.name}</option>`).join('')}</select></td></tr>`).join('');
+        placeTable.innerHTML = rows.map(r=>{
+            const live = !!livePlacements[r[0]];
+            const fav = (favorites.sponsors||[]).includes(r[0]);
+            return `<tr><td class="pr-2">${r[1]}</td><td class="flex items-center gap-2"><button class="control-button btn-xs" data-live="${r[0]}">${live?'Hide':'Live'}</button><button class="control-button btn-xs" data-fav="${r[0]}">${fav?'★':'☆'}</button><select data-place="${r[0]}" class="border p-1 flex-1"><option value="">None</option>${sponsors.map((s,i)=>`<option value="${i}">${s.name}</option>`).join('')}</select></td></tr>`;
+        }).join('');
         rows.forEach(r=>{
             const sel = container.querySelector(`select[data-place="${r[0]}"]`);
             if(sel) sel.value = placements[r[0]] ?? '';
+            const liveBtn = container.querySelector(`button[data-live="${r[0]}"]`);
+            if(liveBtn) liveBtn.onclick = async ()=>{
+                const lp = { ...(livePlacements||{}) };
+                lp[r[0]] = !lp[r[0]];
+                await updateOverlayState(eventId,{sponsorPlacementsLive:lp});
+            };
+            const favBtn = container.querySelector(`button[data-fav="${r[0]}"]`);
+            if(favBtn) favBtn.onclick = ()=>{
+                const favs = favorites.sponsors || [];
+                const idx = favs.indexOf(r[0]);
+                if(idx>=0) favs.splice(idx,1); else favs.push(r[0]);
+                if(favorites.shortcuts){
+                    Object.keys(favorites.shortcuts).forEach(k=>{ const sc=favorites.shortcuts[k]; if(sc.type==='sponsor' && sc.placement===r[0]) delete favorites.shortcuts[k]; });
+                }
+                updateFavorites(eventId, favorites);
+            };
         });
         container.querySelector('#save-placements').onclick = async ()=>{
             const data = {};

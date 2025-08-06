@@ -26,6 +26,18 @@ let prevStingerVisible = false;
 let prevStingerData = null;
 let prevPresentationVisible = false;
 let prevPresentationData = null;
+let prevSponsorLive = {};
+const placementClassMap = {
+    scoreboardTop: 'sb-sponsor top',
+    scoreboardBottom: 'sb-sponsor bottom',
+    formationBottom: 'sb-sponsor bottom',
+    substitutionTop: 'sb-sponsor top',
+    cornerTL: 'corner-sponsor tl',
+    cornerTR: 'corner-sponsor tr',
+    cornerBL: 'corner-sponsor bl',
+    cornerBR: 'corner-sponsor br',
+    intro: 'intro-sponsor'
+};
 
 function contrastColor(hex) {
     let c = hex.replace('#', '');
@@ -825,6 +837,34 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             el.src = sponsor.logo;
         } else if(el){
             el.remove();
+        }
+    });
+
+    const live = (state && state.sponsorPlacementsLive) || {};
+    const allPlacements = new Set([...Object.keys(prevSponsorLive), ...Object.keys(live)]);
+    allPlacements.forEach(p=>{
+        const vis = !!live[p];
+        const idx = sponsorPlacements[p];
+        const sponsor = sponsorsData[idx];
+        const id = `manual-sponsor-${p}`;
+        let el = overlayContainer.querySelector('#'+id);
+        if(vis && sponsor){
+            if(!el){
+                el = document.createElement('img');
+                el.id = id;
+                el.className = placementClassMap[p] || '';
+                overlayContainer.appendChild(el);
+            }
+            el.src = sponsor.logo;
+            if(!prevSponsorLive[p]) addSponsorLog(eventId,{ts:Date.now(),placement:p,sponsor:idx,action:'show'});
+            prevSponsorLive[p] = true;
+        } else if(el){
+            el.remove();
+            if(prevSponsorLive[p]) addSponsorLog(eventId,{ts:Date.now(),placement:p,sponsor:idx,action:'hide'});
+            prevSponsorLive[p] = false;
+        } else if(prevSponsorLive[p]){
+            addSponsorLog(eventId,{ts:Date.now(),placement:p,sponsor:idx,action:'hide'});
+            prevSponsorLive[p] = false;
         }
     });
 

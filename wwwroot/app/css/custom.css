@@ -307,6 +307,7 @@ html,body { margin: 0; width:100%; height:100%; overflow:hidden; }
 .corner-sponsor.tr{top:0.5rem;right:0.5rem;}
 .corner-sponsor.bl{bottom:0.5rem;left:0.5rem;}
 .corner-sponsor.br{bottom:0.5rem;right:0.5rem;}
+.intro-sponsor{position:absolute;top:1rem;left:50%;transform:translateX(-50%);height:60px;}
 .stinger-panel {}
 #stinger-overlay{
   position:absolute;
