@@ -1,4 +1,4 @@
-import { listenOverlayState, listenGraphicsData, listenBranding, listenSponsors, listenSponsorPlacements, addSponsorLog, updateEventMetadata, resolveAssetPath } from './firebase.js';
+import { listenOverlayState, listenGraphicsData, listenBranding, listenSponsors, listenSponsorPlacements, addSponsorLog, updateEventMetadata, resolveAssetPath, updateOverlayState } from './firebase.js';
 import { getDatabaseInstance } from './firebaseApp.js';
 import { suggestAbbreviation } from './teamUtils.js';
 import { ref, onValue, set } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
@@ -24,6 +24,7 @@ let prevTableVisible = false;
 let prevResultsVisible = false;
 let prevStingerVisible = false;
 let prevStingerData = null;
+let stingerTimeout = null;
 let prevPresentationVisible = false;
 let prevPresentationData = null;
 let prevSponsorLive = {};
@@ -1038,6 +1039,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     let stingerOverlay = overlayContainer.querySelector('#stinger-overlay');
     const stingerData = state && state.stinger;
     const stingerShow = previewMode ? state && state.stingerPreviewVisible : state && state.stingerVisible;
+    const stingerChanged = stingerShow !== prevStingerVisible || JSON.stringify(stingerData) !== JSON.stringify(prevStingerData);
     if (stingerShow && stingerData) {
         if (!stingerOverlay) {
             stingerOverlay = document.createElement('div');
@@ -1046,24 +1048,30 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         }
         stingerOverlay.style.fontFamily = branding.font;
         stingerOverlay.style.opacity = previewMode ? '0.6' : '1';
-        const style = stingerData.style || 'logo';
-        const colors = stingerData.colors || [branding.primaryColor || '#000', branding.secondaryColor1 || '#fff'];
-        const textColor = branding.primaryColor || '#fff';
-        const logoUrl = resolveAssetPath(stingerData.logo);
-        stingerOverlay.style.background = 'transparent';
-        if (style === 'split') {
-            stingerOverlay.innerHTML = `
+        if (stingerChanged) {
+            const style = stingerData.style || 'logo';
+            const colors = stingerData.colors || [branding.primaryColor || '#000', branding.secondaryColor1 || '#fff'];
+            const textColor = branding.primaryColor || '#fff';
+            const logoUrl = resolveAssetPath(stingerData.logo);
+            stingerOverlay.style.background = 'transparent';
+            if (style === 'split') {
+                stingerOverlay.innerHTML = `
                 <div class="stinger-split">
                     <div class="stinger-split-top" style="background:${colors[0]}"></div>
                     <div class="stinger-split-bottom" style="background:${colors[1]}"></div>
                     ${logoUrl ? `<img src='${logoUrl}' class='stinger-logo'>` : stingerData.text ? `<div class='stinger-logo stinger-text' style='color:${textColor}'>${stingerData.text}</div>` : ''}
                 </div>`;
-        } else {
-            stingerOverlay.innerHTML = logoUrl ? `<img src='${logoUrl}'>` : stingerData.text ? `<div class='stinger-text' style='color:${textColor}'>${stingerData.text}</div>` : '';
+            } else {
+                stingerOverlay.innerHTML = logoUrl ? `<img src='${logoUrl}'>` : stingerData.text ? `<div class='stinger-text' style='color:${textColor}'>${stingerData.text}</div>` : '';
+            }
+            clearTimeout(stingerTimeout);
+            stingerTimeout = setTimeout(()=>updateOverlayState(eventId,{stingerVisible:false,stingerPreviewVisible:false}),2000);
         }
     } else if (stingerOverlay) {
         stingerOverlay.remove();
     }
+    prevStingerVisible = stingerShow;
+    prevStingerData = stingerData;
 
     // Presentation Overlay
     let presOverlay = overlayContainer.querySelector('#presentation-overlay');
