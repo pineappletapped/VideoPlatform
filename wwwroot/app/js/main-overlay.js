@@ -40,6 +40,12 @@ const placementClassMap = {
     intro: 'intro-sponsor'
 };
 
+const WEATHER_ICONS = {
+    sun: `<svg width="40" height="40" viewBox="0 0 64 64"><circle cx="32" cy="32" r="12" fill="yellow"/><g stroke="yellow" stroke-width="4"><line x1="32" y1="4" x2="32" y2="16"/><line x1="32" y1="48" x2="32" y2="60"/><line x1="4" y1="32" x2="16" y2="32"/><line x1="48" y1="32" x2="60" y2="32"/><line x1="12" y1="12" x2="20" y2="20"/><line x1="44" y1="44" x2="52" y2="52"/><line x1="12" y1="52" x2="20" y2="44"/><line x1="44" y1="20" x2="52" y2="12"/></g></svg>`,
+    cloud: `<svg width="40" height="40" viewBox="0 0 64 64"><ellipse cx="32" cy="40" rx="20" ry="12" fill="#ccc"/><ellipse cx="24" cy="34" rx="12" ry="8" fill="#ccc"/><ellipse cx="40" cy="34" rx="12" ry="8" fill="#ccc"/></svg>`,
+    rain: `<svg width="40" height="40" viewBox="0 0 64 64"><ellipse cx="32" cy="32" rx="20" ry="12" fill="#ccc"/><ellipse cx="24" cy="26" rx="12" ry="8" fill="#ccc"/><ellipse cx="40" cy="26" rx="12" ry="8" fill="#ccc"/><line x1="22" y1="44" x2="22" y2="56" stroke="#00f" stroke-width="4"/><line x1="32" y1="44" x2="32" y2="56" stroke="#00f" stroke-width="4"/><line x1="42" y1="44" x2="42" y2="56" stroke="#00f" stroke-width="4"/></svg>`
+};
+
 function contrastColor(hex) {
     let c = hex.replace('#', '');
     if (c.length === 3) c = c.split('').map(x => x + x).join('');
@@ -133,7 +139,7 @@ async function renderIntroOverlay(introData, branding, introSettings = {}, score
     let weatherHtml = '';
     if (introSettings.weatherSlots && introSettings.weatherSlots.length) {
         const header = introSettings.weatherLoc ? `<div style="text-align:center;font-size:1.25rem;margin-bottom:0.5rem;">${introSettings.weatherLoc}</div>` : '';
-        const slotHtml = introSettings.weatherSlots.map(s=>`<div style='display:flex;flex-direction:column;align-items:center;padding:0 0.5rem;'><div>${s.time}</div><div>${s.icon}</div><div>${s.temp}</div></div>`).join('');
+        const slotHtml = introSettings.weatherSlots.map(s=>`<div style='display:flex;flex-direction:column;align-items:center;padding:0 0.5rem;'><div>${s.time}</div><div>${WEATHER_ICONS[s.icon] || ''}</div><div>${s.temp}</div></div>`).join('');
         weatherHtml = `<div style="margin-top:1rem;font-size:1.5rem;">${header}<div style='display:flex;justify-content:center;'>${slotHtml}</div></div>`;
     }
     holdslateOverlay.innerHTML = `<div style="width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;">${titleHtml}${teamsHtml}${locationHtml}${sponsorHtml}${messageHtml}${countdownHtml}${weatherHtml}</div>`;
@@ -555,6 +561,35 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         courseOverlay.innerHTML = `<div style="font-size:3rem;text-align:center;">${courseData.name || 'Course details'}</div>`;
     } else if (courseOverlay) {
         courseOverlay.remove();
+    }
+
+    let weatherOverlay = overlayContainer.querySelector('#weather-overlay');
+    const weatherData = state && state.weather;
+    const weatherShow = previewMode ? state && state.weatherPreviewVisible : state && state.weatherVisible;
+    if (weatherShow && weatherData) {
+        if (!weatherOverlay) {
+            weatherOverlay = document.createElement('div');
+            weatherOverlay.id = 'weather-overlay';
+            overlayContainer.appendChild(weatherOverlay);
+        }
+        weatherOverlay.style.position = 'absolute';
+        weatherOverlay.style.top = '0';
+        weatherOverlay.style.left = '0';
+        weatherOverlay.style.width = '100vw';
+        weatherOverlay.style.height = '100vh';
+        weatherOverlay.style.background = 'rgba(0,0,0,0.8)';
+        weatherOverlay.style.color = '#fff';
+        weatherOverlay.style.display = 'flex';
+        weatherOverlay.style.alignItems = 'center';
+        weatherOverlay.style.justifyContent = 'center';
+        weatherOverlay.style.zIndex = '110';
+        weatherOverlay.style.fontFamily = branding.font;
+        weatherOverlay.style.opacity = previewMode ? '0.6' : '1';
+        const header = weatherData.weatherLoc ? `<div style="text-align:center;font-size:1.25rem;margin-bottom:0.5rem;">${weatherData.weatherLoc}</div>` : '';
+        const slotHtml = (weatherData.slots || []).map(s=>`<div style='display:flex;flex-direction:column;align-items:center;padding:0 0.5rem;'><div>${s.time}</div><div>${WEATHER_ICONS[s.icon] || ''}</div><div>${s.temp}</div></div>`).join('');
+        weatherOverlay.innerHTML = `<div style="font-size:1.5rem;">${header}<div style='display:flex;justify-content:center;'>${slotHtml}</div></div>`;
+    } else if (weatherOverlay) {
+        weatherOverlay.remove();
     }
 
     // Scoreboard Overlay
