@@ -111,14 +111,46 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
         const hideType = e.target.getAttribute('data-hide');
         const placement = e.target.getAttribute('data-placement');
         if(hideType){ hideItem(hideType, placement); }
+        const previewType = e.target.getAttribute('data-preview');
         const liveType = e.target.getAttribute('data-live');
         const id = e.target.getAttribute('data-id');
         const idx = e.target.getAttribute('data-idx');
+        if(previewType){
+            if(previewType==='lowerThird' && id){
+                if(graphicsData.previewLowerThirdId===id) updateGraphicsData(eventId,{previewLowerThirdId:null}, mode);
+                else updateGraphicsData(eventId,{previewLowerThirdId:id}, mode);
+            }
+            else if(previewType==='titleSlide' && id){
+                if(graphicsData.previewTitleSlideId===id) updateGraphicsData(eventId,{previewTitleSlideId:null}, mode);
+                else updateGraphicsData(eventId,{previewTitleSlideId:id}, mode);
+            }
+            else if(previewType==='scoreboard'){
+                updateOverlayState(eventId,{scoreboardPreviewVisible:!overlayState.scoreboardPreviewVisible});
+            }
+            else if(previewType==='stinger' && idx){
+                const st=favorites.stingers[parseInt(idx,10)];
+                if(overlayState.stingerPreviewVisible) updateOverlayState(eventId,{stingerPreviewVisible:false});
+                else if(st) updateOverlayState(eventId,{stinger:st,stingerPreviewVisible:true,stingerVisible:false});
+            }
+        }
         if(liveType){
-            if(liveType==='lowerThird' && id) updateGraphicsData(eventId,{liveLowerThirdId:id}, mode);
-            else if(liveType==='titleSlide' && id) updateGraphicsData(eventId,{liveTitleSlideId:id}, mode);
-            else if(liveType==='scoreboard') updateOverlayState(eventId,{scoreboardVisible:true,scoreboardPreviewVisible:false});
-            else if(liveType==='stinger' && idx){ const st=favorites.stingers[parseInt(idx,10)]; if(st) updateOverlayState(eventId,{stinger:st,stingerVisible:true,stingerPreviewVisible:false}); }
+            if(liveType==='lowerThird' && id){
+                if(graphicsData.liveLowerThirdId===id) updateGraphicsData(eventId,{liveLowerThirdId:null}, mode);
+                else updateGraphicsData(eventId,{liveLowerThirdId:id, previewLowerThirdId:null}, mode);
+            }
+            else if(liveType==='titleSlide' && id){
+                if(graphicsData.liveTitleSlideId===id) updateGraphicsData(eventId,{liveTitleSlideId:null}, mode);
+                else updateGraphicsData(eventId,{liveTitleSlideId:id, previewTitleSlideId:null}, mode);
+            }
+            else if(liveType==='scoreboard'){
+                const vis = overlayState.scoreboardVisible || overlayState.scoreboardPreviewVisible;
+                updateOverlayState(eventId,{scoreboardVisible:!vis,scoreboardPreviewVisible:false});
+            }
+            else if(liveType==='stinger' && idx){
+                const st=favorites.stingers[parseInt(idx,10)];
+                if(overlayState.stingerVisible) updateOverlayState(eventId,{stingerVisible:false});
+                else if(st) updateOverlayState(eventId,{stinger:st,stingerVisible:true,stingerPreviewVisible:false});
+            }
             else if(liveType==='sponsor' && placement){ const lp={...(overlayState.sponsorPlacementsLive||{})}; lp[placement]=!lp[placement]; updateOverlayState(eventId,{sponsorPlacementsLive:lp}); }
         }
         const remType = e.target.getAttribute('data-remove');
@@ -316,7 +348,9 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
             const favHtml = favItems.map((f,i)=>{
                 const liveAttr = f.type==='stinger' ? `data-live="stinger" data-idx="${f.idx}"` : f.type==='sponsor' ? `data-live="sponsor" data-placement="${f.placement}"` : `data-live="${f.type}" data-id="${f.id}"`;
                 const remAttr = f.type==='stinger' ? `data-remove="stinger" data-idx="${f.idx}"` : f.type==='sponsor' ? `data-remove="sponsor" data-placement="${f.placement}"` : `data-remove="${f.type}" data-id="${f.id}"`;
-                return `<li class="flex items-center gap-2"><input type="checkbox" data-fidx="${i}"><span class="flex-1">${f.label}</span><input type="text" class="w-8 text-center border fav-hotkey" data-fidx="${i}" maxlength="1" value="${f.key||''}"><button class="control-button btn-xs" ${liveAttr}>Live</button><button class="control-button btn-xs btn-remove" ${remAttr}>Remove</button></li>`;
+                const prevAttr = f.type==='stinger' ? `data-preview="stinger" data-idx="${f.idx}"` : f.type==='sponsor' ? '' : f.type==='scoreboard' ? `data-preview="scoreboard"` : `data-preview="${f.type}" data-id="${f.id}"`;
+                const previewBtn = prevAttr ? `<button class="control-button btn-xs btn-preview" ${prevAttr}>Preview</button>` : '';
+                return `<li class="flex items-center gap-2"><input type="checkbox" data-fidx="${i}"><span class="flex-1">${f.label}</span><input type="text" class="w-8 text-center border fav-hotkey" data-fidx="${i}" maxlength="1" value="${f.key||''}">${previewBtn}<button class="control-button btn-xs btn-live" ${liveAttr}>Live</button><button class="control-button btn-xs btn-remove" ${remAttr}>Remove</button></li>`;
             }).join('');
             favList.innerHTML = favHtml || '<li class="text-gray-500">No favourites.</li>';
         }
