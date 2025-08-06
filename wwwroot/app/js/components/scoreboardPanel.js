@@ -104,7 +104,7 @@ function getScoreboardRef(eventId) {
 export function renderScoreboardPanel(container, sport = 'Football', eventId = 'demo') {
     const cfg = sportsData[sport] || sportsData['Football'];
     const scoreboardStyles = getStylesForSport(sport);
-    const goalSport = (sportsData[sport]?.logEvents || []).includes('goal');
+    const goalSport = (sportsData[sport]?.logEvents || []).some(e => e.toLowerCase() === 'goal');
 
     let teamsData = null;
 
@@ -436,7 +436,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                                 const teamPlayers = getTeam(i).players || [];
                                 const scObj = teamPlayers.find(p=>p.name===res.scorer);
                                 const asObj = teamPlayers.find(p=>p.name===res.assist);
-                                await addMatchLog(eventId,{ts:Date.now(),type:'goal',team:teamKey,player:res.scorer,playerName:res.scorer,playerNumber:scObj?.number||'',assist:res.assist,assistNumber:asObj?.number||'',time:currentTimeStr()});
+                                await addMatchLog(eventId,{ts:Date.now(),type:'Goal',team:teamKey,player:res.scorer,playerName:res.scorer,playerNumber:scObj?.number||'',assist:res.assist,assistNumber:asObj?.number||'',time:currentTimeStr()});
                                 await saveData(getFormData());
                             }else{
                                 input.value = val;
@@ -687,8 +687,8 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             if(currentData && newData.scores){
                 const diffA = (newData.scores[0]||0) - (currentData.scores?.[0]||0);
                 const diffB = (newData.scores[1]||0) - (currentData.scores?.[1]||0);
-                for(let i=0;i<diffA;i++) await addMatchLog(eventId,{ts:Date.now(),type:'goal',team:'a',player:'',time:newData.time});
-                for(let i=0;i<diffB;i++) await addMatchLog(eventId,{ts:Date.now(),type:'goal',team:'b',player:'',time:newData.time});
+                for(let i=0;i<diffA;i++) await addMatchLog(eventId,{ts:Date.now(),type:'Goal',team:'a',player:'',time:newData.time});
+                for(let i=0;i<diffB;i++) await addMatchLog(eventId,{ts:Date.now(),type:'Goal',team:'b',player:'',time:newData.time});
             }
             await saveData(newData);
             currentData = newData;

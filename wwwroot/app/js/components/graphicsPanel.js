@@ -12,9 +12,12 @@ const transitions = [
     { value: 'slide-down', label: 'Slide Down' }
 ];
 
-const BASE_LOG_EVENTS = ['goal','substitution'];
+const BASE_LOG_EVENTS = ['Goal','Substitution'];
 function getLogEventsForSport(sp){
     return sportsData[sp]?.logEvents || BASE_LOG_EVENTS;
+}
+function formatEventLabel(e){
+    return e.replace(/\b\w/g, c => c.toUpperCase());
 }
 
 let liveLowerThirdId = null;
@@ -189,7 +192,7 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                     <strong>In Game Events:</strong>
                     <div class="flex gap-2 mt-1 text-sm items-center">
                         <select id="ige-type" class="border p-1 flex-1">
-                            ${logEvents.map(e=>`<option value="${e}">${e}</option>`).join('')}
+                            ${logEvents.map(e=>`<option value="${e}">${formatEventLabel(e)}</option>`).join('')}
                         </select>
                         <select id="ige-team" class="border p-1">
                             ${['teamA','teamB'].map(k=>`<option value="${k}">${teamsData[k]?.name || k}</option>`).join('')}
@@ -293,7 +296,7 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                 playerOnSel.innerHTML = onOpts.join('');
             };
             const updateType = () => {
-                playerOnSel.style.display = typeSel.value === 'substitution' ? '' : 'none';
+                playerOnSel.style.display = typeSel.value.toLowerCase() === 'substitution' ? '' : 'none';
             };
             teamSel.onchange = fillPlayers;
             typeSel.onchange = updateType;
@@ -310,7 +313,7 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                 let playerField = '';
                 let playerName = '';
                 let playerNumber = '';
-                if (type === 'substitution') {
+                if (type.toLowerCase() === 'substitution') {
                     subtitle = `${off} → ${on}`;
                     playerField = subtitle;
                     playerName = off;
@@ -334,7 +337,7 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                 const timeStr = formatTime(secs);
                 const logEntry = { ts: Date.now(), type, team: teamKey==='teamA'?'a':'b', player: playerField, playerName, playerNumber, time: timeStr };
                 await addMatchLog(eventId, logEntry);
-                if(type === 'substitution'){
+                if(type.toLowerCase() === 'substitution'){
                     const teamObj = teamsData[teamKey];
                     const offIdx = teamObj.players.findIndex(p=>p.name===off);
                     const onIdx = teamObj.players.findIndex(p=>p.name===on);

@@ -56,8 +56,8 @@ export function renderTeamsPanel(container, eventId, sport='Football', tournamen
         const photoIcon = p=> p?'<span class="text-green-400 ml-1">✔</span>':'';
         const cardMark = (name, key) => {
             const t = key === 'teamA' ? 'a' : 'b';
-            const hasY = matchLogs.some(l=>l.team===t && l.playerName===name && l.type==='yellow card');
-            const hasR = matchLogs.some(l=>l.team===t && l.playerName===name && l.type==='red card');
+            const hasY = matchLogs.some(l=>l.team===t && l.playerName===name && l.type?.toLowerCase()==='yellow card');
+            const hasR = matchLogs.some(l=>l.team===t && l.playerName===name && l.type?.toLowerCase()==='red card');
             let m = '';
             if(hasY) m += '<span class="ml-1 text-yellow-400">Y</span>';
             if(hasR) m += '<span class="ml-1 text-red-500">R</span>';
