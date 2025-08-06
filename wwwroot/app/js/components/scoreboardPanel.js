@@ -119,7 +119,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
     }
     let currentData = null;
     let timerInterval = null;
-    let favorites = { scoreboard: false };
+    let favorites = { scoreboard: false, stingers: [], shortcuts: {} };
     let matchLogs = [];
 
     const teamsRef = ref(db, `teams/${eventId}`);
@@ -137,7 +137,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         highBreakVisible = (state && state.highBreakVisible) || false;
         if (currentData) render(currentData);
     });
-    listenFavorites(eventId, fav => { favorites = { scoreboard: false, ...(fav || {}) }; if(currentData) render(currentData); });
+    listenFavorites(eventId, fav => { favorites = { scoreboard: false, stingers: [], shortcuts: {}, ...(fav || {}) }; if(currentData) render(currentData); });
     listenMatchLog(eventId, logs => { matchLogs = logs || []; updateScorersFromLogs(); if(currentData) render(currentData); });
 
     onValue(getScoreboardRef(eventId), snap => {
@@ -797,6 +797,9 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         if(favBtn){
             favBtn.onclick = () => {
                 favorites.scoreboard = !favorites.scoreboard;
+                if(!favorites.scoreboard && favorites.shortcuts){
+                    Object.keys(favorites.shortcuts).forEach(k=>{ const sc=favorites.shortcuts[k]; if(sc.type==='scoreboard') delete favorites.shortcuts[k]; });
+                }
                 updateFavorites(eventId, favorites);
                 render(data);
             };

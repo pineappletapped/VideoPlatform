@@ -22,7 +22,7 @@ let previewLowerThirdId = null;
 let liveTitleSlideId = null;
 let previewTitleSlideId = null;
 let graphicsData = { lowerThirds: [], titleSlides: [], teams: {} };
-let favorites = { lowerThirds: [], titleSlides: [], scoreboard: false };
+let favorites = { lowerThirds: [], titleSlides: [], scoreboard: false, stingers: [], shortcuts: {} };
 let overlayState = {};
 
 function saveLiveState(eventId, mode) {
@@ -75,7 +75,7 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
         previewTitleSlideId = graphicsData.previewTitleSlideId || null;
         renderPanel();
     }, mode);
-    listenFavorites(eventId, (fav) => { favorites = { lowerThirds: [], titleSlides: [], scoreboard: false, ...(fav || {}) }; renderPanel(); });
+    listenFavorites(eventId, (fav) => { favorites = { lowerThirds: [], titleSlides: [], scoreboard: false, stingers: [], shortcuts: {}, ...(fav || {}) }; renderPanel(); });
     listenOverlayState(eventId, state => { overlayState = state || {}; });
 
     function renderPanel() {
@@ -416,11 +416,17 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                 } else if (action === 'favorite-lt') {
                     const idx = favorites.lowerThirds.indexOf(id);
                     if (idx >= 0) favorites.lowerThirds.splice(idx,1); else favorites.lowerThirds.push(id);
+                    if(favorites.shortcuts){
+                        Object.keys(favorites.shortcuts).forEach(k=>{ const sc=favorites.shortcuts[k]; if(sc.type==='lowerThird' && sc.id===id) delete favorites.shortcuts[k]; });
+                    }
                     updateFavorites(eventId, favorites);
                     renderPanel();
                 } else if (action === 'favorite-ts') {
                     const idx = favorites.titleSlides.indexOf(id);
                     if (idx >= 0) favorites.titleSlides.splice(idx,1); else favorites.titleSlides.push(id);
+                    if(favorites.shortcuts){
+                        Object.keys(favorites.shortcuts).forEach(k=>{ const sc=favorites.shortcuts[k]; if(sc.type==='titleSlide' && sc.id===id) delete favorites.shortcuts[k]; });
+                    }
                     updateFavorites(eventId, favorites);
                     renderPanel();
                 } else if (action === 'remove-lt') {
