@@ -150,6 +150,10 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
                                     <option value="sun">Sun</option>
                                     <option value="cloud">Cloudy</option>
                                     <option value="rain">Rain</option>
+                                    <option value="thunder">Thunder</option>
+                                    <option value="snow">Snow</option>
+                                    <option value="wind">Windy</option>
+                                    <option value="suncloud">Sun + Cloud</option>
                                 </select>
                                 <input class="border p-1 flex-1" name="temp1" placeholder="Temp" />
                             </div>
@@ -159,6 +163,10 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
                                     <option value="sun">Sun</option>
                                     <option value="cloud">Cloudy</option>
                                     <option value="rain">Rain</option>
+                                    <option value="thunder">Thunder</option>
+                                    <option value="snow">Snow</option>
+                                    <option value="wind">Windy</option>
+                                    <option value="suncloud">Sun + Cloud</option>
                                 </select>
                                 <input class="border p-1 flex-1" name="temp2" placeholder="Temp" />
                             </div>
@@ -168,6 +176,10 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
                                     <option value="sun">Sun</option>
                                     <option value="cloud">Cloudy</option>
                                     <option value="rain">Rain</option>
+                                    <option value="thunder">Thunder</option>
+                                    <option value="snow">Snow</option>
+                                    <option value="wind">Windy</option>
+                                    <option value="suncloud">Sun + Cloud</option>
                                 </select>
                                 <input class="border p-1 flex-1" name="temp3" placeholder="Temp" />
                             </div>
