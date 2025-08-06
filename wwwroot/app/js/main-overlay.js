@@ -697,11 +697,6 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         if (scoreboardData.points) info.push('Pts ' + scoreboardData.points.join('-'));
         if (scoreboardData.overs) info.push('Ov ' + scoreboardData.overs.join('-'));
         if (scoreboardData.wickets) info.push('Wk ' + scoreboardData.wickets.join('-'));
-        if (scoreboardData.showPens) {
-            const pA = scoreboardData.pens?.[0] ?? 0;
-            const pB = scoreboardData.pens?.[1] ?? 0;
-            info.push('Pens ' + pA + '-' + pB);
-        }
         const infoHtml = info.length ? `<div class='sb-info'>${info.join(' | ')}</div>` : '';
         const brand = branding.primaryColor || '#e16316';
         const textA = contrastColor(colors[0]);
@@ -750,7 +745,6 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         } else if(style==='football' || style.startsWith('football-')){
             const timePart = timeStr ? `<span class="sb-time">${timeStr}</span>` : '';
             const stopPart = scoreboardData.showStoppage && scoreboardData.stoppage ? `<span class="sb-time">+${scoreboardData.stoppage}</span>` : '';
-            const pensPart = scoreboardData.showPens ? `<span class=\"sb-time\">Pens ${scoreboardData.pens?.[0]||0}-${scoreboardData.pens?.[1]||0}</span>` : '';
             scoreboardOverlay.innerHTML = `
             ${topImg}
             <div class="sb-row">
@@ -759,7 +753,6 @@ function renderOverlayFromFirebase(state, graphics, branding) {
                 <span class="sb-team${aClassB}" style="background:${colors[1]};color:${textB}">${showLogos ? `<img src='${logos[1]}' class='sb-team-logo'>` : ''}${names[1]}</span>
                 ${timePart}
                 ${stopPart}
-                ${pensPart}
             </div>
             ${sbSponsorHtml}
             ${bottomImg}`;
@@ -860,6 +853,42 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     }
     prevScoreboardVisible = scoreboardShow;
     prevScoreboardData = scoreboardData;
+
+    // Shootout Overlay
+    let shootOverlay = overlayContainer.querySelector('#shootout-overlay');
+    const shootData = state && state.scoreboard && state.scoreboard.shootout;
+    const shootShow = previewMode ? state && state.shootoutPreviewVisible : state && state.shootoutVisible;
+    if(shootShow && shootData){
+        if(!shootOverlay){
+            shootOverlay = document.createElement('div');
+            shootOverlay.id = 'shootout-overlay';
+            overlayContainer.appendChild(shootOverlay);
+        }
+        shootOverlay.style.position = 'absolute';
+        shootOverlay.style.bottom = '2rem';
+        shootOverlay.style.left = '50%';
+        shootOverlay.style.transform = 'translateX(-50%)';
+        shootOverlay.style.fontFamily = branding.font;
+        shootOverlay.style.opacity = previewMode ? '0.6' : '1';
+        const tA = getTeam(0) || {name:'Team 1'};
+        const tB = getTeam(1) || {name:'Team 2'};
+        const shotsA = shootData.shots?.[0] || [];
+        const shotsB = shootData.shots?.[1] || [];
+        const scoreA = shotsA.filter(s=>s && s.result==='goal').length;
+        const scoreB = shotsB.filter(s=>s && s.result==='goal').length;
+        const rows = Array.from({length:Math.max(shotsA.length, shotsB.length)}).map((_,i)=>{
+            const a = shotsA[i] || {};
+            const b = shotsB[i] || {};
+            const aMark = a.result==='goal' ? '✓' : a.result==='miss' ? '✗' : '';
+            const bMark = b.result==='goal' ? '✓' : b.result==='miss' ? '✗' : '';
+            const aPlayer = a.player || '';
+            const bPlayer = b.player || '';
+            return `<tr><td>${aPlayer}</td><td class='text-center'>${aMark}</td><td class='px-4'></td><td>${bPlayer}</td><td class='text-center'>${bMark}</td></tr>`;
+        }).join('');
+        shootOverlay.innerHTML = `<div class='lower-third-default'><div class='font-bold mb-1'>Shoot-out ${scoreA}-${scoreB}</div><table class='text-sm'><tbody>${rows}</tbody></table></div>`;
+    } else if(shootOverlay){
+        shootOverlay.remove();
+    }
 
     // Corner Sponsors
     ['tl','tr','bl','br'].forEach(pos=>{

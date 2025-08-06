@@ -1,7 +1,7 @@
 import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 import { getDatabaseInstance } from "../firebaseApp.js";
 import { sportsData } from "../sportsConfig.js";
-import { updateOverlayState, listenOverlayState, addMatchLog, listenFavorites, updateFavorites, listenMatchLog, resolveAssetPath } from "../firebase.js";
+import { updateOverlayState, listenOverlayState, addMatchLog, listenFavorites, updateFavorites, resolveAssetPath } from "../firebase.js";
 import { suggestAbbreviation } from "../teamUtils.js";
 
 const DEFAULT_STYLES = [
@@ -120,7 +120,6 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
     let currentData = null;
     let timerInterval = null;
     let favorites = { scoreboard: false, stingers: [], shortcuts: {}, sponsors: [] };
-    let matchLogs = [];
 
     const teamsRef = ref(db, `teams/${eventId}`);
     onValue(teamsRef, snap => { teamsData = snap.val(); if(currentData) render(currentData); });
@@ -129,41 +128,25 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
     let sbPreview = false;
     let breakVisible = false;
     let highBreakVisible = false;
+    let shootoutVisible = false;
+    let shootoutPreview = false;
 
     listenOverlayState(eventId, state => {
         sbVisible = (state && state.scoreboardVisible) || false;
         sbPreview = (state && state.scoreboardPreviewVisible) || false;
         breakVisible = (state && state.breakVisible) || false;
         highBreakVisible = (state && state.highBreakVisible) || false;
+        shootoutVisible = (state && state.shootoutVisible) || false;
+        shootoutPreview = (state && state.shootoutPreviewVisible) || false;
         if (currentData) render(currentData);
     });
     listenFavorites(eventId, fav => { favorites = { scoreboard: false, stingers: [], shortcuts: {}, sponsors: [], ...(fav || {}) }; if(currentData) render(currentData); });
-    listenMatchLog(eventId, logs => { matchLogs = logs || []; updateScorersFromLogs(); if(currentData) render(currentData); });
 
     onValue(getScoreboardRef(eventId), snap => {
         currentData = snap.val() || defaultData();
-        updateScorersFromLogs();
         render(currentData);
         updateOverlayState(eventId, { scoreboard: currentData });
     });
-
-    function updateScorersFromLogs(){
-        if(!currentData) return;
-        const newScorers = [[],[]];
-        (matchLogs||[]).forEach(e=>{
-            if(e.type==='goal'){
-                const idx = e.team==='a'?0:1;
-                const assist = e.assist ? ` (${e.assist})` : '';
-                const entry = e.player ? `${e.player}${assist}${e.time?` ${e.time}`:''}` : e.time||'';
-                newScorers[idx].push(entry.trim());
-            }
-        });
-        if(JSON.stringify(currentData.scorers||[])!==JSON.stringify(newScorers)){
-            currentData.scorers = newScorers;
-            set(getScoreboardRef(eventId), currentData);
-            updateOverlayState(eventId,{scoreboard: currentData});
-        }
-    }
 
     function defaultData() {
         const startVal = cfg.scoreboard.start || 0;
@@ -197,15 +180,16 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             base.dartStats = scores.map(() => ({ throws: 0, highCheckout: 0, count180: 0, count140: 0, count100: 0 }));
             base.dartLogs = scores.map(() => []);
         }
-        base.scorers = scores.map(() => []);
         base.extraTime = false;
-        base.showPens = false;
-        base.pens = scores.map(() => 0);
+        base.shootout = { shots: scores.map(() => Array.from({length:5}, () => ({ player: '', result: '' }))) };
         return base;
     }
 
     function render(data) {
         if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+        if(!data.shootout){
+            data.shootout = { shots: (data.scores||[]).map(()=>Array.from({length:5}, () => ({ player:'', result:'' })) ) };
+        }
         container.innerHTML = `
             <div class='scoreboard-panel'>
                 <h2 class="font-bold text-lg mb-2">${sport} Scoreboard</h2>
@@ -317,10 +301,8 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         }
         if(goalSport){
             htmlParts.push(`<tr><td class="pr-2">Extra Time:</td><td><button id="sb-toggle-et" class="control-button btn-xs${data.extraTime?' ring-2 ring-green-400':''}">Toggle</button></td></tr>`);
-            htmlParts.push(`<tr><td class="pr-2">Shoot-out:</td><td><button id="sb-toggle-pens" class="control-button btn-xs${data.showPens?' ring-2 ring-green-400':''}">Toggle</button></td></tr>`);
-            if(data.showPens){
-                htmlParts.push(`<tr><td class="pr-2">Pens:</td><td><div class="flex items-center gap-1"><input type="number" id="sb-pen-0" class="border p-1 w-12 text-center" value="${data.pens?.[0]||0}"><button id="sb-pen-add-0" class="control-button btn-xs">+1</button><span class="mx-2">|</span><input type="number" id="sb-pen-1" class="border p-1 w-12 text-center" value="${data.pens?.[1]||0}"><button id="sb-pen-add-1" class="control-button btn-xs">+1</button></div></td></tr>`);
-            }
+            htmlParts.push(`<tr><td class="pr-2">Shoot-out:</td><td><button id="sb-view-shootout" class="control-button btn-xs">View Controls</button></td></tr>`);
+            htmlParts.push(`<tr id="sb-shootout-row" style="display:none;"><td colspan="2"><div id="sb-shootout-controls"></div></td></tr>`);
         }
         if (cfg.scoreboard.round) {
             htmlParts.push(`<tr><td class="pr-2">Round:</td><td><input type="number" class="border p-1 w-16" id="sb-round" value="${data.round || 1}"></td></tr>`);
@@ -360,8 +342,6 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             htmlParts.push(`<tr><td class="pr-2">Dart:</td><td><input type="number" class="border p-1 w-16" id="dart-val"><button id="dart-a" class="control-button btn-xs ml-1">${tnA}</button><button id="dart-b" class="control-button btn-xs ml-1">${tnB}</button><button id="new-leg" class="control-button btn-xs ml-1">New Leg</button></td></tr>`);
             htmlParts.push(`<tr><td colspan="2"><div id="dart-stats" class="text-xs"></div></td></tr>`);
         }
-        htmlParts.push(`<tr><td class="pr-2 align-top">${tnA} scorers:</td><td><div id="sb-scorers-a" class="text-xs">${(data.scorers?.[0] || []).join('<br>')}</div></td></tr>`);
-        htmlParts.push(`<tr><td class="pr-2 align-top">${tnB} scorers:</td><td><div id="sb-scorers-b" class="text-xs">${(data.scorers?.[1] || []).join('<br>')}</div></td></tr>`);
         if (cfg.scoreboard.breaks) {
             htmlParts.push(`<tr><td class="pr-2">Current Break:</td><td><input type="number" class="border p-1 w-16" id="sb-break" value="${data.currentBreak || 0}"></td></tr>`);
         }
@@ -374,6 +354,45 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             htmlParts.push(`<tr><td class="pr-2">In Play:</td><td><select id="sb-turn" class="border p-1"><option value="0">${optA}</option><option value="1">${optB}</option></select></td></tr>`);
         }
         table.innerHTML = htmlParts.join('');
+
+        function renderShootoutControls(){
+            const holder = container.querySelector('#sb-shootout-controls');
+            if(!holder) return;
+            const shots = data.shootout?.shots || [[],[]];
+            const teamHtml = t => (shots[t] || []).map((s,i)=>`<div class="flex items-center mb-1"><input id="shot-player-${t}-${i}" class="border p-1 w-24 mr-1" value="${s.player||''}" placeholder="Shooter"><select id="shot-res-${t}-${i}" class="border p-1"><option value=""></option><option value="goal"${s.result==='goal'?' selected':''}>Scored</option><option value="miss"${s.result==='miss'?' selected':''}>Missed</option></select></div>`).join('');
+            holder.innerHTML = `
+                <div class="mb-2 flex gap-2">
+                    <button id="shootout-preview" class="control-button btn-sm btn-preview${shootoutPreview ? ' ring-2 ring-brand' : ''}">Preview</button>
+                    <button id="shootout-live" class="control-button btn-sm btn-live${shootoutVisible ? ' ring-2 ring-green-400' : ''}">Live</button>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-xs">
+                    <div><div class="font-bold mb-1">${tnA}</div>${teamHtml(0)}</div>
+                    <div><div class="font-bold mb-1">${tnB}</div>${teamHtml(1)}</div>
+                </div>`;
+            holder.querySelector('#shootout-preview').onclick = async () => {
+                const obj = getFormData();
+                await saveData(obj);
+                const show = !shootoutPreview;
+                await updateOverlayState(eventId,{ shootoutPreviewVisible: show });
+            };
+            holder.querySelector('#shootout-live').onclick = async () => {
+                const obj = getFormData();
+                await saveData(obj);
+                const show = !shootoutVisible;
+                await updateOverlayState(eventId,{ shootoutVisible: show, shootoutPreviewVisible: false });
+            };
+        }
+
+        const viewBtn = container.querySelector('#sb-view-shootout');
+        const shootRow = container.querySelector('#sb-shootout-row');
+        if(viewBtn && shootRow){
+            viewBtn.onclick = () => {
+                const vis = shootRow.style.display !== 'none';
+                shootRow.style.display = vis ? 'none' : '';
+                if(!vis) renderShootoutControls();
+            };
+        }
+
         const ffSel = container.querySelector('#sb-frame-format');
         if (ffSel) ffSel.value = data.frameFormat || 'firstTo';
         updateDartStats();
@@ -540,33 +559,6 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                 render(obj);
             };
         }
-        const penBtn = container.querySelector('#sb-toggle-pens');
-        if(penBtn){
-            penBtn.onclick = async () => {
-                data.showPens = !data.showPens;
-                const obj = getFormData();
-                await saveData(obj);
-                render(obj);
-            };
-        }
-        const penAddA = container.querySelector('#sb-pen-add-0');
-        const penAddB = container.querySelector('#sb-pen-add-1');
-        if(penAddA){
-            penAddA.onclick = async () => {
-                const inp = container.querySelector('#sb-pen-0');
-                inp.value = (parseInt(inp.value)||0) + 1;
-                const obj = getFormData();
-                await saveData(obj);
-            };
-        }
-        if(penAddB){
-            penAddB.onclick = async () => {
-                const inp = container.querySelector('#sb-pen-1');
-                inp.value = (parseInt(inp.value)||0) + 1;
-                const obj = getFormData();
-                await saveData(obj);
-            };
-        }
 
         const dartVal = container.querySelector('#dart-val');
         const dartBtnA = container.querySelector('#dart-a');
@@ -653,16 +645,22 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             if (cfg.scoreboard.breaks) obj.currentBreak = parseInt(container.querySelector('#sb-break').value) || 0;
             if (cfg.scoreboard.highBreak) obj.highBreak = parseInt(container.querySelector('#sb-highbreak').value) || 0;
             if (cfg.scoreboard.turn) obj.turn = parseInt(container.querySelector('#sb-turn').value) || 0;
-            obj.scorers = currentData.scorers || [[],[]];
             obj.extraTime = data.extraTime || false;
-            obj.showPens = data.showPens || false;
-            if(obj.showPens){
-                obj.pens = [
-                    parseInt(container.querySelector('#sb-pen-0').value) || 0,
-                    parseInt(container.querySelector('#sb-pen-1').value) || 0
-                ];
-            }else{
-                obj.pens = data.pens || [0,0];
+            if(data.shootout){
+                obj.shootout = { shots: [[],[]] };
+                [0,1].forEach(t=>{
+                    obj.shootout.shots[t] = Array.from({length:5}).map((_,i)=>{
+                        const pEl = container.querySelector(`#shot-player-${t}-${i}`);
+                        const rEl = container.querySelector(`#shot-res-${t}-${i}`);
+                        if(pEl || rEl){
+                            return { player: pEl?.value || '', result: rEl?.value || '' };
+                        }
+                        const prev = data.shootout?.shots?.[t]?.[i] || {player:'', result:''};
+                        return { player: prev.player || '', result: prev.result || '' };
+                    });
+                });
+            }else if(goalSport){
+                obj.shootout = data.shootout || { shots:[[],[]] };
             }
             if (sport === 'Darts' && data.checkoutText) {
                 obj.checkoutPlayer = data.checkoutPlayer;
