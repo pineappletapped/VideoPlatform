@@ -1,4 +1,4 @@
-import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+import { ref, set, onValue, get } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 import { getDatabaseInstance } from "../firebaseApp.js";
 import { updateOverlayState } from "../firebase.js";
 
@@ -19,7 +19,7 @@ export function renderTournamentPanel(container, eventId, sport='Football'){
     onValue(getTeamsRef(eventId), snap=>{ teams = snap.val(); render(); });
 
     function defaultData(){
-        return { format:'Round Robin', pointsWin:3, pointsDraw:1, pointsLoss:0, matches:[] };
+        return { format:'Round Robin', pointsWin:3, pointsDraw:1, pointsLoss:0, currentMatch:0, matches:[] };
     }
 
     function render(){
@@ -34,7 +34,9 @@ export function renderTournamentPanel(container, eventId, sport='Football'){
                 <td><input type="number" data-sa="${i}" class="border p-1 w-12" value="${m.scoreA||0}"></td>
                 <td>-</td>
                 <td><input type="number" data-sb="${i}" class="border p-1 w-12" value="${m.scoreB||0}"></td>
-                <td><button data-show="${i}" class="control-button btn-xs">Show</button>
+                <td><button data-live="${i}" class="control-button btn-xs">Live</button>
+                    <button data-inst="${i}" class="control-button btn-xs ml-1">New</button>
+                    <button data-show="${i}" class="control-button btn-xs ml-1">Result</button>
                     <button data-del="${i}" class="control-button btn-xs ml-1">X</button></td>
             </tr>`;
         }).join('');
@@ -105,6 +107,37 @@ export function renderTournamentPanel(container, eventId, sport='Football'){
                 const tA = teams.teams[m.teamA] || {name:'Team 1'};
                 const tB = teams.teams[m.teamB] || {name:'Team 2'};
                 updateOverlayState(eventId, { results: { teamA:{name:tA.name,score:m.scoreA,scorers:[]}, teamB:{name:tB.name,score:m.scoreB,scorers:[]} }, resultsVisible:true });
+            };
+        });
+        table.querySelectorAll('button[data-live]').forEach(btn=>{
+            btn.onclick = async ()=>{
+                const idx = parseInt(btn.dataset.live,10);
+                const m = data.matches[idx];
+                if(!teams || !teams.teams || !m) return;
+                teams.currentA = m.teamA;
+                teams.currentB = m.teamB;
+                set(getTeamsRef(eventId), teams);
+                data.currentMatch = idx;
+                set(getRef(eventId), data);
+                await set(ref(db, `scoreboard/${eventId}`), null);
+            };
+        });
+        table.querySelectorAll('button[data-inst]').forEach(btn=>{
+            btn.onclick = async ()=>{
+                const idx = parseInt(btn.dataset.inst,10);
+                if(!teams || !teams.teams || !data.matches[idx]) return;
+                const m = data.matches[idx];
+                const tA = teams.teams[m.teamA] || { name: 'Team 1', players: [] };
+                const tB = teams.teams[m.teamB] || { name: 'Team 2', players: [] };
+                const newId = `${eventId}-m${idx+1}`;
+                await set(ref(db, `teams/${newId}`), { teamA: tA, teamB: tB, showPhotosFormation:false, showPhotosStats:false, showPhotosSubs:false });
+                await set(ref(db, `scoreboard/${newId}`), null);
+                const metaSnap = await get(ref(db, `events/${eventId}`));
+                const meta = metaSnap.val() || {};
+                meta.tournament = false;
+                meta.title = `${meta.title || eventId} Match ${idx+1}`;
+                await set(ref(db, `events/${newId}`), meta);
+                window.open(`graphics.html?event_id=${newId}`, '_blank');
             };
         });
         container.querySelector('#hide-results').onclick = ()=>{
