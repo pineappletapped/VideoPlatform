@@ -49,7 +49,8 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
     function render(){
         const highlight = visible ? 'ring-4 ring-green-400' : preview ? 'ring-4 ring-brand' : '';
         const teamOptions = teamsData ? (teamsData.teams ? teamsData.teams.map((t,i)=>`<option value="${i}">${t.name}</option>`).join('') : ['a','b'].map(k=>`<option value="${k}">${teamsData[k==='a'?'teamA':'teamB']?.name || ('Team '+k.toUpperCase())}</option>`).join('')) : '';
-        const formationRow = teamsData ? `<div class="flex items-center gap-2"><span class="flex-1">Formation Graphic</span><select id="formation-team" class="border p-1 flex-1">${teamOptions}</select><button class="control-button btn-sm" id="formation-preview">Preview</button><button class="control-button btn-sm" id="formation-live">Live</button><button class="control-button btn-sm" id="formation-edit">Edit</button></div>` : '';
+        const teamRow = teamsData ? `<div class=\"flex items-center gap-2\"><span class=\"flex-1\">Show Team</span><select id=\"teamlist-team\" class=\"border p-1 flex-1\">${teamOptions}</select><button class=\"control-button btn-sm\" id=\"teamlist-preview\">Preview</button><button class=\"control-button btn-sm\" id=\"teamlist-live\">Live</button><button class=\"control-button btn-sm\" id=\"teamlist-edit\">Edit</button></div>` : '';
+        const formationRow = teamsData ? `<div class=\"flex items-center gap-2\"><span class=\"flex-1\">Formation Graphic</span><select id=\"formation-team\" class=\"border p-1 flex-1\">${teamOptions}</select><button class=\"control-button btn-sm\" id=\"formation-preview\">Preview</button><button class=\"control-button btn-sm\" id=\"formation-live\">Live</button><button class=\"control-button btn-sm\" id=\"formation-edit\">Edit</button></div>` : '';
         container.innerHTML = `
             <div class='intro-panel ${highlight}'>
                 <div class="flex items-center justify-between mb-2">
@@ -63,6 +64,7 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
                         <button class="control-button btn-sm" id="fixtures-live">Live</button>
                         <button class="control-button btn-sm" id="fixtures-edit">Edit</button>
                     </div>
+                    ${teamRow}
                     ${formationRow}
                     <div class="flex items-center gap-2">
                         <span class="flex-1">Course Details</span>
@@ -303,6 +305,23 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
                 </div>
             </div>`;
 
+        function buildTeamListData(){
+            if(!teamsData) return { team:'', teamName:'', players:[] };
+            const selEl = container.querySelector('#teamlist-team');
+            const sel = selEl ? selEl.value : 'a';
+            let team = null;
+            let teamName = '';
+            if(teamsData.teams){
+                team = teamsData.teams[parseInt(sel,10)] || {};
+                teamName = team.name || '';
+            } else {
+                team = sel==='b' ? teamsData.teamB : teamsData.teamA;
+                teamName = team?.name || '';
+            }
+            const players = (team?.players || []).map(p=>({ name:p.name, number:p.number, pos:p.pos, photo:p.photo }));
+            return { team: sel, teamName, players };
+        }
+
         function buildFormationData(){
             if(!teamsData) return {};
             const selEl = container.querySelector('#formation-team');
@@ -331,6 +350,21 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
         };
         const fixturesEdit = container.querySelector('#fixtures-edit');
         if(fixturesEdit) fixturesEdit.onclick = () => showFixturesModal();
+
+        const teamPrev = container.querySelector('#teamlist-preview');
+        if(teamPrev) teamPrev.onclick = () => {
+            const data = buildTeamListData();
+            updateOverlayState(eid,{ lineupTable:data, lineupTablePreviewVisible:true, lineupTableVisible:false });
+            if(onOverlayStateChange) onOverlayStateChange({ lineupTablePreviewVisible:true, lineupTable:data });
+        };
+        const teamLive = container.querySelector('#teamlist-live');
+        if(teamLive) teamLive.onclick = () => {
+            const data = buildTeamListData();
+            updateOverlayState(eid,{ lineupTable:data, lineupTableVisible:true, lineupTablePreviewVisible:false });
+            if(onOverlayStateChange) onOverlayStateChange({ lineupTableVisible:true, lineupTable:data, lineupTablePreviewVisible:false });
+        };
+        const teamEdit = container.querySelector('#teamlist-edit');
+        if(teamEdit) teamEdit.onclick = () => { window.location.hash = '#teams'; };
 
         const formationPrev = container.querySelector('#formation-preview');
         if(formationPrev) formationPrev.onclick = () => {

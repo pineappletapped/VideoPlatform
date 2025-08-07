@@ -958,7 +958,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     // Lineup Table Overlay
     let tableOverlay = overlayContainer.querySelector('#lineup-table-overlay');
     const tableData = state && state.lineupTable;
-    const tableShow = state && state.lineupTableVisible;
+    const tableShow = previewMode ? state && state.lineupTablePreviewVisible : state && state.lineupTableVisible;
     if(tableShow && tableData){
         if(!tableOverlay){
             tableOverlay = document.createElement('div');
@@ -966,10 +966,12 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             overlayContainer.appendChild(tableOverlay);
         }
         const showPhoto = teamsData && teamsData.showPhotosFormation;
+        tableOverlay.style.opacity = previewMode ? '0.6' : '1';
         tableOverlay.innerHTML = `<div class='lineup-table' style='font-family:${branding.font};'>`+
             tableData.players.map(p=>{
                 const photo = showPhoto && p.photo ? `<img src='${p.photo}' class='lineup-table-photo'>` : '';
-                return `<div class='lineup-row'>${photo}<span>${p.name}${p.pos?` (${p.pos})`:''}</span></div>`;
+                const num = p.number ? `${p.number} ` : '';
+                return `<div class='lineup-row'>${photo}<span>${num}${p.name}${p.pos?` (${p.pos})`:''}</span></div>`;
             }).join('')+`</div>`;
     } else if(tableOverlay){
         tableOverlay.remove();
