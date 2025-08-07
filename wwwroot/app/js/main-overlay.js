@@ -562,7 +562,11 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         courseOverlay.style.zIndex = '110';
         courseOverlay.style.fontFamily = branding.font;
         courseOverlay.style.opacity = previewMode ? '0.6' : '1';
-        courseOverlay.innerHTML = `<div style="font-size:3rem;text-align:center;">${courseData.name || 'Course details'}</div>`;
+        const rows = (courseData.holes||[]).map((h,i)=>`<tr><td>${i+1}</td><td>${h.tee||''}</td><td>${h.length||''}</td><td>${h.par||''}</td></tr>`).join('');
+        courseOverlay.innerHTML = `<div style="text-align:center;">
+            <div style="font-size:3rem;">${courseData.name || 'Course details'}</div>
+            ${rows?`<table style="margin:1rem auto;font-size:2rem;"><thead><tr><th>#</th><th>Tee</th><th>Length</th><th>Par</th></tr></thead><tbody>${rows}</tbody></table>`:''}
+        </div>`;
     } else if (courseOverlay) {
         courseOverlay.remove();
     }

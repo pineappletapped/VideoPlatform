@@ -270,6 +270,11 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
                                 <input class="border p-1 w-full" name="par" />
                             </div>
                             <div class="mb-2">
+                                <label class="block text-sm">Tees / Holes</label>
+                                <div id="course-holes" class="space-y-1"></div>
+                                <button type="button" id="course-add-hole" class="control-button btn-xs mt-1">Add Tee</button>
+                            </div>
+                            <div class="mb-2">
                                 <label class="block text-sm">Image URL</label>
                                 <input class="border p-1 w-full" name="image" />
                             </div>
@@ -551,11 +556,31 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
         const transSel = form.querySelector('select[name="transition"]');
         styleSel.value = introSettings.course?.style || 'style1';
         transSel.value = introSettings.course?.transition || 'fade';
+        const holesDiv = form.querySelector('#course-holes');
+        const holes = (introSettings.course?.holes && introSettings.course.holes.slice()) || [];
+        function renderHoles(){
+            holesDiv.innerHTML = holes.map((h,i)=>
+                `<div class="flex items-center gap-2"><span class="w-6 text-sm">${i+1}</span>`+
+                `<input class="border p-1 flex-1" name="tee-${i}" placeholder="Tee" value="${h.tee||''}" />`+
+                `<input class="border p-1 w-20" name="len-${i}" placeholder="Length" value="${h.length||''}" />`+
+                `<input class="border p-1 w-16" type="number" name="par-${i}" placeholder="Par" value="${h.par||''}" />`+
+                `</div>`).join('');
+        }
+        renderHoles();
+        const addHoleBtn = form.querySelector('#course-add-hole');
+        if(addHoleBtn) addHoleBtn.onclick = ()=>{ holes.push({tee:'', length:'', par:0}); renderHoles(); };
+
         modal.style.display='flex';
         form.onsubmit = async e=>{
             e.preventDefault();
-            introSettings.course = { name:form.name.value, length:form.length.value, par:form.par.value, image:form.image.value, style:styleSel.value, transition:transSel.value };
+            const savedHoles = holes.map((h,i)=>({
+                tee: form[`tee-${i}`].value,
+                length: form[`len-${i}`].value,
+                par: parseInt(form[`par-${i}`].value)||0
+            }));
+            introSettings.course = { name:form.name.value, length:form.length.value, par:form.par.value, image:form.image.value, style:styleSel.value, transition:transSel.value, holes:savedHoles };
             await set(getIntroSettingsRef(eid), introSettings);
+            await set(ref(db, `golf/${eid}/course`), introSettings.course);
             await updateOverlayState(eid,{ holdslateSettings:introSettings });
             modal.style.display='none';
         };
