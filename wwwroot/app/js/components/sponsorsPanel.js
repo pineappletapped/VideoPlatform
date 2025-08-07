@@ -1,4 +1,4 @@
-import { getSponsors, setSponsors, listenSponsors, getSponsorPlacements, setSponsorPlacements, listenSponsorPlacements, getSponsorLog, updateOverlayState, listenFavorites, updateFavorites, listenOverlayState } from '../firebase.js';
+import { getSponsors, setSponsors, listenSponsors, getSponsorPlacements, setSponsorPlacements, listenSponsorPlacements, getSponsorLog, updateOverlayState, listenFavorites, updateFavorites, listenOverlayState, getEventMetadata } from '../firebase.js';
 
 let csrfPromise;
 async function getCsrf(){
@@ -22,11 +22,13 @@ export function renderSponsorsPanel(container, eventId){
     let livePlacements = {};
     let ltPreviewing = false;
     let ltLiving = false;
+    let eventType = 'sports';
 
     listenSponsors(eventId, data=>{ sponsors = data || []; render(); });
     listenSponsorPlacements(eventId, data=>{ placements = data || {}; render(); });
     listenFavorites(eventId, fav=>{ favorites = { lowerThirds: [], titleSlides: [], scoreboard: false, stingers: [], shortcuts:{}, sponsors: [], ...(fav||{}) }; render(); });
     listenOverlayState(eventId, state=>{ livePlacements = (state && state.sponsorPlacementsLive) || {}; render(); });
+    getEventMetadata(eventId).then(meta=>{ eventType = meta?.eventType || 'sports'; render(); });
 
     function render(){
         const ltOptions = sponsors.map((s,i)=>s.lowerThird?`<option value="${i}">${s.name}</option>`:'').join('');
@@ -78,17 +80,25 @@ export function renderSponsorsPanel(container, eventId){
             </div>`;
         const list = container.querySelector('#sponsor-list');
         list.innerHTML = sponsors.map((s,i)=>`<li class="flex items-center gap-2"><span class="flex-1">${s.name}</span><button class="control-button btn-xs" data-edit="${i}">Edit</button><button class="control-button btn-xs btn-remove" data-remove="${i}">Remove</button></li>`).join('') || '<li class="text-gray-500">None</li>';
-        const rows = [
-            ['scoreboardTop','Above Scoreboard'],
-            ['scoreboardBottom','Below Scoreboard'],
-            ['formationBottom','Bottom of Formation'],
-            ['substitutionTop','Top of Substitution'],
-            ['cornerTL','Top Left Corner'],
-            ['cornerTR','Top Right Corner'],
-            ['cornerBL','Bottom Left Corner'],
-            ['cornerBR','Bottom Right Corner'],
-            ['intro','Intro Graphic']
-        ];
+        const rows = eventType==='corporate'
+            ? [
+                ['intro','Info Window'],
+                ['cornerTL','Top Left Corner'],
+                ['cornerTR','Top Right Corner'],
+                ['cornerBL','Bottom Left Corner'],
+                ['cornerBR','Bottom Right Corner']
+              ]
+            : [
+                ['scoreboardTop','Above Scoreboard'],
+                ['scoreboardBottom','Below Scoreboard'],
+                ['formationBottom','Bottom of Formation'],
+                ['substitutionTop','Top of Substitution'],
+                ['cornerTL','Top Left Corner'],
+                ['cornerTR','Top Right Corner'],
+                ['cornerBL','Bottom Left Corner'],
+                ['cornerBR','Bottom Right Corner'],
+                ['intro','Intro Graphic']
+              ];
         const placeTable = container.querySelector('#place-table');
         placeTable.innerHTML = rows.map(r=>{
             const live = !!livePlacements[r[0]];

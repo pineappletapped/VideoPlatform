@@ -1,4 +1,4 @@
-import { listenOverlayState, updateOverlayState, listenGraphicsData, updateGraphicsData, listenMatchLog, updateMatchLogEntry, listenSponsors, listenSponsorPlacements, listenTeams } from '../firebase.js';
+import { listenOverlayState, updateOverlayState, listenGraphicsData, updateGraphicsData, listenMatchLog, updateMatchLogEntry, listenSponsors, listenSponsorPlacements, listenTeams, getEventMetadata } from '../firebase.js';
 import { listenFavorites, updateFavorites } from '../firebase.js';
 import { renderSponsorsPanel } from './sponsorsPanel.js';
 
@@ -12,7 +12,15 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
     let teamsData = null;
     let logVisible = false;
     let favRenderItems = [];
-    const sponsorPlacementLabels = { scoreboardTop:'Above Scoreboard', scoreboardBottom:'Below Scoreboard', formationBottom:'Bottom of Formation', substitutionTop:'Top of Substitution', cornerTL:'Top Left Corner', cornerTR:'Top Right Corner', cornerBL:'Bottom Left Corner', cornerBR:'Bottom Right Corner', intro:'Intro Graphic' };
+    let sponsorPlacementLabels = { scoreboardTop:'Above Scoreboard', scoreboardBottom:'Below Scoreboard', formationBottom:'Bottom of Formation', substitutionTop:'Top of Substitution', cornerTL:'Top Left Corner', cornerTR:'Top Right Corner', cornerBL:'Bottom Left Corner', cornerBR:'Bottom Right Corner', intro:'Intro Graphic' };
+
+    getEventMetadata(eventId).then(meta=>{
+        if(meta && meta.eventType === 'corporate'){
+            sponsorPlacementLabels = { intro:'Info Window', cornerTL:'Top Left Corner', cornerTR:'Top Right Corner', cornerBL:'Bottom Left Corner', cornerBR:'Bottom Right Corner' };
+            render();
+            renderFav();
+        }
+    });
 
     function assignShortcut(idx, key){
         const fav = favRenderItems[idx];
