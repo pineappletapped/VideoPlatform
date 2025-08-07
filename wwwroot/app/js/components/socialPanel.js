@@ -1,4 +1,4 @@
-import { listenMatchLog, updateMatchLogEntry, listenBranding } from '../firebase.js';
+import { listenMatchLog, updateMatchLogEntry, listenBranding, listenTeams } from '../firebase.js';
 import { generateSocialAssets, generateFinalScoreAssets } from '../socialAssets.js';
 import { renderBrandingModal } from './brandingModal.js';
 import { renderPostStyleModal } from './postStyleModal.js';
@@ -47,7 +47,7 @@ export function renderSocialPanel(container, eventId) {
 
       const db = getDatabaseInstance();
       onValue(ref(db, `scoreboard/${eventId}`), snap => { this.scoreboard = snap.val(); this.updateScoreboard(); });
-      onValue(ref(db, `teams/${eventId}`), snap => { this.teams = snap.val(); this.updateScoreboard(); });
+      listenTeams(eventId, data => { this.teams = data; this.updateScoreboard(); });
       listenBranding(eventId, b => {
         this.templateStyle = b?.socialTemplateStyle || 'style1';
         this.branding = b;

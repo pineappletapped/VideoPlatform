@@ -1,8 +1,6 @@
-import { listenOverlayState, updateOverlayState, listenGraphicsData, updateGraphicsData, listenMatchLog, updateMatchLogEntry, listenSponsors, listenSponsorPlacements } from '../firebase.js';
+import { listenOverlayState, updateOverlayState, listenGraphicsData, updateGraphicsData, listenMatchLog, updateMatchLogEntry, listenSponsors, listenSponsorPlacements, listenTeams } from '../firebase.js';
 import { listenFavorites, updateFavorites } from '../firebase.js';
 import { renderSponsorsPanel } from './sponsorsPanel.js';
-import { getDatabaseInstance } from '../firebaseApp.js';
-import { ref, onValue } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
 
 export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
     let overlayState = {};
@@ -232,7 +230,7 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
     listenSponsors(eventId, data => { sponsors = data || []; render(); renderFav(); });
     listenSponsorPlacements(eventId, data => { sponsorPlacements = data || {}; render(); renderFav(); });
     listenMatchLog(eventId, data => { matchLogs = data || []; renderLog(); });
-    onValue(ref(getDatabaseInstance(), `teams/${eventId}`), snap => { teamsData = snap.val(); renderLog(); });
+    listenTeams(eventId, data => { teamsData = data; renderLog(); });
     listenOverlayState(eventId, s => { logVisible = !!(s && s.matchLogVisible); renderLog(); });
 
     if(favList){

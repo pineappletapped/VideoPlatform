@@ -1,4 +1,4 @@
-import { listenOverlayState, listenGraphicsData, listenBranding, listenSponsors, listenSponsorPlacements, addSponsorLog, updateEventMetadata, resolveAssetPath, updateOverlayState } from './firebase.js';
+import { listenOverlayState, listenGraphicsData, listenBranding, listenSponsors, listenSponsorPlacements, addSponsorLog, updateEventMetadata, resolveAssetPath, updateOverlayState, listenTeams } from './firebase.js';
 import { getDatabaseInstance } from './firebaseApp.js';
 import { suggestAbbreviation } from './teamUtils.js';
 import { ref, onValue, set } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
@@ -1202,8 +1202,8 @@ listenBranding(eventId, (branding) => {
     lastBranding = branding || DEFAULT_BRANDING;
     updateOverlay();
 });
-onValue(ref(getDatabaseInstance(), `teams/${eventId}`), snap => {
-    teamsData = snap.val() || null;
+listenTeams(eventId, data => {
+    teamsData = data || null;
     updateOverlay();
 });
 onValue(ref(getDatabaseInstance(), `scoreboard/${eventId}`), snap => {

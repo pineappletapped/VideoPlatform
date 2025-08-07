@@ -1,5 +1,5 @@
 import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
-import { listenMatchLog, updateOverlayState, listenOverlayState, getEventMetadata } from '../firebase.js';
+import { listenMatchLog, updateOverlayState, listenOverlayState, getEventMetadata, listenTeams } from '../firebase.js';
 import { getDatabaseInstance } from '../firebaseApp.js';
 
 const db = getDatabaseInstance();
@@ -27,7 +27,7 @@ export function renderStatsPanel(container, eventId = 'demo') {
 
     const configRef = ref(db, `matchStatsConfig/${eventId}`);
 
-    onValue(ref(db, `teams/${eventId}`), snap => { teams = snap.val(); render(); });
+    listenTeams(eventId, data => { teams = data; render(); });
     listenMatchLog(eventId, data => { logs = data || []; render(); });
     listenOverlayState(eventId, state => {
         visible = !!(state && state.statVisible);

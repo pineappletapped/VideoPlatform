@@ -1,15 +1,12 @@
-import { listenBranding, listenSponsors, updateOverlayState, resolveAssetPath, getFavorites, updateFavorites } from '../firebase.js';
-import { getDatabaseInstance } from '../firebaseApp.js';
-import { ref, onValue } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
+import { listenBranding, listenSponsors, updateOverlayState, resolveAssetPath, getFavorites, updateFavorites, listenTeams } from '../firebase.js';
 
 export function renderStingerPanel(container, eventId){
-    const db = getDatabaseInstance();
     let branding = {};
     let teams = null;
     let sponsors = [];
 
     listenBranding(eventId, b=>{ branding = b || {}; render(); });
-    onValue(ref(db, `teams/${eventId}`), snap => { teams = snap.val(); render(); });
+    listenTeams(eventId, data => { teams = data; render(); });
     listenSponsors(eventId, data=>{ sponsors = data || []; render(); });
 
     function buildOptions(){

@@ -1,13 +1,5 @@
-import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
-import { getDatabaseInstance } from "../firebaseApp.js";
-import { listenMatchLog } from "../firebase.js";
+import { listenMatchLog, listenTeams, setTeams } from "../firebase.js";
 import { sportsData, getTeamLabel } from "../sportsConfig.js";
-
-const db = getDatabaseInstance();
-
-function getTeamsRef(eventId){
-    return ref(db, `teams/${eventId}`);
-}
 
 async function uploadToServer(file, path){
     try{
@@ -29,7 +21,8 @@ export function renderTeamsPanel(container, eventId, sport='Football', tournamen
     const label = getTeamLabel(sport);
     let currentData = null;
     let matchLogs = [];
-    onValue(getTeamsRef(eventId), snap=>{ currentData = snap.val() || defaultData(); renderList(); });
+    let teamsEventId = eventId;
+    listenTeams(eventId, (data, baseId)=>{ teamsEventId = baseId; currentData = data || defaultData(); renderList(); });
     listenMatchLog(eventId, logs=>{ matchLogs = logs || []; renderList(); });
 
     function defaultData(){
@@ -190,7 +183,7 @@ export function renderTeamsPanel(container, eventId, sport='Football', tournamen
                 fileInp.addEventListener('change', async ()=>{
                     const file = fileInp.files[0];
                     if(file){
-                        const path = `uploads/${eventId}/teams/${prefix}_${i}_${file.name}`;
+                        const path = `uploads/${teamsEventId}/teams/${prefix}_${i}_${file.name}`;
                         const url = await uploadToServer(file, path);
                         if(url) tr.querySelector('input[data-field="photo"]').value = url;
                     }
@@ -221,7 +214,7 @@ export function renderTeamsPanel(container, eventId, sport='Football', tournamen
         aLogoFile.addEventListener('change', async ()=>{
             const file = aLogoFile.files[0];
             if(file){
-                const path = `uploads/${eventId}/teams/a_logo_${file.name}`;
+                const path = `uploads/${teamsEventId}/teams/a_logo_${file.name}`;
                 const url = await uploadToServer(file, path);
                 if(url) win.querySelector('#team-a-logo').value = url;
             }
@@ -229,7 +222,7 @@ export function renderTeamsPanel(container, eventId, sport='Football', tournamen
         bLogoFile.addEventListener('change', async ()=>{
             const file = bLogoFile.files[0];
             if(file){
-                const path = `uploads/${eventId}/teams/b_logo_${file.name}`;
+                const path = `uploads/${teamsEventId}/teams/b_logo_${file.name}`;
                 const url = await uploadToServer(file, path);
                 if(url) win.querySelector('#team-b-logo').value = url;
             }
@@ -325,7 +318,7 @@ export function renderTeamsPanel(container, eventId, sport='Football', tournamen
                     showPhotosSubs: currentData.showPhotosSubs
                 };
             }
-            await set(getTeamsRef(eventId), newData);
+            await setTeams(teamsEventId, newData);
             modal.style.display='none';
         };
     }

@@ -1,4 +1,4 @@
-import { updateOverlayState, listenOverlayState } from '../firebase.js';
+import { updateOverlayState, listenOverlayState, listenTeams } from '../firebase.js';
 import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 import { getDatabaseInstance } from "../firebaseApp.js";
 
@@ -32,7 +32,7 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
         updateOverlayState(eid,{ holdslateSettings:introSettings });
         render();
     });
-    onValue(ref(db, `teams/${eid}`), snap => { teamsData = snap.val(); render(); });
+    listenTeams(eid, data => { teamsData = data; render(); });
     onValue(ref(db, `tournament/${eid}`), snap => { tournamentData = snap.val(); render(); });
 
     listenOverlayState(eid, state => {

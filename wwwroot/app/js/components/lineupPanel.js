@@ -1,7 +1,7 @@
 import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 import { getDatabaseInstance } from "../firebaseApp.js";
 import { sportsData } from "../sportsConfig.js";
-import { updateOverlayState, listenOverlayState } from "../firebase.js";
+import { updateOverlayState, listenOverlayState, listenTeams } from "../firebase.js";
 
 const db = getDatabaseInstance();
 
@@ -21,7 +21,7 @@ export function renderLineupPanel(container, eventId = 'demo', sport = 'Football
     let resultsVisible = false;
     let scoreboardData = null;
 
-    onValue(ref(db, `teams/${eventId}`), snap=>{ teamsData = snap.val(); if(lineupData) render(); });
+    listenTeams(eventId, data=>{ teamsData = data; if(lineupData) render(); });
     onValue(getLineupsRef(eventId), snap=>{ lineupData = snap.val() || defaultData(); render(); });
     if(mode === 'view') {
         listenOverlayState(eventId, state => {

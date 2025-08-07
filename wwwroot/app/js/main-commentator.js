@@ -1,7 +1,7 @@
 import { requireAuth, logout } from './auth.js';
 import './components/topBar.js';
 import { renderStatusBar } from './components/statusBar.js';
-import { getEventMetadata, updateEventMetadata, listenOverlayState, listenMatchLog } from './firebase.js';
+import { getEventMetadata, updateEventMetadata, listenOverlayState, listenMatchLog, listenTeams } from './firebase.js';
 import { getDatabaseInstance } from './firebaseApp.js';
 import { ref, onValue } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
 
@@ -159,7 +159,7 @@ async function init(user){
     document.getElementById('top-bar').appendChild(tb);
     renderStatusBar(document.getElementById('status-bar'), { id:eventId, status:'Commentator', firebaseStatus:'Connected' }, { overlay:false, listener:false, sport:true, clock:true, atem:false, obs:false });
 
-    onValue(ref(db, `teams/${eventId}`), snap => { teams = snap.val(); renderAll(); });
+    listenTeams(eventId, data => { teams = data; renderAll(); });
     onValue(ref(db, `lineups/${eventId}`), snap => { lineups = snap.val(); renderAll(); });
     onValue(ref(db, `stats/${eventId}`), snap => { stats = snap.val() || []; renderAll(); });
     listenMatchLog(eventId, data => { logs = data || []; renderAll(); });

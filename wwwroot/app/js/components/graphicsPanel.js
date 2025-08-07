@@ -1,6 +1,4 @@
-import { setGraphicsData, updateGraphicsData, getGraphicsData, listenGraphicsData, listenFavorites, updateFavorites, addMatchLog, listenOverlayState } from '../firebase.js';
-import { ref, onValue, set } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
-import { getDatabaseInstance } from '../firebaseApp.js';
+import { setGraphicsData, updateGraphicsData, getGraphicsData, listenGraphicsData, listenFavorites, updateFavorites, addMatchLog, listenOverlayState, listenTeams, setTeams } from '../firebase.js';
 import { sportsData } from '../sportsConfig.js';
 
 const transitions = [
@@ -55,13 +53,10 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
     const sportsMode = eventType === 'sports';
     let teamsData = null;
     let logEvents = [];
-    let db;
-    let teamsRef;
+    let teamsBaseId = eventId;
 
     if (sportsMode) {
-        db = getDatabaseInstance();
-        teamsRef = ref(db, `teams/${eventId}`);
-        onValue(teamsRef, snap => { teamsData = snap.val(); renderPanel(); });
+        listenTeams(eventId, (data, baseId)=>{ teamsBaseId = baseId; teamsData = data; renderPanel(); });
         logEvents = getLogEventsForSport(eventData.sport);
     }
     // Listen for graphics changes from Firebase
@@ -343,7 +338,7 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                     const onIdx = teamObj.players.findIndex(p=>p.name===on);
                     if(offIdx >= 0) teamObj.players[offIdx].status = 'sub';
                     if(onIdx >= 0) teamObj.players[onIdx].status = 'starting';
-                    if(teamsRef) await set(teamsRef, teamsData);
+                    await setTeams(teamsBaseId, teamsData);
                     fillPlayers();
                 }
                 const obj = {

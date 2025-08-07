@@ -19,7 +19,7 @@ export function renderTournamentPanel(container, eventId, sport='Football'){
     onValue(getTeamsRef(eventId), snap=>{ teams = snap.val(); render(); });
 
     function defaultData(){
-        return { format:'Round Robin', pointsWin:3, pointsDraw:1, pointsLoss:0, currentMatch:0, matches:[] };
+        return { format:'League', pointsWin:3, pointsDraw:1, pointsLoss:0, currentMatch:0, matches:[] };
     }
 
     function render(){
@@ -45,8 +45,9 @@ export function renderTournamentPanel(container, eventId, sport='Football'){
                 <h2 class="font-bold text-lg mb-2">Tournament</h2>
                 <div class="mb-2 text-sm">
                     <label>Format <select id="tn-format" class="border p-1 ml-1">
-                        <option value="Round Robin">Round Robin</option>
+                        <option value="League">League</option>
                         <option value="Knockout">Knockout</option>
+                        <option value="World Cup">World Cup</option>
                     </select></label>
                 </div>
                 <div class="mb-2 text-sm">
@@ -59,7 +60,7 @@ export function renderTournamentPanel(container, eventId, sport='Football'){
                 <button id="add-match" class="control-button btn-sm">Add Match</button>
                 <button id="hide-results" class="control-button btn-sm ml-2">Hide Results</button>
             </div>`;
-        container.querySelector('#tn-format').value = data.format || 'Round Robin';
+        container.querySelector('#tn-format').value = data.format || 'League';
         const table = container.querySelector('#tn-table');
         (data.matches||[]).forEach((m,i)=>{
             table.querySelector(`select[data-a="${i}"]`).value = m.teamA ?? 0;
@@ -127,15 +128,14 @@ export function renderTournamentPanel(container, eventId, sport='Football'){
                 const idx = parseInt(btn.dataset.inst,10);
                 if(!teams || !teams.teams || !data.matches[idx]) return;
                 const m = data.matches[idx];
-                const tA = teams.teams[m.teamA] || { name: 'Team 1', players: [] };
-                const tB = teams.teams[m.teamB] || { name: 'Team 2', players: [] };
                 const newId = `${eventId}-m${idx+1}`;
-                await set(ref(db, `teams/${newId}`), { teamA: tA, teamB: tB, showPhotosFormation:false, showPhotosStats:false, showPhotosSubs:false });
+                await set(ref(db, `teams/${newId}`), { link: eventId });
                 await set(ref(db, `scoreboard/${newId}`), null);
                 const metaSnap = await get(ref(db, `events/${eventId}`));
                 const meta = metaSnap.val() || {};
                 meta.tournament = false;
                 meta.title = `${meta.title || eventId} Match ${idx+1}`;
+                meta.linkedTo = eventId;
                 await set(ref(db, `events/${newId}`), meta);
                 window.open(`graphics.html?event_id=${newId}`, '_blank');
             };

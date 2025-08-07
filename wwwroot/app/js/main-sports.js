@@ -7,7 +7,7 @@ import { renderGolfPanel } from './components/golfPanel.js';
 import { renderStatsPanel } from './components/statsPanel.js';
 import { renderBrandingModal } from './components/brandingModal.js';
 import { renderSponsorsPanel } from './components/sponsorsPanel.js';
-import { getEventMetadata, updateEventMetadata, listenOverlayState, listenMatchLog } from './firebase.js';
+import { getEventMetadata, updateEventMetadata, listenOverlayState, listenMatchLog, listenTeams } from './firebase.js';
 import { getTeamLabel } from './sportsConfig.js';
 import { getDatabaseInstance } from './firebaseApp.js';
 import { ref, onValue } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
@@ -148,7 +148,7 @@ async function init() {
 
   renderBySport(meta.sport);
 
-  onValue(ref(db, `teams/${eventId}`), snap=>{ teams = snap.val(); renderScoreboard(); renderLogs(); });
+  listenTeams(eventId, data=>{ teams = data; renderScoreboard(); renderLogs(); });
   listenOverlayState(eventId, state=>{ scoreboard = state && state.scoreboard; renderScoreboard(); });
   listenMatchLog(eventId, data=>{ logs = data || []; renderLogs(); });
 

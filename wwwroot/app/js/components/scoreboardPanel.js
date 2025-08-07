@@ -1,7 +1,7 @@
 import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 import { getDatabaseInstance } from "../firebaseApp.js";
 import { sportsData } from "../sportsConfig.js";
-import { updateOverlayState, listenOverlayState, addMatchLog, listenFavorites, updateFavorites, resolveAssetPath } from "../firebase.js";
+import { updateOverlayState, listenOverlayState, addMatchLog, listenFavorites, updateFavorites, resolveAssetPath, listenTeams } from "../firebase.js";
 import { suggestAbbreviation } from "../teamUtils.js";
 
 const DEFAULT_STYLES = [
@@ -121,8 +121,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
     let timerInterval = null;
     let favorites = { scoreboard: false, stingers: [], shortcuts: {}, sponsors: [] };
 
-    const teamsRef = ref(db, `teams/${eventId}`);
-    onValue(teamsRef, snap => { teamsData = snap.val(); if(currentData) render(currentData); });
+    listenTeams(eventId, data => { teamsData = data; if(currentData) render(currentData); });
 
     let sbVisible = false;
     let sbPreview = false;

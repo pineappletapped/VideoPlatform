@@ -73,6 +73,43 @@ export function getOverlayState(eventId) {
   return get(ref(db, `overlays/${eventId}`)).then(snap => snap.val());
 }
 
+// Teams helpers
+export function listenTeams(eventId, cb) {
+  const r = ref(db, `teams/${eventId}`);
+  let innerUnsub = null;
+  const outerUnsub = onValue(r, snap => {
+    const val = snap.val();
+    if (val && val.link) {
+      if (innerUnsub) innerUnsub();
+      innerUnsub = onValue(ref(db, `teams/${val.link}`), s2 => cb(s2.val(), val.link));
+    } else {
+      if (innerUnsub) {
+        innerUnsub();
+        innerUnsub = null;
+      }
+      cb(val, eventId);
+    }
+  });
+  return () => {
+    outerUnsub();
+    if (innerUnsub) innerUnsub();
+  };
+}
+
+export async function getTeams(eventId) {
+  const snap = await get(ref(db, `teams/${eventId}`));
+  const val = snap.val();
+  if (val && val.link) {
+    const snap2 = await get(ref(db, `teams/${val.link}`));
+    return snap2.val();
+  }
+  return val;
+}
+
+export function setTeams(eventId, data) {
+  return set(ref(db, `teams/${eventId}`), data);
+}
+
 // Graphics helpers (eventId-scoped)
 export function setGraphicsData(eventId, graphics, mode = 'live') {
   const path = mode === 'dev' ? `graphicsDev/${eventId}` : `graphics/${eventId}`;
