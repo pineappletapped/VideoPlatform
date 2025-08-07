@@ -212,15 +212,6 @@ async function initializeComponents(eventData) {
     });
 
     renderActiveGraphicsPanel(document.getElementById('active-graphics'), eventId, graphicsMode);
-    if(!userFeatures.logging){
-        document.querySelector('#active-graphics [data-tab="logs"]')?.classList.add('hidden');
-        document.getElementById('logs-tab')?.classList.add('hidden');
-    }
-    if(!userFeatures.sponsorship){
-        document.querySelector('#active-graphics [data-tab="sponsors"]')?.classList.add('hidden');
-        document.getElementById('sponsors-tab')?.classList.add('hidden');
-    }
-
     const brandingModal = document.getElementById('branding-modal');
     renderBrandingModal(brandingModal, { eventId });
     brandingModal.classList.add('hidden');
