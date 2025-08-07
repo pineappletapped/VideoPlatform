@@ -6,7 +6,7 @@ import { renderTeamsPanel } from './components/teamsPanel.js';
 import { renderGolfPanel } from './components/golfPanel.js';
 import { renderStatsPanel } from './components/statsPanel.js';
 import { renderBrandingModal } from './components/brandingModal.js';
-import { addMatchLog, getEventMetadata, updateEventMetadata, listenOverlayState, listenMatchLog, listenTeams, getUserFeatures, setTeams } from './firebase.js';
+import { addMatchLog, getEventMetadata, updateEventMetadata, listenOverlayState, listenMatchLog, listenTeams, getUserFeatures, setTeams, setMatchLog, updateOverlayState } from './firebase.js';
 import { getTeamLabel, sportsData } from './sportsConfig.js';
 import { getDatabaseInstance } from './firebaseApp.js';
 
@@ -88,11 +88,38 @@ function renderScoreboard(){
 function renderLogs(){
   const cont = document.querySelector('#logs > div');
   if(!cont) return;
-  if(!logs.length){
-    cont.innerHTML = '<div class="text-gray-400">No logs</div>';
-    return;
-  }
-  cont.innerHTML = `<ul class='space-y-1 text-sm'>${logs.map(e=>{ const teamName = e.team? (e.team==='a'?getTeam('a')?.name:getTeam('b')?.name):''; return `<li>${e.time||''} ${teamName?teamName+' ':''}${e.type||''}${e.player?` - ${e.player}`:''}</li>`; }).join('')}</ul>`;
+  const tA = getTeam('a');
+  const tB = getTeam('b');
+  const aLogs = logs.filter(l=>l.team==='a');
+  const bLogs = logs.filter(l=>l.team==='b');
+  const listHtml = arr=>arr.map(e=>`<li>${e.time||''} ${e.type||''}${e.player?` - ${e.player}`:''}</li>`).join('');
+  cont.innerHTML = `
+    <div class='grid grid-cols-2 gap-4 text-sm'>
+      <div><div class='font-bold mb-1'>${tA?.name||'Team A'}</div><ul class='space-y-1'>${listHtml(aLogs)}</ul></div>
+      <div><div class='font-bold mb-1'>${tB?.name||'Team B'}</div><ul class='space-y-1'>${listHtml(bLogs)}</ul></div>
+    </div>
+    <div class='mt-2 text-right'><button id='sa-logs-edit' class='control-button btn-sm'>Edit</button></div>
+    <div id='sa-logs-modal' class='modal-overlay' style='display:none;'>
+      <div class='modal-window'>
+        <h3 class='font-bold text-lg mb-2'>Edit Logs</h3>
+        <textarea id='sa-logs-text' class='w-full h-48 p-2 border text-black'>${JSON.stringify(logs,null,2)}</textarea>
+        <div class='mt-2 text-right'>
+          <button id='sa-logs-save' class='control-button btn-sm'>Save</button>
+          <button id='sa-logs-close' class='control-button btn-sm'>Close</button>
+        </div>
+      </div>
+    </div>`;
+  const editBtn = cont.querySelector('#sa-logs-edit');
+  const modal = cont.querySelector('#sa-logs-modal');
+  editBtn.onclick = ()=>{ modal.style.display='flex'; };
+  cont.querySelector('#sa-logs-close').onclick = ()=>{ modal.style.display='none'; };
+  cont.querySelector('#sa-logs-save').onclick = async ()=>{
+    try{
+      const arr = JSON.parse(cont.querySelector('#sa-logs-text').value);
+      await setMatchLog(eventId, arr);
+      modal.style.display='none';
+    }catch(e){ alert('Invalid JSON'); }
+  };
 }
 
 async function init() {
@@ -135,10 +162,10 @@ async function init() {
       <div class='bg-gray-800 text-gray-100 rounded-lg p-4'>
         <h2 class='font-bold text-lg mb-2'>In Game Events</h2>
         <div class='flex gap-2 items-center text-sm'>
-          <select id='sa-ige-type' class='border p-1 flex-1'>${logEvents.map(e=>`<option value="${e}">${e}</option>`).join('')}</select>
-          <select id='sa-ige-team' class='border p-1'>${['teamA','teamB'].map(k=>`<option value="${k}">${teams[k]?.name || k}</option>`).join('')}</select>
-          <select id='sa-ige-player' class='border p-1 flex-1'></select>
-          <select id='sa-ige-player-on' class='border p-1 flex-1' style='display:none;'></select>
+          <select id='sa-ige-type' class='border p-1 flex-1 text-black'>${logEvents.map(e=>`<option value="${e}">${e}</option>`).join('')}</select>
+          <select id='sa-ige-team' class='border p-1 text-black'>${['teamA','teamB'].map(k=>`<option value="${k}">${teams[k]?.name || k}</option>`).join('')}</select>
+          <select id='sa-ige-player' class='border p-1 flex-1 text-black'></select>
+          <select id='sa-ige-player-on' class='border p-1 flex-1 text-black' style='display:none;'></select>
           <button id='sa-ige-add' class='control-button btn-sm'>Add</button>
         </div>
       </div>`;
@@ -222,6 +249,7 @@ async function init() {
   listenTeams(eventId, (data, baseId)=>{ teams = data; teamsBaseId = baseId; renderScoreboard(); renderEventsPanel(); renderLogs(); });
   listenOverlayState(eventId, state=>{ scoreboard = state && state.scoreboard; renderScoreboard(); });
   listenMatchLog(eventId, data=>{ logs = data || []; renderLogs(); });
+  updateOverlayState(eventId,{ scoreboardVisible:true, scoreboardPreviewVisible:false });
 
   setupTabs();
 }

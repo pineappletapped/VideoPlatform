@@ -29,6 +29,14 @@ html,body { margin: 0; width:100%; height:100%; overflow:hidden; }
   min-height: 48px;
 }
 
+.sports-admin .scoreboard-panel,
+.sports-admin .teams-panel,
+.sports-admin .lineup-panel,
+.sports-admin .stats-panel,
+.sports-admin .sponsors-panel {
+  border: none;
+}
+
 .status-bar {
   border: none;
 }

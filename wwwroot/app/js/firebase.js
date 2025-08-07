@@ -263,6 +263,11 @@ export function getMatchLog(eventId) {
     return Object.entries(val).map(([k,v])=>({ id:k, ...v }));
   });
 }
+export function setMatchLog(eventId, entries) {
+  const obj = {};
+  entries.forEach(e => { const id = e.id || push(ref(db, `matchLog/${eventId}`)).key; obj[id] = { ...e }; });
+  return set(ref(db, `matchLog/${eventId}`), obj);
+}
 
 // Graphics notifications
 export function listenGraphicsNotify(eventId, cb) {

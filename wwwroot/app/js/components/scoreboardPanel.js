@@ -364,28 +364,31 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             const holder = container.querySelector('#sb-shootout-controls');
             if(!holder) return;
             const shots = data.shootout?.shots || [[],[]];
-            const teamHtml = t => (shots[t] || []).map((s,i)=>`<div class="flex items-center mb-1"><input id="shot-player-${t}-${i}" class="border p-1 w-24 mr-1" value="${s.player||''}" placeholder="Shooter"><select id="shot-res-${t}-${i}" class="border p-1"><option value=""></option><option value="goal"${s.result==='goal'?' selected':''}>Scored</option><option value="miss"${s.result==='miss'?' selected':''}>Missed</option></select></div>`).join('');
+            const players = [getTeam(0).players||[], getTeam(1).players||[]];
+            const teamHtml = t => (shots[t] || []).map((s,i)=>`<div class="flex items-center mb-1"><select id="shot-player-${t}-${i}" class="border p-1 mr-1 text-black"><option value=""></option>${players[t].map(p=>`<option value="${p.name}"${s.player===p.name?' selected':''}>${p.name}</option>`).join('')}</select><select id="shot-res-${t}-${i}" class="border p-1 text-black"><option value=""></option><option value="goal"${s.result==='goal'?' selected':''}>Scored</option><option value="miss"${s.result==='miss'?' selected':''}>Missed</option></select></div>`).join('');
             holder.innerHTML = `
-                <div class="mb-2 flex gap-2">
+                ${showOverlayControls?`<div class="mb-2 flex gap-2">
                     <button id="shootout-preview" class="control-button btn-sm btn-preview${shootoutPreview ? ' ring-2 ring-brand' : ''}">Preview</button>
                     <button id="shootout-live" class="control-button btn-sm btn-live${shootoutVisible ? ' ring-2 ring-green-400' : ''}">Live</button>
-                </div>
+                </div>`:''}
                 <div class="grid grid-cols-2 gap-4 text-xs">
                     <div><div class="font-bold mb-1">${tnA}</div>${teamHtml(0)}</div>
                     <div><div class="font-bold mb-1">${tnB}</div>${teamHtml(1)}</div>
                 </div>`;
-            holder.querySelector('#shootout-preview').onclick = async () => {
-                const obj = getFormData();
-                await saveData(obj);
-                const show = !shootoutPreview;
-                await updateOverlayState(eventId,{ shootoutPreviewVisible: show });
-            };
-            holder.querySelector('#shootout-live').onclick = async () => {
-                const obj = getFormData();
-                await saveData(obj);
-                const show = !shootoutVisible;
-                await updateOverlayState(eventId,{ shootoutVisible: show, shootoutPreviewVisible: false });
-            };
+            if(showOverlayControls){
+                holder.querySelector('#shootout-preview').onclick = async () => {
+                    const obj = getFormData();
+                    await saveData(obj);
+                    const show = !shootoutPreview;
+                    await updateOverlayState(eventId,{ shootoutPreviewVisible: show });
+                };
+                holder.querySelector('#shootout-live').onclick = async () => {
+                    const obj = getFormData();
+                    await saveData(obj);
+                    const show = !shootoutVisible;
+                    await updateOverlayState(eventId,{ shootoutVisible: show, shootoutPreviewVisible: false });
+                };
+            }
         }
 
         const viewBtn = container.querySelector('#sb-view-shootout');
