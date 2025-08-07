@@ -26,6 +26,17 @@ let graphicsMode = 'live';
 let userFeatures = {};
 let eventsNotify = false;
 
+function highlightLatestLowerThird() {
+    const rows = document.querySelectorAll('#events-panel tbody tr');
+    if (rows.length) {
+        const last = rows[rows.length - 1];
+        last.classList.add('bg-yellow-100', 'animate-pulse');
+        setTimeout(() => {
+            last.classList.remove('bg-yellow-100', 'animate-pulse');
+        }, 2000);
+    }
+}
+
 async function initializeApp(user) {
     currentUserId = user ? user.uid.replace('local-','') : '';
     let firebaseStatus = 'Connecting to Firebase...';
@@ -73,13 +84,14 @@ function setupTabs() {
     document.querySelectorAll('.graphics-panel [data-tab]').forEach(btn => {
         btn.addEventListener('click', () => {
             const tab = btn.getAttribute('data-tab');
+            setActiveTab(tab, '.graphics-panel');
             if(tab === 'events'){
-                clearGraphicsNotify(eventId, 'events');
                 const evBtn = document.querySelector('#graphics-tabs [data-tab="events"]');
-                evBtn?.classList.remove('animate-pulse','text-brand');
+                evBtn?.classList.remove('animate-pulse','bg-brand','text-white');
+                if(eventsNotify) highlightLatestLowerThird();
+                clearGraphicsNotify(eventId, 'events');
                 eventsNotify = false;
             }
-            setActiveTab(tab, '.graphics-panel');
         });
     });
     document.querySelectorAll('.av-panel [data-tab]').forEach(btn => {
@@ -224,7 +236,7 @@ async function initializeComponents(eventData) {
         if(data.events){
             const btn = document.querySelector('#graphics-tabs [data-tab="events"]');
             if(btn){
-                btn.classList.add('animate-pulse','text-brand');
+                btn.classList.add('animate-pulse','bg-brand','text-white');
                 eventsNotify = true;
             }
         }
