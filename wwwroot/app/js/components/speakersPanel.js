@@ -1,8 +1,10 @@
-import { listenSpeakers, setSpeakers } from '../firebase.js';
+import { listenSpeakers, setSpeakers, listenSpeakerBanners, setSpeakerBanners, updateOverlayState } from '../firebase.js';
 
 export function renderSpeakersPanel(container, eventId){
     let speakers = [];
+    let banners = [];
     listenSpeakers(eventId, data=>{ speakers = data || []; render(); });
+    listenSpeakerBanners(eventId, data=>{ banners = data || []; render(); });
 
     async function uploadToServer(file){
         const fd = new FormData();
@@ -34,8 +36,36 @@ export function renderSpeakersPanel(container, eventId){
         if(sp){ sp[field] = value; setSpeakers(eventId, speakers); }
     }
 
+    function addBanner(){
+        banners.push({ id: Date.now(), slots: [] });
+        setSpeakerBanners(eventId, banners);
+    }
+
+    function removeBanner(id){
+        banners = banners.filter(b=>b.id!==id);
+        setSpeakerBanners(eventId, banners);
+    }
+
+    function updateBannerSlot(bid, slotIdx, speakerId){
+        const b = banners.find(x=>x.id===bid);
+        if(b){ b.slots[slotIdx] = speakerId; setSpeakerBanners(eventId, banners); }
+    }
+
+    function addBannerSlot(bid){
+        const b = banners.find(x=>x.id===bid);
+        if(b){ b.slots.push(speakers[0]?.id || 0); setSpeakerBanners(eventId, banners); }
+    }
+
+    function triggerBanner(bid, live){
+        const b = banners.find(x=>x.id===bid);
+        if(!b) return;
+        const items = b.slots.map(id=>speakers.find(s=>s.id===parseInt(id,10))).filter(Boolean).map(s=>({name:s.name, subtitle:s.position||s.organisation||''}));
+        updateOverlayState(eventId,{ speakersBanner: items, speakersBannerVisible: live, speakersBannerPreviewVisible: !live });
+    }
+
     function render(){
         if(!container) return;
+        const speakerOptions = speakers.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
         container.innerHTML = `
             <div>
                 <h2 class="font-bold text-lg mb-2">Speakers</h2>
@@ -56,6 +86,19 @@ export function renderSpeakersPanel(container, eventId){
                     `).join('')}
                 </div>
                 <button id="add-speaker" class="control-button btn-sm mt-2">Add Speaker</button>
+                <h3 class="font-bold text-lg mt-4">Speaker Banners</h3>
+                <div class="flex flex-col gap-2" id="banner-list">
+                    ${banners.map(b=>`
+                        <div class="flex items-center gap-2" data-id="${b.id}">
+                            ${b.slots.map((sid,i)=>`<select class="border p-1" data-slot="${i}">${speakerOptions}</select>`).join('')}
+                            <button class="control-button btn-sm" data-action="add-slot">+Slot</button>
+                            <button class="control-button btn-sm" data-action="preview">Preview</button>
+                            <button class="control-button btn-sm" data-action="live">Live</button>
+                            <button class="control-button btn-sm bg-red-600" data-action="remove">Remove</button>
+                        </div>
+                    `).join('')}
+                </div>
+                <button id="add-banner" class="control-button btn-sm mt-2">Add Banner</button>
             </div>
         `;
         container.querySelector('#add-speaker')?.addEventListener('click', addSpeaker);
@@ -94,6 +137,25 @@ export function renderSpeakersPanel(container, eventId){
                 const id = parseInt(e.target.closest('[data-id]').dataset.id,10);
                 setHost(id);
             });
+        });
+        container.querySelector('#add-banner')?.addEventListener('click', addBanner);
+        container.querySelectorAll('#banner-list select').forEach(sel=>{
+            const bid = parseInt(sel.closest('[data-id]').dataset.id,10);
+            const slot = parseInt(sel.getAttribute('data-slot'),10);
+            sel.value = banners.find(b=>b.id===bid)?.slots[slot] || '';
+            sel.onchange = e=>{ updateBannerSlot(bid, slot, e.target.value); };
+        });
+        container.querySelectorAll('#banner-list button[data-action="add-slot"]').forEach(btn=>{
+            btn.onclick = ()=>{ const bid = parseInt(btn.closest('[data-id]').dataset.id,10); addBannerSlot(bid); };
+        });
+        container.querySelectorAll('#banner-list button[data-action="remove"]').forEach(btn=>{
+            btn.onclick = ()=>{ const bid = parseInt(btn.closest('[data-id]').dataset.id,10); removeBanner(bid); };
+        });
+        container.querySelectorAll('#banner-list button[data-action="preview"]').forEach(btn=>{
+            btn.onclick = ()=>{ const bid = parseInt(btn.closest('[data-id]').dataset.id,10); triggerBanner(bid,false); };
+        });
+        container.querySelectorAll('#banner-list button[data-action="live"]').forEach(btn=>{
+            btn.onclick = ()=>{ const bid = parseInt(btn.closest('[data-id]').dataset.id,10); triggerBanner(bid,true); };
         });
     }
 }

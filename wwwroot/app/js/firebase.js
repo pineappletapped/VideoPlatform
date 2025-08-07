@@ -119,6 +119,15 @@ export function setSpeakers(eventId, data) {
   return set(ref(db, `speakers/${eventId}`), data);
 }
 
+// Speaker banner helpers
+export function listenSpeakerBanners(eventId, cb) {
+  return onValue(ref(db, `speakerBanners/${eventId}`), snap => cb(snap.val()));
+}
+
+export function setSpeakerBanners(eventId, data) {
+  return set(ref(db, `speakerBanners/${eventId}`), data);
+}
+
 // Graphics helpers (eventId-scoped)
 export function setGraphicsData(eventId, graphics, mode = 'live') {
   const path = mode === 'dev' ? `graphicsDev/${eventId}` : `graphics/${eventId}`;

@@ -1,4 +1,4 @@
-import { updateOverlayState, listenOverlayState, listenTeams } from '../firebase.js';
+import { updateOverlayState, listenOverlayState, listenTeams, getEventMetadata } from '../firebase.js';
 import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 import { getDatabaseInstance } from "../firebaseApp.js";
 
@@ -21,6 +21,8 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
     let preview = false;
     let teamsData = null;
     let tournamentData = null;
+    let eventType = 'corporate';
+    let corpType = 'conference';
 
     onValue(getIntroRef(eid), snap => {
         intros = snap.val() || [];
@@ -34,6 +36,7 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
     });
     listenTeams(eid, data => { teamsData = data; render(); });
     onValue(ref(db, `tournament/${eid}`), snap => { tournamentData = snap.val(); render(); });
+    getEventMetadata(eid).then(meta=>{ eventType = meta?.eventType || 'corporate'; corpType = meta?.corporateType || 'conference'; render(); });
 
     listenOverlayState(eid, state => {
         activeIntro = (state && state.holdslate) || {};
@@ -51,6 +54,11 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
         const teamOptions = teamsData ? (teamsData.teams ? teamsData.teams.map((t,i)=>`<option value="${i}">${t.name}</option>`).join('') : ['a','b'].map(k=>`<option value="${k}">${teamsData[k==='a'?'teamA':'teamB']?.name || ('Team '+k.toUpperCase())}</option>`).join('')) : '';
         const teamRow = teamsData ? `<div class=\"flex items-center gap-2\"><span class=\"flex-1\">Show Team</span><select id=\"teamlist-team\" class=\"border p-1 flex-1\">${teamOptions}</select><button class=\"control-button btn-sm\" id=\"teamlist-preview\">Preview</button><button class=\"control-button btn-sm\" id=\"teamlist-live\">Live</button><button class=\"control-button btn-sm\" id=\"teamlist-edit\">Edit</button></div>` : '';
         const formationRow = teamsData ? `<div class=\"flex items-center gap-2\"><span class=\"flex-1\">Formation Graphic</span><select id=\"formation-team\" class=\"border p-1 flex-1\">${teamOptions}</select><button class=\"control-button btn-sm\" id=\"formation-preview\">Preview</button><button class=\"control-button btn-sm\" id=\"formation-live\">Live</button><button class=\"control-button btn-sm\" id=\"formation-edit\">Edit</button></div>` : '';
+        const sportsMode = eventType === 'sports';
+        const fixturesRow = sportsMode ? `<div class=\"flex items-center gap-2\"><span class=\"flex-1\">Show Fixtures</span><button class=\"control-button btn-sm\" id=\"fixtures-preview\">Preview</button><button class=\"control-button btn-sm\" id=\"fixtures-live\">Live</button><button class=\"control-button btn-sm\" id=\"fixtures-edit\">Edit</button></div>` : '';
+        const courseRow = sportsMode ? `<div class=\"flex items-center gap-2\"><span class=\"flex-1\">Course Details</span><button class=\"control-button btn-sm\" id=\"course-preview\">Preview</button><button class=\"control-button btn-sm\" id=\"course-live\">Live</button><button class=\"control-button btn-sm\" id=\"course-edit\">Edit</button></div>` : '';
+        const eventTitleRow = !sportsMode ? `<div class=\"flex items-center gap-2\"><span class=\"flex-1\">Event Title</span><button class=\"control-button btn-sm\" id=\"eventtitle-preview\">Preview</button><button class=\"control-button btn-sm\" id=\"eventtitle-live\">Live</button><button class=\"control-button btn-sm\" id=\"eventtitle-edit\">Edit</button></div>` : '';
+        const scheduleRow = (!sportsMode && corpType==='conference') ? `<div class=\"flex items-center gap-2\"><span class=\"flex-1\">Schedule</span><button class=\"control-button btn-sm\" id=\"schedule-preview\">Preview</button><button class=\"control-button btn-sm\" id=\"schedule-live\">Live</button><button class=\"control-button btn-sm\" id=\"schedule-edit\">Edit</button></div>` : '';
         container.innerHTML = `
             <div class='intro-panel ${highlight}'>
                 <div class="flex items-center justify-between mb-2">
@@ -58,26 +66,18 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
                     <button class="control-button btn-sm" id="hs-input">Input data</button>
                 </div>
                 <div class="space-y-2 mb-4">
-                    <div class="flex items-center gap-2">
-                        <span class="flex-1">Show Fixtures</span>
-                        <button class="control-button btn-sm" id="fixtures-preview">Preview</button>
-                        <button class="control-button btn-sm" id="fixtures-live">Live</button>
-                        <button class="control-button btn-sm" id="fixtures-edit">Edit</button>
-                    </div>
+                    ${eventTitleRow}
+                    ${fixturesRow}
                     ${teamRow}
                     ${formationRow}
-                    <div class="flex items-center gap-2">
-                        <span class="flex-1">Course Details</span>
-                        <button class="control-button btn-sm" id="course-preview">Preview</button>
-                        <button class="control-button btn-sm" id="course-live">Live</button>
-                        <button class="control-button btn-sm" id="course-edit">Edit</button>
-                    </div>
+                    ${courseRow}
                     <div class="flex items-center gap-2">
                         <span class="flex-1">Weather</span>
                         <button class="control-button btn-sm" id="weather-preview">Preview</button>
                         <button class="control-button btn-sm" id="weather-live">Live</button>
                         <button class="control-button btn-sm" id="weather-edit">Edit</button>
                     </div>
+                    ${scheduleRow}
                 </div>
                 <div class="flex items-center justify-between mb-2">
                     <h3 class="font-bold text-md">Holdslates</h3>
@@ -196,6 +196,41 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
                             <div class="flex gap-2 mt-4">
                                 <button type="submit" class="control-button btn-sm">Save</button>
                                 <button type="button" id="hs-weather-cancel" class="control-button btn-sm bg-gray-400 hover:bg-gray-600">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div id="eventtitle-modal" class="modal-overlay" style="display:none;">
+                    <div class="modal-window">
+                        <h3 class="font-bold text-lg mb-2">Event Title</h3>
+                        <form id="eventtitle-form">
+                            <div class="mb-2">
+                                <label class="block text-sm">Title</label>
+                                <input class="border p-1 w-full" name="title" />
+                            </div>
+                            <div class="mb-2">
+                                <label class="block text-sm">Venue</label>
+                                <input class="border p-1 w-full" name="venue" />
+                            </div>
+                            <div class="mb-2">
+                                <label class="block text-sm">Location</label>
+                                <input class="border p-1 w-full" name="location" />
+                            </div>
+                            <div class="mb-2">
+                                <label class="block text-sm">Logo 1</label>
+                                <input type="file" id="eventtitle-logo1" accept="image/*" />
+                                <button type="button" id="eventtitle-upload1" class="control-button btn-sm mt-1">Upload</button>
+                                <input class="border p-1 w-full mt-1" name="logo1" placeholder="Uploaded image URL" />
+                            </div>
+                            <div class="mb-2">
+                                <label class="block text-sm">Logo 2</label>
+                                <input type="file" id="eventtitle-logo2" accept="image/*" />
+                                <button type="button" id="eventtitle-upload2" class="control-button btn-sm mt-1">Upload</button>
+                                <input class="border p-1 w-full mt-1" name="logo2" placeholder="Uploaded image URL" />
+                            </div>
+                            <div class="flex gap-2 mt-4">
+                                <button type="submit" class="control-button btn-sm">Save</button>
+                                <button type="button" id="eventtitle-cancel" class="control-button btn-sm bg-gray-400 hover:bg-gray-600">Cancel</button>
                             </div>
                         </form>
                     </div>
@@ -338,6 +373,19 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
 
         container.querySelector('#hs-add').onclick = () => showModal();
 
+        const etPrev = container.querySelector('#eventtitle-preview');
+        if(etPrev) etPrev.onclick = () => {
+            updateOverlayState(eid,{ eventTitle:introSettings.eventTitle || {}, eventTitlePreviewVisible:true, eventTitleVisible:false });
+            if(onOverlayStateChange) onOverlayStateChange({ eventTitlePreviewVisible:true, eventTitle:introSettings.eventTitle });
+        };
+        const etLive = container.querySelector('#eventtitle-live');
+        if(etLive) etLive.onclick = () => {
+            updateOverlayState(eid,{ eventTitle:introSettings.eventTitle || {}, eventTitleVisible:true, eventTitlePreviewVisible:false });
+            if(onOverlayStateChange) onOverlayStateChange({ eventTitleVisible:true, eventTitle:introSettings.eventTitle, eventTitlePreviewVisible:false });
+        };
+        const etEdit = container.querySelector('#eventtitle-edit');
+        if(etEdit) etEdit.onclick = () => showEventTitleModal();
+
         const fixturesPrev = container.querySelector('#fixtures-preview');
         if(fixturesPrev) fixturesPrev.onclick = () => {
             updateOverlayState(eid,{ fixtures: introSettings.fixtures || {}, fixturesPreviewVisible:true, fixturesVisible:false });
@@ -408,6 +456,19 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
         };
         const weatherEdit = container.querySelector('#weather-edit');
         if(weatherEdit) weatherEdit.onclick = () => showWeatherModal();
+
+        const schedPrev = container.querySelector('#schedule-preview');
+        if(schedPrev) schedPrev.onclick = () => {
+            updateOverlayState(eid,{ previewProgramVisible:true, liveProgramVisible:false });
+            if(onOverlayStateChange) onOverlayStateChange({ previewProgramVisible:true, liveProgramVisible:false });
+        };
+        const schedLive = container.querySelector('#schedule-live');
+        if(schedLive) schedLive.onclick = () => {
+            updateOverlayState(eid,{ liveProgramVisible:true, previewProgramVisible:false });
+            if(onOverlayStateChange) onOverlayStateChange({ liveProgramVisible:true, previewProgramVisible:false });
+        };
+        const schedEdit = container.querySelector('#schedule-edit');
+        if(schedEdit) schedEdit.onclick = () => { window.location.hash = '#schedule'; };
 
         container.querySelectorAll('button[data-action]').forEach(btn=>{
             const idx = parseInt(btn.getAttribute('data-idx'));
@@ -518,6 +579,63 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
             modal.style.display='none';
         };
         form.querySelector('#hs-weather-cancel').onclick = ()=>{ modal.style.display='none'; };
+    }
+
+    function showEventTitleModal(){
+        const modal = container.querySelector('#eventtitle-modal');
+        const form = container.querySelector('#eventtitle-form');
+        if(!modal || !form) return;
+        const data = introSettings.eventTitle || {};
+        form.title.value = data.title || '';
+        form.venue.value = data.venue || '';
+        form.location.value = data.location || '';
+        form.logo1.value = data.logo1 || '';
+        form.logo2.value = data.logo2 || '';
+        form['eventtitle-logo1'].value = '';
+        form['eventtitle-logo2'].value = '';
+        modal.style.display='flex';
+        form.onsubmit = async e=>{
+            e.preventDefault();
+            let logo1 = form.logo1.value;
+            let logo2 = form.logo2.value;
+            if(form['eventtitle-logo1'].files[0]){
+                const path = `uploads/${eid}/eventtitle/${form['eventtitle-logo1'].files[0].name}`;
+                setStatus('Uploading...');
+                const url = await uploadToServer(form['eventtitle-logo1'].files[0], path);
+                setStatus('');
+                if(url) logo1 = url;
+            }
+            if(form['eventtitle-logo2'].files[0]){
+                const path = `uploads/${eid}/eventtitle/${form['eventtitle-logo2'].files[0].name}`;
+                setStatus('Uploading...');
+                const url = await uploadToServer(form['eventtitle-logo2'].files[0], path);
+                setStatus('');
+                if(url) logo2 = url;
+            }
+            introSettings.eventTitle = { title:form.title.value, venue:form.venue.value, location:form.location.value, logo1, logo2 };
+            await set(getIntroSettingsRef(eid), introSettings);
+            await updateOverlayState(eid,{ holdslateSettings:introSettings });
+            modal.style.display='none';
+        };
+        container.querySelector('#eventtitle-upload1').onclick = async ()=>{
+            if(form['eventtitle-logo1'].files[0]){
+                const path = `uploads/${eid}/eventtitle/${form['eventtitle-logo1'].files[0].name}`;
+                setStatus('Uploading...');
+                const url = await uploadToServer(form['eventtitle-logo1'].files[0], path);
+                setStatus('');
+                if(url) form.logo1.value = url;
+            }
+        };
+        container.querySelector('#eventtitle-upload2').onclick = async ()=>{
+            if(form['eventtitle-logo2'].files[0]){
+                const path = `uploads/${eid}/eventtitle/${form['eventtitle-logo2'].files[0].name}`;
+                setStatus('Uploading...');
+                const url = await uploadToServer(form['eventtitle-logo2'].files[0], path);
+                setStatus('');
+                if(url) form.logo2.value = url;
+            }
+        };
+        container.querySelector('#eventtitle-cancel').onclick = ()=>{ modal.style.display='none'; };
     }
 
     function showFixturesModal(){

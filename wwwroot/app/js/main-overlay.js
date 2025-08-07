@@ -31,6 +31,8 @@ let prevPresentationData = null;
 let prevSponsorLive = {};
 let prevFixturesVisible = false;
 let prevWeatherVisible = false;
+let prevEventTitleVisible = false;
+let prevSpeakersBannerVisible = false;
 const placementClassMap = {
     scoreboardTop: 'sb-sponsor top',
     scoreboardBottom: 'sb-sponsor bottom',
@@ -560,6 +562,34 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         courseOverlay.remove();
     }
 
+    let eventTitleOverlay = overlayContainer.querySelector('#event-title-overlay');
+    const eventTitleData = state && state.eventTitle;
+    const eventTitleShow = previewMode ? state && state.eventTitlePreviewVisible : state && state.eventTitleVisible;
+    if(eventTitleShow && eventTitleData){
+        if(!eventTitleOverlay){
+            eventTitleOverlay = document.createElement('div');
+            eventTitleOverlay.id = 'event-title-overlay';
+            eventTitleOverlay.className = 'info-overlay';
+            overlayContainer.appendChild(eventTitleOverlay);
+        }
+        eventTitleOverlay.style.opacity = previewMode ? '0.6' : '1';
+        const logosHtml = [eventTitleData.logo1, eventTitleData.logo2].filter(Boolean).map(l=>`<img src='${l}' style='height:60px;margin:0 0.5rem;'>`).join('');
+        const loc = eventTitleData.venue ? `<div style="font-size:1.25rem;margin-bottom:0.5rem;">${eventTitleData.venue}${eventTitleData.location?`, ${eventTitleData.location}`:''}</div>` : '';
+        const bodyHtml = `<div style='text-align:center;'>${loc}${logosHtml?`<div style='margin-top:0.5rem;display:flex;justify-content:center;'>${logosHtml}</div>`:''}</div>`;
+        eventTitleOverlay.innerHTML = buildInfoWindow(eventTitleData.title || '', bodyHtml, branding, sponsorPlacements.intro, 'style1');
+        if(!prevEventTitleVisible){
+            const sp = sponsorsData[sponsorPlacements.intro];
+            if(sp) addSponsorLog(eventId,{ts:Date.now(),placement:'intro',sponsor:sponsorPlacements.intro,action:'show'});
+        }
+    }else if(eventTitleOverlay){
+        if(prevEventTitleVisible){
+            const sp = sponsorsData[sponsorPlacements.intro];
+            if(sp) addSponsorLog(eventId,{ts:Date.now(),placement:'intro',sponsor:sponsorPlacements.intro,action:'hide'});
+        }
+        eventTitleOverlay.remove();
+    }
+    prevEventTitleVisible = eventTitleShow;
+
     let weatherOverlay = overlayContainer.querySelector('#weather-overlay');
     const weatherData = state && state.weather;
     const weatherShow = previewMode ? state && state.weatherPreviewVisible : state && state.weatherVisible;
@@ -587,6 +617,33 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         weatherOverlay.remove();
     }
     prevWeatherVisible = weatherShow;
+
+    let bannerOverlay = overlayContainer.querySelector('#speakers-banner-overlay');
+    const bannerData = state && state.speakersBanner;
+    const bannerShow = previewMode ? state && state.speakersBannerPreviewVisible : state && state.speakersBannerVisible;
+    if(bannerShow && bannerData && bannerData.length){
+        if(!bannerOverlay){
+            bannerOverlay = document.createElement('div');
+            bannerOverlay.id = 'speakers-banner-overlay';
+            overlayContainer.appendChild(bannerOverlay);
+        }
+        bannerOverlay.style.position = 'absolute';
+        bannerOverlay.style.bottom = '5%';
+        bannerOverlay.style.left = '50%';
+        bannerOverlay.style.transform = 'translateX(-50%)';
+        bannerOverlay.style.display = 'flex';
+        bannerOverlay.style.gap = '1rem';
+        bannerOverlay.style.padding = '0.5rem 1rem';
+        bannerOverlay.style.background = branding.primaryColor + 'cc';
+        bannerOverlay.style.color = '#fff';
+        bannerOverlay.style.borderRadius = '0.5rem';
+        bannerOverlay.style.fontFamily = branding.font;
+        bannerOverlay.style.opacity = previewMode ? '0.6' : '1';
+        bannerOverlay.innerHTML = bannerData.map(s=>`<div style='text-align:center;padding:0 0.5rem;'><div style='font-weight:bold;'>${s.name}</div><div style='font-size:0.8em;'>${s.subtitle||''}</div></div>`).join('');
+    } else if(bannerOverlay){
+        bannerOverlay.remove();
+    }
+    prevSpeakersBannerVisible = bannerShow;
 
     // Scoreboard Overlay
     let scoreboardOverlay = overlayContainer.querySelector('#scoreboard-overlay');
