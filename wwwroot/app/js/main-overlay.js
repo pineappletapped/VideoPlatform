@@ -19,6 +19,7 @@ let prevScoreboardData = null;
 let prevStoppageVisible = false;
 let prevLowerThirdId = null;
 let prevLowerThirdData = null;
+let prevLowerThirdKey = '';
 let prevFormationVisible = false;
 let prevTableVisible = false;
 let prevResultsVisible = false;
@@ -119,7 +120,11 @@ function applyBranding(branding = DEFAULT_BRANDING) {
     document.documentElement.style.setProperty('--brand-secondary2', branding.secondaryColor2);
     ['tl','tr','bl','br'].forEach(pos=>{
         const img=document.getElementById(`logo-${pos}`);
-        if(img) img.src = (branding.logos && branding.logos[pos]) ? branding.logos[pos] : '';
+        const url = (branding.logos && branding.logos[pos]) ? resolveAssetPath(branding.logos[pos]) : '';
+        if(img && img.getAttribute('data-src') !== url){
+            if(url) img.src = url; else img.removeAttribute('src');
+            img.setAttribute('data-src', url);
+        }
     });
 }
 
@@ -230,39 +235,41 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     } else if (previewMode) {
         document.getElementById('preview-lower-third').innerHTML = '';
     }
-    if (!previewMode && lowerThird) {
-        const pos = lowerThird.position || 'bottom-left';
-        let stylePos = '';
-        if (pos.startsWith('custom')) {
-            const [x,y] = pos.split(':')[1].split(',');
-            stylePos = `top:${y}px;left:${x}px;`;
-        } else if (pos === 'bottom-right') stylePos = 'bottom:2rem;right:2rem;';
-        else if (pos === 'top-left') stylePos = 'top:2rem;left:2rem;';
-        else if (pos === 'top-right') stylePos = 'top:2rem;right:2rem;';
-        else stylePos = 'bottom:2rem;left:2rem;';
-        const styleClass = `lower-third-${lowerThird.style || 'default'}`;
+    if (!previewMode) {
         const containerEl = document.getElementById('lower-third');
-        const oldEl = containerEl.firstElementChild;
-        if (oldEl && prevLowerThirdId && prevLowerThirdId !== liveLowerThirdId) {
-            playTransition(oldEl,'out',prevLowerThirdData?.transitionOut);
+        if (lowerThird) {
+            const key = liveLowerThirdId + JSON.stringify(lowerThird);
+            if (key !== prevLowerThirdKey) {
+                const oldEl = containerEl.firstElementChild;
+                if (oldEl) playTransition(oldEl,'out',prevLowerThirdData?.transitionOut);
+                const pos = lowerThird.position || 'bottom-left';
+                let stylePos = '';
+                if (pos.startsWith('custom')) {
+                    const [x,y] = pos.split(':')[1].split(',');
+                    stylePos = `top:${y}px;left:${x}px;`;
+                } else if (pos === 'bottom-right') stylePos = 'bottom:2rem;right:2rem;';
+                else if (pos === 'top-left') stylePos = 'top:2rem;left:2rem;';
+                else if (pos === 'top-right') stylePos = 'top:2rem;right:2rem;';
+                else stylePos = 'bottom:2rem;left:2rem;';
+                const styleClass = `lower-third-${lowerThird.style || 'default'}`;
+                const ltWrap = document.createElement('div');
+                ltWrap.className = styleClass;
+                ltWrap.style.position = 'absolute';
+                ltWrap.style.cssText += stylePos + `min-width:300px;font-family:${branding.font};`;
+                ltWrap.innerHTML = `${branding.logoPrimary ? `<img src='${resolveAssetPath(branding.logoPrimary)}' alt='Logo' style='height:32px;display:inline-block;margin-right:1rem;vertical-align:middle;' />` : ''}`+
+                    `<span style='vertical-align:middle;'><span style='font-weight:bold;font-size:1.2em;'>${lowerThird.title}</span><br><span style='font-size:1em;'>${lowerThird.subtitle}</span></span>`;
+                containerEl.appendChild(ltWrap);
+                playTransition(ltWrap,'in',lowerThird.transitionIn);
+                prevLowerThirdKey = key;
+            }
         } else {
-            containerEl.innerHTML = '';
+            const ltWrap = containerEl.firstElementChild;
+            if (ltWrap) playTransition(ltWrap,'out',prevLowerThirdData?.transitionOut);
+            prevLowerThirdKey = '';
         }
-        const ltWrap = document.createElement('div');
-        ltWrap.className = styleClass;
-        ltWrap.style.position = 'absolute';
-        ltWrap.style.cssText += stylePos + `min-width:300px;font-family:${branding.font};`;
-        ltWrap.innerHTML = `${branding.logoPrimary ? `<img src='${resolveAssetPath(branding.logoPrimary)}' alt='Logo' style='height:32px;display:inline-block;margin-right:1rem;vertical-align:middle;' />` : ''}`+
-            `<span style='vertical-align:middle;'><span style='font-weight:bold;font-size:1.2em;'>${lowerThird.title}</span><br><span style='font-size:1em;'>${lowerThird.subtitle}</span></span>`;
-        containerEl.appendChild(ltWrap);
-        playTransition(ltWrap,'in',lowerThird.transitionIn);
-    } else if (!previewMode) {
-        const ltWrap = document.getElementById('lower-third').firstElementChild;
-        if (ltWrap) playTransition(ltWrap,'out',prevLowerThirdData?.transitionOut);
-        else document.getElementById('lower-third').innerHTML = '';
+        prevLowerThirdId = liveLowerThirdId;
+        prevLowerThirdData = lowerThird;
     }
-    prevLowerThirdId = liveLowerThirdId;
-    prevLowerThirdData = lowerThird;
     // Sponsor Lower Third Banner
     let spEl = overlayContainer.querySelector('#sponsor-lt');
     const spUrl = state && state.sponsorLtUrl;
