@@ -88,7 +88,7 @@ function setupTabs() {
     setActiveTab('vts','.av-panel');
 }
 
-function updateGraphicsTabs(type, tournament) {
+function updateGraphicsTabs(type, tournament, corporateType = 'conference') {
     const tabBar = document.getElementById('graphics-tabs');
     if (!tabBar) return;
     const sports = ['scoreboard','stats','teams'];
@@ -105,21 +105,23 @@ function updateGraphicsTabs(type, tournament) {
     const schedulePanel = document.getElementById('schedule-panel');
     const presBtn = tabBar.querySelector('[data-tab="presentation"]');
     const presPanel = document.getElementById('presentation-panel');
+    const showSchedule = type !== 'sports' && corporateType !== 'podcast';
+    const showPres = type !== 'sports' && corporateType === 'conference';
     if (scheduleBtn && schedulePanel) {
-        if (type === 'sports') {
-            scheduleBtn.classList.add('hidden');
-            schedulePanel.classList.add('hidden');
-        } else {
+        if (showSchedule) {
             scheduleBtn.classList.remove('hidden');
             schedulePanel.classList.remove('hidden');
+        } else {
+            scheduleBtn.classList.add('hidden');
+            schedulePanel.classList.add('hidden');
         }
     }
     if(presBtn && presPanel){
-        if(type === 'sports'){
-            presBtn.classList.add('hidden');
+        if(showPres){
+            presBtn.classList.remove('hidden');
             presPanel.classList.add('hidden');
         }else{
-            presBtn.classList.remove('hidden');
+            presBtn.classList.add('hidden');
             presPanel.classList.add('hidden');
         }
     }
@@ -169,7 +171,8 @@ async function initializeComponents(eventData) {
 
     document.getElementById('top-bar').appendChild(topBar);
     renderStatusBar(document.getElementById('status-bar'), eventData, {listener:false, atem:false, obs:false, sport:true, clock:true});
-    updateGraphicsTabs(eventData.eventType || 'corporate', !!(eventData.tournament && userFeatures.tournament));
+    const corpType = eventData.corporateType || 'conference';
+    updateGraphicsTabs(eventData.eventType || 'corporate', !!(eventData.tournament && userFeatures.tournament), corpType);
     if ((eventData.eventType || 'corporate') === 'sports') {
         const teamLabel = getTeamLabel(eventData.sport);
         const teamsTabBtn = document.querySelector('[data-tab="teams"]');
@@ -189,13 +192,15 @@ async function initializeComponents(eventData) {
             document.getElementById('tournament-panel')?.classList.add('hidden');
         }
     } else {
-        renderProgramPreview(document.getElementById('schedule-panel'), eventData, onOverlayStateChange);
+        if(corpType !== 'podcast'){
+            renderProgramPreview(document.getElementById('schedule-panel'), eventData, onOverlayStateChange);
+        }
     }
 
     renderIntroPanel(document.getElementById('intro-panel'), eventId, onOverlayStateChange);
     const { renderStingerPanel } = await import('./components/stingerPanel.js');
     renderStingerPanel(document.getElementById('stinger-panel'), eventId);
-    if((eventData.eventType || 'corporate') === 'corporate') {
+    if((eventData.eventType || 'corporate') === 'corporate' && corpType === 'conference') {
         const { renderPresentationPanel } = await import('./components/presentationPanel.js');
         renderPresentationPanel(document.getElementById('presentation-panel'), eventId);
     }

@@ -59,7 +59,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       const ev = entry.data;
       const id = entry.id;
       const name = ev.title || id;
-      const typeInfo = ev.eventType === 'sports' ? `Sports Event > ${ev.sport}` : 'Corporate Event';
+      const corpLabel = ev.corporateType ? ev.corporateType.charAt(0).toUpperCase() + ev.corporateType.slice(1) : 'Conference';
+      const typeInfo = ev.eventType === 'sports' ? `Sports Event > ${ev.sport}` : `Corporate Event > ${corpLabel}`;
       const gfx = `graphics.html?event_id=${id}`;
       const ovl = `overlay.html?event_id=${id}`;
       const sportsLink = ev.eventType === 'sports'
@@ -254,6 +255,13 @@ document.addEventListener('DOMContentLoaded', async () => {
               <option value="corporate">Corporate Event</option>
               <option value="sports">Sports Event</option>
             </select>
+            <div id="corp-wrap" class="mb-2">
+              <select name="corporateType" class="border p-1 w-full">
+                <option value="conference">Conference</option>
+                <option value="podcast">Podcast</option>
+                <option value="panel">Panel Discussion</option>
+              </select>
+            </div>
             <div id="sport-wrap" class="mb-2 hidden">
               <select name="sport" class="border p-1 w-full">
                 ${Object.keys(sportsData).map(s=>`<option value="${s}">${s}</option>`).join('')}
@@ -273,11 +281,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const form = createModal.querySelector('#create-form');
     const typeSel = createModal.querySelector('#create-type');
     const sportWrap = createModal.querySelector('#sport-wrap');
+    const corpWrap = createModal.querySelector('#corp-wrap');
     const tournamentWrap = createModal.querySelector('#tournament-wrap');
     typeSel.onchange = () => {
-      const show = typeSel.value === 'sports';
-      sportWrap.style.display = show ? 'block' : 'none';
-      tournamentWrap.style.display = show ? 'block' : 'none';
+      const sports = typeSel.value === 'sports';
+      sportWrap.style.display = sports ? 'block' : 'none';
+      tournamentWrap.style.display = sports ? 'block' : 'none';
+      corpWrap.style.display = sports ? 'none' : 'block';
     };
     createModal.querySelector('#create-cancel').onclick = () => {
       createModal.classList.add('hidden');
@@ -290,6 +300,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (data.eventType === 'sports') {
         meta.sport = data.sport;
         if (data.tournament === 'on') meta.tournament = true;
+      } else {
+        meta.corporateType = data.corporateType || 'conference';
       }
       await setEventMetadata(data.id, meta);
       window.location.href = `graphics.html?event_id=${data.id}&setup=1`;

@@ -136,7 +136,8 @@ async function loadEvents() {
     }).map(id => {
       const ev = events[id];
       const ownerEmail = users[ev.owner]?.email || ev.owner || '';
-      const typeInfo = ev.eventType === 'sports' ? `Sports > ${ev.sport || ''}` : 'Corporate';
+      const corpLabel = ev.corporateType ? ev.corporateType.charAt(0).toUpperCase() + ev.corporateType.slice(1) : 'Conference';
+      const typeInfo = ev.eventType === 'sports' ? `Sports > ${ev.sport || ''}` : `Corporate > ${corpLabel}`;
       const last = ev.lastOpened ? new Date(ev.lastOpened).toLocaleString() : 'N/A';
       const sportsBtn = ev.eventType === 'sports' ? `<a class="control-button btn-sm" href="sports.html?event_id=${id}">Sports Admin</a>` : '';
       const commBtn = ev.eventType === 'sports' ? `<a class="control-button btn-sm" href="commentator.html?event_id=${id}" target="_blank">Commentator</a>` : '';
