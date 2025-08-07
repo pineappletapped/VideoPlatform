@@ -398,9 +398,9 @@ function renderOverlayFromFirebase(state, graphics, branding) {
                 sponsorHtml = `<div style='display:flex;gap:1rem;justify-content:space-around;margin-top:0.5rem;'>${sponsors.slice(0,4).map(s=>`<img src='${s.logo}' alt='${s.name}' style='height:60px;'>`).join('')}</div>`;
             }
         }
-        let html = `<div class='font-bold text-lg mb-2'>Program</div>`;
+        let html = `<div class='font-bold text-lg mb-2'>Schedule</div>`;
         if(eventLogo && layout==='center') html += `<img src='${eventLogo}' alt='Logo' style='height:80px;margin:0.5rem auto;'>`;
-        html += `<table><tbody>${program.map(item=>`<tr><td class='pr-4'>${item.time}</td><td class='pr-4'>${item.title}</td><td>${item.presenter}</td></tr>`).join('')}</tbody></table>`;
+        html += `<table><tbody>${program.map(item=>`<tr class='${item.done?'opacity-60 line-through':''}'><td class='pr-4'>${item.time}</td><td class='pr-4'>${item.title}</td><td class='pr-4'>${item.type||''}</td><td>${(item.speakers||[]).join(', ')}</td></tr>`).join('')}</tbody></table>`;
         html += sponsorHtml;
         programOverlay.innerHTML = html;
     } else if (previewMode && state && state.previewProgramVisible && program && program.length) {
@@ -452,9 +452,9 @@ function renderOverlayFromFirebase(state, graphics, branding) {
                 sponsorHtml2 = `<div style='display:flex;gap:1rem;justify-content:space-around;margin-top:0.5rem;'>${sponsors2.slice(0,4).map(s=>`<img src='${s.logo}' alt='${s.name}' style='height:60px;'>`).join('')}</div>`;
             }
         }
-        let html2 = `<div class='font-bold text-lg mb-2'>Program</div>`;
+        let html2 = `<div class='font-bold text-lg mb-2'>Schedule</div>`;
         if(eventLogo2 && layoutPrev==='center') html2 += `<img src='${eventLogo2}' alt='Logo' style='height:80px;margin:0.5rem auto;'>`;
-        html2 += `<table><tbody>${program.map(item=>`<tr><td class='pr-4'>${item.time}</td><td class='pr-4'>${item.title}</td><td>${item.presenter}</td></tr>`).join('')}</tbody></table>`;
+        html2 += `<table><tbody>${program.map(item=>`<tr class='${item.done?'opacity-60 line-through':''}'><td class='pr-4'>${item.time}</td><td class='pr-4'>${item.title}</td><td class='pr-4'>${item.type||''}</td><td>${(item.speakers||[]).join(', ')}</td></tr>`).join('')}</tbody></table>`;
         html2 += sponsorHtml2;
         programOverlay.innerHTML = html2;
     } else if (programOverlay) {

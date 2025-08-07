@@ -6,6 +6,7 @@ import { renderGraphicsPanel } from './components/graphicsPanel.js';
 import { renderScoreboardPanel } from './components/scoreboardPanel.js';
 import { renderStatsPanel } from './components/statsPanel.js';
 import { renderTeamsPanel } from './components/teamsPanel.js';
+import { renderSpeakersPanel } from './components/speakersPanel.js';
 import { getTeamLabel } from './sportsConfig.js';
 import { renderBrandingModal } from './components/brandingModal.js';
 import { renderProfileWizard } from './components/profileWizard.js';
@@ -105,8 +106,11 @@ function updateGraphicsTabs(type, tournament, corporateType = 'conference') {
     const schedulePanel = document.getElementById('schedule-panel');
     const presBtn = tabBar.querySelector('[data-tab="presentation"]');
     const presPanel = document.getElementById('presentation-panel');
+    const spkBtn = tabBar.querySelector('[data-tab="speakers"]');
+    const spkPanel = document.getElementById('speakers-panel');
     const showSchedule = type !== 'sports' && corporateType !== 'podcast';
     const showPres = type !== 'sports' && corporateType === 'conference';
+    const showSpeakers = type !== 'sports';
     if (scheduleBtn && schedulePanel) {
         if (showSchedule) {
             scheduleBtn.classList.remove('hidden');
@@ -123,6 +127,15 @@ function updateGraphicsTabs(type, tournament, corporateType = 'conference') {
         }else{
             presBtn.classList.add('hidden');
             presPanel.classList.add('hidden');
+        }
+    }
+    if(spkBtn && spkPanel){
+        if(showSpeakers){
+            spkBtn.classList.remove('hidden');
+            spkPanel.classList.add('hidden');
+        } else {
+            spkBtn.classList.add('hidden');
+            spkPanel.classList.add('hidden');
         }
     }
     const eventsLabel = document.getElementById('events-tab-label');
@@ -192,6 +205,7 @@ async function initializeComponents(eventData) {
             document.getElementById('tournament-panel')?.classList.add('hidden');
         }
     } else {
+        renderSpeakersPanel(document.getElementById('speakers-panel'), eventId);
         if(corpType !== 'podcast'){
             renderProgramPreview(document.getElementById('schedule-panel'), eventData, onOverlayStateChange);
         }

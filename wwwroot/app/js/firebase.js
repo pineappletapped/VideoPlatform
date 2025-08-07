@@ -110,6 +110,15 @@ export function setTeams(eventId, data) {
   return set(ref(db, `teams/${eventId}`), data);
 }
 
+// Speakers helpers
+export function listenSpeakers(eventId, cb) {
+  return onValue(ref(db, `speakers/${eventId}`), snap => cb(snap.val()));
+}
+
+export function setSpeakers(eventId, data) {
+  return set(ref(db, `speakers/${eventId}`), data);
+}
+
 // Graphics helpers (eventId-scoped)
 export function setGraphicsData(eventId, graphics, mode = 'live') {
   const path = mode === 'dev' ? `graphicsDev/${eventId}` : `graphics/${eventId}`;
