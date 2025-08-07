@@ -32,14 +32,14 @@ let loadedVT = null;
 let graphicsMode = 'live';
 
 async function initializeApp(user) {
-    let firebaseStatus = 'Connecting to Firebase...';
+    let firebaseStatus = 'Connecting to server...';
     currentUserId = user ? user.uid.replace('local-','') : '';
     try {
         // Test Firebase connection
         await getOverlayState(eventId);
-        firebaseStatus = 'Connected to Firebase';
+        firebaseStatus = 'Connected to server';
     } catch (e) {
-        firebaseStatus = 'Firebase connection failed';
+        firebaseStatus = 'Server connection failed';
     }
     try {
         // Load event data (from JSON)

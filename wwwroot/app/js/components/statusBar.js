@@ -22,9 +22,8 @@ export function renderStatusBar(container, eventData, opts = {}) {
         container.innerHTML = `
             <div class='status-bar'>
                 <div class="flex flex-wrap gap-4 items-center text-sm">
-                    <span>Status: <span class="font-semibold">${eventData.status || 'unknown'}</span></span>
                     <span>Date: <span class="font-semibold" id="status-date"></span></span>
-                    ${options.firebase && eventData.firebaseStatus ? `<span>Firebase: <span class="font-semibold ${eventData.firebaseStatus.includes('Connected') ? 'text-green-600' : 'text-red-600'}">${eventData.firebaseStatus}</span></span>` : ''}
+                    ${options.firebase && eventData.firebaseStatus ? `<span>Server: <span class="font-semibold ${eventData.firebaseStatus.includes('Connected') ? 'text-green-600' : 'text-red-600'}">${eventData.firebaseStatus}</span></span>` : ''}
                     ${options.overlay ? `<span>Overlay: <span class="font-semibold ${overlayOnline ? 'text-green-600' : 'text-red-600'}">${overlayOnline ? 'Online' : 'Offline'}</span></span>` : ''}
                     ${options.listener ? `<span>Listener: <span class="font-semibold ${listenerOnline ? 'text-green-600' : 'text-red-600'}">${listenerOnline ? 'Online' : 'Offline'}</span></span>` : ''}
                     ${options.sport ? `<span>Sports: <span class="font-semibold ${sportOnline ? 'text-green-600' : 'text-red-600'}">${sportOnline ? 'Online' : 'Offline'}</span></span>` : ''}

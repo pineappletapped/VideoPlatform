@@ -137,7 +137,7 @@ async function init() {
   topBar.addEventListener('brand-settings', () => { const modal=document.getElementById('branding-modal'); renderBrandingModal(modal,{ eventId }); modal.classList.remove('hidden'); });
   document.getElementById('top-bar').appendChild(topBar);
 
-  renderStatusBar(document.getElementById('status-bar'), { id:eventId, status:'Sports Admin', firebaseStatus:'Connected to Firebase' }, { overlay:false, listener:false, sport:false, clock:true, atem:false, obs:false });
+  renderStatusBar(document.getElementById('status-bar'), { id:eventId, status:'Sports Admin', firebaseStatus:'Connected to server' }, { overlay:false, listener:false, sport:false, clock:true, atem:false, obs:false });
 
   const left = document.getElementById('left');
   const teamsTab = document.getElementById('teams');

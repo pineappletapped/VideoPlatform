@@ -39,12 +39,12 @@ function highlightLatestLowerThird() {
 
 async function initializeApp(user) {
     currentUserId = user ? user.uid.replace('local-','') : '';
-    let firebaseStatus = 'Connecting to Firebase...';
+    let firebaseStatus = 'Connecting to server...';
     try {
         await getOverlayState(eventId);
-        firebaseStatus = 'Connected to Firebase';
+        firebaseStatus = 'Connected to server';
     } catch (e) {
-        firebaseStatus = 'Firebase connection failed';
+        firebaseStatus = 'Server connection failed';
     }
     try {
         const eventData = await eventStorage.loadEvent(eventId);
