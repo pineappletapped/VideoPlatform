@@ -5,7 +5,6 @@ import { renderBrandingModal } from './components/brandingModal.js';
 let SQUARE_APP_ID = '';
 let SQUARE_LOCATION_ID = '';
 let SQUARE_PLANS = {};
-const PLAN_LIMITS = { bronze: 1, silver: 3, gold: 8 };
 import { sportsData } from './sportsConfig.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -105,7 +104,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       };
     });
-    const limit = PLAN_LIMITS[currentUserTier] || 1;
+    const limit = planFeatures.maxEvents || 1;
     const count = entries.length;
     allowanceDiv.innerHTML = `Events used: ${count}/${limit}` + (count >= limit ? ` <a href="account.html" class="underline text-brand">Upgrade</a>` : '');
     openCreateBtn.disabled = count >= limit;
