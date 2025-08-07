@@ -283,10 +283,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const sportWrap = createModal.querySelector('#sport-wrap');
     const corpWrap = createModal.querySelector('#corp-wrap');
     const tournamentWrap = createModal.querySelector('#tournament-wrap');
+    const allowTournament = !!planFeatures.tournament;
+    if(!allowTournament) tournamentWrap.remove();
     typeSel.onchange = () => {
       const sports = typeSel.value === 'sports';
       sportWrap.style.display = sports ? 'block' : 'none';
-      tournamentWrap.style.display = sports ? 'block' : 'none';
+      if(allowTournament){
+        tournamentWrap.style.display = sports ? 'block' : 'none';
+      }
       corpWrap.style.display = sports ? 'none' : 'block';
     };
     createModal.querySelector('#create-cancel').onclick = () => {
@@ -299,7 +303,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const meta = { title: data.title, eventType: data.eventType, owner: currentUserId };
       if (data.eventType === 'sports') {
         meta.sport = data.sport;
-        if (data.tournament === 'on') meta.tournament = true;
+        if (data.tournament === 'on' && allowTournament) meta.tournament = true;
       } else {
         meta.corporateType = data.corporateType || 'conference';
       }

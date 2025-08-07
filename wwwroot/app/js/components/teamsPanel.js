@@ -105,8 +105,17 @@ export function renderTeamsPanel(container, eventId, sport='Football', tournamen
         const nameALabel = cfg.playersPerTeam === 1 ? 'Player 1 Name' : 'Team A Name';
         const nameBLabel = cfg.playersPerTeam === 1 ? 'Player 2 Name' : 'Team B Name';
         const buildRows = (prefix, team) => team.players.map(pl=>rowTpl(prefix, pl)).join('');
+        const teamOptions = tournament ? currentData.teams.map((t,i)=>`<option value="${i}">${t.name||`Team ${i+1}`}</option>`).join('') : '';
+        const selectors = tournament ? `
+            <div class="flex items-center gap-2 mb-2">
+                <label class="text-sm">Team A<select id="sel-team-a" class="border p-1 ml-1">${teamOptions}</select></label>
+                <label class="text-sm">Team B<select id="sel-team-b" class="border p-1 ml-1">${teamOptions}</select></label>
+                <button id="add-team" class="control-button btn-xs ml-2">Add Team/Player</button>
+            </div>
+        ` : '';
         return `
             <h3 class="font-bold text-lg mb-2">Edit ${label}</h3>
+            ${selectors}
             <div class="flex gap-4 text-sm mb-4">
                 <div class="flex-1 min-w-0">
                     <label class="block text-sm mb-1">${nameALabel}</label>
@@ -208,6 +217,25 @@ export function renderTeamsPanel(container, eventId, sport='Football', tournamen
         let dragSrc = null;
         renderBody('a', tA);
         renderBody('b', tB);
+
+        const selA = win.querySelector('#sel-team-a');
+        const selB = win.querySelector('#sel-team-b');
+        if(selA) selA.value = aIdx;
+        if(selB) selB.value = bIdx;
+        if(selA) selA.onchange = ()=>{ currentData.currentA = parseInt(selA.value,10); setTeams(teamsEventId, currentData); showEditModal(); };
+        if(selB) selB.onchange = ()=>{ currentData.currentB = parseInt(selB.value,10); setTeams(teamsEventId, currentData); showEditModal(); };
+        const addBtn = win.querySelector('#add-team');
+        if(addBtn) addBtn.onclick = ()=>{
+            const count = cfg.playersPerTeam + (cfg.subs||0);
+            const players = Array.from({length:count}).map((_,i)=>({
+                name:'', number:'', pos:'', photo:'', status: i < cfg.playersPerTeam ? 'starting' : 'sub'
+            }));
+            const name = cfg.playersPerTeam === 1 ? `Player ${currentData.teams.length+1}` : `Team ${currentData.teams.length+1}`;
+            currentData.teams.push({ name, color:'#333', logo:'', players });
+            currentData.currentA = currentData.teams.length-1;
+            setTeams(teamsEventId, currentData);
+            showEditModal();
+        };
 
         const aLogoFile = win.querySelector('#team-a-logo-file');
         const bLogoFile = win.querySelector('#team-b-logo-file');

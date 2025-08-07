@@ -27,7 +27,6 @@ let eventsNotify = false;
 
 async function initializeApp(user) {
     currentUserId = user ? user.uid.replace('local-','') : '';
-    userFeatures = await getUserFeatures(user?.uid || '');
     let firebaseStatus = 'Connecting to Firebase...';
     try {
         await getOverlayState(eventId);
@@ -37,8 +36,9 @@ async function initializeApp(user) {
     }
     try {
         const eventData = await eventStorage.loadEvent(eventId);
-        let eventMeta = await getEventMetadata(eventId);
+        const eventMeta = await getEventMetadata(eventId);
         if (eventMeta) Object.assign(eventData, eventMeta);
+        userFeatures = await getUserFeatures(eventMeta?.owner || user?.uid || '');
         updateEventMetadata(eventId, { lastOpened: Date.now() }).catch(()=>{});
         eventData.firebaseStatus = firebaseStatus;
         initializeComponents(eventData);
