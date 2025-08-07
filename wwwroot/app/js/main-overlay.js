@@ -28,6 +28,8 @@ let stingerTimeout = null;
 let prevPresentationVisible = false;
 let prevPresentationData = null;
 let prevSponsorLive = {};
+let prevFixturesVisible = false;
+let prevWeatherVisible = false;
 const placementClassMap = {
     scoreboardTop: 'sb-sponsor top',
     scoreboardBottom: 'sb-sponsor bottom',
@@ -58,6 +60,16 @@ function contrastColor(hex) {
     const b = parseInt(c.substr(4,2),16);
     const lum = (0.299*r + 0.587*g + 0.114*b)/255;
     return lum > 0.6 ? '#000' : '#fff';
+}
+
+function buildInfoWindow(title, bodyHtml, branding, sponsorKey, style='style1'){
+    const sponsor = sponsorsData[sponsorKey];
+    const sponsorHtml = sponsor ? `<div class='info-window-sponsor'><img src='${sponsor.logo}' alt='${sponsor.name}'></div>` : '';
+    const headColor = contrastColor(branding.primaryColor);
+    return `<div class='info-window info-window-${style}' style='font-family:${branding.font};'>`+
+        `<div class='info-window-head' style='background:${branding.primaryColor};color:${headColor};'>${title}</div>`+
+        `<div class='info-window-body'>${bodyHtml}${sponsorHtml}</div>`+
+        `</div>`;
 }
 
 function parseTime(str){
@@ -490,54 +502,24 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         if (!fixturesOverlay) {
             fixturesOverlay = document.createElement('div');
             fixturesOverlay.id = 'fixtures-overlay';
+            fixturesOverlay.className = 'info-overlay';
             overlayContainer.appendChild(fixturesOverlay);
         }
-        fixturesOverlay.style.position = 'absolute';
-        fixturesOverlay.style.top = '0';
-        fixturesOverlay.style.left = '0';
-        fixturesOverlay.style.width = '100vw';
-        fixturesOverlay.style.height = '100vh';
-        fixturesOverlay.style.background = 'rgba(0,0,0,0.8)';
-        fixturesOverlay.style.color = '#fff';
-        fixturesOverlay.style.display = 'flex';
-        fixturesOverlay.style.alignItems = 'center';
-        fixturesOverlay.style.justifyContent = 'center';
-        fixturesOverlay.style.zIndex = '110';
-        fixturesOverlay.style.fontFamily = branding.font;
         fixturesOverlay.style.opacity = previewMode ? '0.6' : '1';
         const listHtml = (fixturesData.list||[]).map(f=>`<div>${f.home} vs ${f.away}</div>`).join('');
-        fixturesOverlay.innerHTML = `<div style="font-size:3rem;text-align:center;">${listHtml || 'No fixtures'}</div>`;
+        fixturesOverlay.innerHTML = buildInfoWindow('Fixtures', listHtml || 'No fixtures', branding, sponsorPlacements.intro, fixturesData.style || 'style1');
+        if(!prevFixturesVisible){
+            const sp = sponsorsData[sponsorPlacements.intro];
+            if(sp) addSponsorLog(eventId,{ts:Date.now(),placement:'intro',sponsor:sponsorPlacements.intro,action:'show'});
+        }
     } else if (fixturesOverlay) {
+        if(prevFixturesVisible){
+            const sp = sponsorsData[sponsorPlacements.intro];
+            if(sp) addSponsorLog(eventId,{ts:Date.now(),placement:'intro',sponsor:sponsorPlacements.intro,action:'hide'});
+        }
         fixturesOverlay.remove();
     }
-
-    // Formation Overlay
-    let formationOverlay = overlayContainer.querySelector('#formation-overlay');
-    const formationData = state && state.formation;
-    const formationShow = previewMode ? state && state.formationPreviewVisible : state && state.formationVisible;
-    if (formationShow && formationData) {
-        if (!formationOverlay) {
-            formationOverlay = document.createElement('div');
-            formationOverlay.id = 'formation-overlay';
-            overlayContainer.appendChild(formationOverlay);
-        }
-        formationOverlay.style.position = 'absolute';
-        formationOverlay.style.top = '0';
-        formationOverlay.style.left = '0';
-        formationOverlay.style.width = '100vw';
-        formationOverlay.style.height = '100vh';
-        formationOverlay.style.background = 'rgba(0,0,0,0.8)';
-        formationOverlay.style.color = '#fff';
-        formationOverlay.style.display = 'flex';
-        formationOverlay.style.alignItems = 'center';
-        formationOverlay.style.justifyContent = 'center';
-        formationOverlay.style.zIndex = '110';
-        formationOverlay.style.fontFamily = branding.font;
-        formationOverlay.style.opacity = previewMode ? '0.6' : '1';
-        formationOverlay.innerHTML = `<div style="font-size:3rem;">${formationData.teamName || 'Formation graphic'}</div>`;
-    } else if (formationOverlay) {
-        formationOverlay.remove();
-    }
+    prevFixturesVisible = fixturesShow;
 
     // Course Overlay
     let courseOverlay = overlayContainer.querySelector('#course-overlay');
@@ -578,27 +560,26 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         if (!weatherOverlay) {
             weatherOverlay = document.createElement('div');
             weatherOverlay.id = 'weather-overlay';
+            weatherOverlay.className = 'info-overlay';
             overlayContainer.appendChild(weatherOverlay);
         }
-        weatherOverlay.style.position = 'absolute';
-        weatherOverlay.style.top = '0';
-        weatherOverlay.style.left = '0';
-        weatherOverlay.style.width = '100vw';
-        weatherOverlay.style.height = '100vh';
-        weatherOverlay.style.background = 'rgba(0,0,0,0.8)';
-        weatherOverlay.style.color = '#fff';
-        weatherOverlay.style.display = 'flex';
-        weatherOverlay.style.alignItems = 'center';
-        weatherOverlay.style.justifyContent = 'center';
-        weatherOverlay.style.zIndex = '110';
-        weatherOverlay.style.fontFamily = branding.font;
         weatherOverlay.style.opacity = previewMode ? '0.6' : '1';
-        const header = weatherData.weatherLoc ? `<div style="text-align:center;font-size:1.25rem;margin-bottom:0.5rem;">${weatherData.weatherLoc}</div>` : '';
         const slotHtml = (weatherData.slots || []).map(s=>`<div style='display:flex;flex-direction:column;align-items:center;padding:0 0.5rem;'><div>${s.time}</div><div>${WEATHER_ICONS[s.icon] || ''}</div><div>${s.temp}</div></div>`).join('');
-        weatherOverlay.innerHTML = `<div style="font-size:1.5rem;">${header}<div style='display:flex;justify-content:center;'>${slotHtml}</div></div>`;
+        const header = weatherData.weatherLoc ? `<div style="text-align:center;font-size:1.25rem;margin-bottom:0.5rem;">${weatherData.weatherLoc}</div>` : '';
+        const bodyHtml = `${header}<div style='display:flex;justify-content:center;'>${slotHtml}</div>`;
+        weatherOverlay.innerHTML = buildInfoWindow('Weather', bodyHtml, branding, sponsorPlacements.intro, 'style1');
+        if(!prevWeatherVisible){
+            const sp = sponsorsData[sponsorPlacements.intro];
+            if(sp) addSponsorLog(eventId,{ts:Date.now(),placement:'intro',sponsor:sponsorPlacements.intro,action:'show'});
+        }
     } else if (weatherOverlay) {
+        if(prevWeatherVisible){
+            const sp = sponsorsData[sponsorPlacements.intro];
+            if(sp) addSponsorLog(eventId,{ts:Date.now(),placement:'intro',sponsor:sponsorPlacements.intro,action:'hide'});
+        }
         weatherOverlay.remove();
     }
+    prevWeatherVisible = weatherShow;
 
     // Scoreboard Overlay
     let scoreboardOverlay = overlayContainer.querySelector('#scoreboard-overlay');
@@ -949,19 +930,20 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         if (!formOverlay) {
             formOverlay = document.createElement('div');
             formOverlay.id = 'formation-overlay';
+            formOverlay.className = 'info-overlay';
             overlayContainer.appendChild(formOverlay);
         }
         const showPhoto = teamsData && teamsData.showPhotosFormation;
-        const bottomSp = sponsorsData[sponsorPlacements.formationBottom];
-        const bottomImg = bottomSp ? `<img src='${bottomSp.logo}' class='sb-sponsor bottom'>` : '';
-        formOverlay.innerHTML = `<div class='formation-pitch'></div>` +
+        const pitchHtml = `<div class='formation-pitch'>`+
             formData.players.map(p=>{
                 const photo = showPhoto && p.photo ? `<img src='${p.photo}' class='formation-photo'>` : '';
                 const num = p.number ? `#${p.number} ` : '';
                 const pos = p.pos ? `<div class='text-xs'>${p.pos}</div>` : '';
                 return `<div class='formation-player' style='top:${p.y}%;left:${p.x}%;font-family:${branding.font};'>${photo}<span>${num}${p.name}</span>${pos}</div>`;
-            }).join('') + bottomImg;
+            }).join('') + `</div>`;
+        formOverlay.innerHTML = buildInfoWindow(formData.teamName || 'Formation', pitchHtml, branding, sponsorPlacements.formationBottom, formData.style || 'style1');
         if(!prevFormationVisible){
+            const bottomSp = sponsorsData[sponsorPlacements.formationBottom];
             if(bottomSp) addSponsorLog(eventId,{ts:Date.now(),placement:'formationBottom',sponsor:sponsorPlacements.formationBottom,action:'show'});
         }
     } else if (formOverlay) {
