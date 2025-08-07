@@ -150,11 +150,11 @@ function renderAll(){
     renderTeamColumn('b');
 }
 
-async function init(user){
-    const ev = await getEventMetadata(eventId) || {};
+async function init(user, ev){
+    const meta = ev || await getEventMetadata(eventId) || {};
     updateEventMetadata(eventId, { lastOpened: Date.now() }).catch(()=>{});
     const tb = document.createElement('top-bar');
-    tb.setAttribute('event-name', ev.title || eventId);
+    tb.setAttribute('event-name', meta.title || eventId);
     tb.addEventListener('logout', logout);
     document.getElementById('top-bar').appendChild(tb);
     renderStatusBar(document.getElementById('status-bar'), { id:eventId, status:'Commentator', firebaseStatus:'Connected' }, { overlay:false, listener:false, sport:true, clock:true, atem:false, obs:false });
@@ -167,11 +167,12 @@ async function init(user){
 }
 
 requireAuth(`commentator.html?event_id=${eventId}`).then(async u => {
-  const feats = await getUserFeatures(u.uid);
+  const ev = await getEventMetadata(eventId).catch(()=>({})) || {};
+  const feats = await getUserFeatures(ev.owner || u.uid);
   if (!feats.commentator) {
     alert('Commentator panel not available for your plan.');
     window.location.href = 'index.html';
     return;
   }
-  init(u);
+  init(u, ev);
 });
