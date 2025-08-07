@@ -40,6 +40,25 @@ export function renderTournamentPanel(container, eventId, sport='Football'){
                     <button data-del="${i}" class="control-button btn-xs ml-1">X</button></td>
             </tr>`;
         }).join('');
+        function calcStandings(){
+            const list = teams?.teams || [];
+            const stats = list.map(t=>({ name:t.name, played:0, won:0, draw:0, lost:0, for:0, against:0, points:0 }));
+            (data.matches||[]).forEach(m=>{
+                const a = stats[m.teamA];
+                const b = stats[m.teamB];
+                if(a && b && m.scoreA!=null && m.scoreB!=null){
+                    a.played++; b.played++;
+                    a.for += m.scoreA; a.against += m.scoreB;
+                    b.for += m.scoreB; b.against += m.scoreA;
+                    if(m.scoreA>m.scoreB){ a.won++; b.lost++; a.points+=data.pointsWin; b.points+=data.pointsLoss; }
+                    else if(m.scoreA<m.scoreB){ b.won++; a.lost++; b.points+=data.pointsWin; a.points+=data.pointsLoss; }
+                    else { a.draw++; b.draw++; a.points+=data.pointsDraw; b.points+=data.pointsDraw; }
+                }
+            });
+            stats.forEach(s=>{ s.diff = s.for - s.against; });
+            stats.sort((x,y)=> y.points - x.points || y.diff - x.diff || y.for - x.for );
+            return stats;
+        }
         container.innerHTML = `
             <div class='tournament-panel'>
                 <h2 class="font-bold text-lg mb-2">Tournament</h2>
@@ -59,6 +78,8 @@ export function renderTournamentPanel(container, eventId, sport='Football'){
                 <table id="tn-table" class="text-sm w-full mb-2">${matchRows}</table>
                 <button id="add-match" class="control-button btn-sm">Add Match</button>
                 <button id="hide-results" class="control-button btn-sm ml-2">Hide Results</button>
+                <button id="show-standings" class="control-button btn-sm ml-2">Standings</button>
+                <button id="hide-standings" class="control-button btn-sm ml-2">Hide Standings</button>
             </div>`;
         container.querySelector('#tn-format').value = data.format || 'League';
         const table = container.querySelector('#tn-table');
@@ -142,6 +163,13 @@ export function renderTournamentPanel(container, eventId, sport='Football'){
         });
         container.querySelector('#hide-results').onclick = ()=>{
             updateOverlayState(eventId,{resultsVisible:false});
+        };
+        container.querySelector('#show-standings').onclick = ()=>{
+            const tableData = calcStandings();
+            updateOverlayState(eventId,{ standings:{ style:'style1', rows:tableData }, standingsVisible:true });
+        };
+        container.querySelector('#hide-standings').onclick = ()=>{
+            updateOverlayState(eventId,{ standingsVisible:false });
         };
     }
 }

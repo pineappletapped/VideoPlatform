@@ -19,6 +19,8 @@ export function renderLineupPanel(container, eventId = 'demo', sport = 'Football
     let tableVisible = false;
     let tableTeam = '';
     let resultsVisible = false;
+    let resultsPreviewVisible = false;
+    let resultsStyle = 'style1';
     let scoreboardData = null;
 
     listenTeams(eventId, data=>{ teamsData = data; if(lineupData) render(); });
@@ -31,6 +33,8 @@ export function renderLineupPanel(container, eventId = 'demo', sport = 'Football
             tableVisible = state && state.lineupTableVisible || false;
             tableTeam = state && state.lineupTable ? state.lineupTable.team : '';
             resultsVisible = state && state.resultsVisible || false;
+            resultsPreviewVisible = state && state.resultsPreviewVisible || false;
+            resultsStyle = state && state.results ? (state.results.style || resultsStyle) : resultsStyle;
             scoreboardData = state && state.scoreboard || null;
             render();
         });
@@ -103,8 +107,14 @@ export function renderLineupPanel(container, eventId = 'demo', sport = 'Football
                             <button id="table-b" class="control-button btn-sm mt-1${tableVisible && tableTeam==='b' ? ' ring-2 ring-green-400' : ''}">Table</button>
                         </div>
                     </div>
-                    <div class="mt-2">
-                        <button id="show-results" class="control-button btn-sm${resultsVisible ? ' ring-2 ring-green-400' : ''}">Match Result</button>
+                    <div class="mt-2 flex items-center gap-2">
+                        <select id="res-style" class="border p-1 text-black">
+                            <option value="style1">Style 1</option>
+                            <option value="style2">Style 2</option>
+                            <option value="style3">Style 3</option>
+                        </select>
+                        <button id="res-preview" class="control-button btn-sm btn-preview${resultsPreviewVisible ? ' ring-2 ring-brand' : ''}">Preview</button>
+                        <button id="res-live" class="control-button btn-sm btn-live${resultsVisible ? ' ring-2 ring-green-400' : ''}">Live</button>
                     </div>
                 </div>`;
             localStorage.setItem(`lineupsSeen-${eventId}`, String(lineupsUpdated));
@@ -151,26 +161,36 @@ export function renderLineupPanel(container, eventId = 'demo', sport = 'Football
                     updateOverlayState(eventId,{lineupTable:buildTable(teamKey),lineupTableVisible:true});
                 }
             }
-            function toggleResults(){
-                if(resultsVisible){
-                    updateOverlayState(eventId,{resultsVisible:false});
-                }else if(scoreboardData){
-                    const tA = teamsData.teams ? teamsData.teams[teamsData.currentA||0] : teamsData.teamA;
-                    const tB = teamsData.teams ? teamsData.teams[teamsData.currentB||1] : teamsData.teamB;
-                    updateOverlayState(eventId,{results:{
-                        teamA:{name:tA.name,score:scoreboardData.scores?.[0]||0,scorers:scoreboardData.scorers?.[0]||[]},
-                        teamB:{name:tB.name,score:scoreboardData.scores?.[1]||0,scorers:scoreboardData.scorers?.[1]||[]}
-                    },resultsVisible:true});
-                }
-            }
             if(showA) showA.onclick=()=>toggleFormation('a');
             if(showB) showB.onclick=()=>toggleFormation('b');
             const tableA = container.querySelector('#table-a');
             const tableB = container.querySelector('#table-b');
-            const resBtn = container.querySelector('#show-results');
+            const styleSel = container.querySelector('#res-style');
+            const resPrev = container.querySelector('#res-preview');
+            const resLive = container.querySelector('#res-live');
+            if(styleSel) styleSel.value = resultsStyle;
             if(tableA) tableA.onclick=()=>toggleTableDisplay('a');
             if(tableB) tableB.onclick=()=>toggleTableDisplay('b');
-            if(resBtn) resBtn.onclick=toggleResults;
+            if(styleSel) styleSel.onchange = () => { resultsStyle = styleSel.value; };
+            const makeResults = () => {
+                if(!scoreboardData) return null;
+                const tA = teamsData.teams ? teamsData.teams[teamsData.currentA||0] : teamsData.teamA;
+                const tB = teamsData.teams ? teamsData.teams[teamsData.currentB||1] : teamsData.teamB;
+                return { style: resultsStyle,
+                    teamA:{name:tA.name,score:scoreboardData.scores?.[0]||0,scorers:scoreboardData.scorers?.[0]||[]},
+                    teamB:{name:tB.name,score:scoreboardData.scores?.[1]||0,scorers:scoreboardData.scorers?.[1]||[]}
+                };
+            };
+            if(resPrev) resPrev.onclick = () => {
+                const obj = makeResults();
+                if(!obj) return;
+                updateOverlayState(eventId,{results:obj, resultsPreviewVisible:!resultsPreviewVisible, resultsVisible:false});
+            };
+            if(resLive) resLive.onclick = () => {
+                const obj = makeResults();
+                if(!obj) return;
+                updateOverlayState(eventId,{results:obj, resultsVisible:!resultsVisible, resultsPreviewVisible:false});
+            };
         }
     }
 }

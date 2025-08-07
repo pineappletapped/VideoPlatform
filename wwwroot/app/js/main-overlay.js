@@ -979,22 +979,40 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     // Results Overlay
     let resOverlay = overlayContainer.querySelector('#results-overlay');
     const resData = state && state.results;
-    const resShow = state && state.resultsVisible;
+    const resShow = state && state.resultsVisible || state && state.resultsPreviewVisible;
     if(resShow && resData){
         if(!resOverlay){
             resOverlay = document.createElement('div');
             resOverlay.id = 'results-overlay';
             overlayContainer.appendChild(resOverlay);
         }
-        resOverlay.innerHTML = `<div class='results-box' style='font-family:${branding.font};'>`+
-            `<div class='results-teams'>${resData.teamA.name} ${resData.teamA.score} - ${resData.teamB.score} ${resData.teamB.name}</div>`+
-            `<div class='results-grid'><div><h3>${resData.teamA.name}</h3>${resData.teamA.scorers.map(s=>`<div>${s}</div>`).join('')}</div>`+
-            `<div><h3>${resData.teamB.name}</h3>${resData.teamB.scorers.map(s=>`<div>${s}</div>`).join('')}</div></div>`+
-            `</div>`;
+        const scorersA = (resData.teamA.scorers||[]).map(s=>`<div>${s}</div>`).join('');
+        const scorersB = (resData.teamB.scorers||[]).map(s=>`<div>${s}</div>`).join('');
+        const body = `<div class='results-teams'>${resData.teamA.name} ${resData.teamA.score} - ${resData.teamB.score} ${resData.teamB.name}</div>`+
+            `<div class='results-grid'><div><h3>${resData.teamA.name}</h3>${scorersA}</div>`+
+            `<div><h3>${resData.teamB.name}</h3>${scorersB}</div></div>`;
+        resOverlay.innerHTML = buildInfoWindow('Match Result', body, branding, resData.sponsor, resData.style||'style1');
     } else if(resOverlay){
         resOverlay.remove();
     }
     prevResultsVisible = resShow;
+
+    // Standings Overlay
+    let standOverlay = overlayContainer.querySelector('#standings-overlay');
+    const standData = state && state.standings;
+    const standShow = state && state.standingsVisible;
+    if(standShow && standData){
+        if(!standOverlay){
+            standOverlay = document.createElement('div');
+            standOverlay.id = 'standings-overlay';
+            overlayContainer.appendChild(standOverlay);
+        }
+        const rows = (standData.rows||[]).map((r,i)=>`<tr><td>${i+1}</td><td>${r.name}</td><td>${r.played}</td><td>${r.won}</td><td>${r.draw}</td><td>${r.lost}</td><td>${r.for}</td><td>${r.against}</td><td>${r.diff}</td><td>${r.points}</td></tr>`).join('');
+        const body = `<table class='standings-table'><thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>F</th><th>A</th><th>GD</th><th>Pts</th></tr></thead><tbody>${rows}</tbody></table>`;
+        standOverlay.innerHTML = buildInfoWindow('Standings', body, branding, standData.sponsor, standData.style||'style1');
+    } else if(standOverlay){
+        standOverlay.remove();
+    }
 
     // Match Log Overlay
     let logOverlay = overlayContainer.querySelector('#log-overlay');
