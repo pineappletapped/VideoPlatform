@@ -1,7 +1,7 @@
 import { requireAuth, logout } from './auth.js';
 import './components/topBar.js';
 import { renderStatusBar } from './components/statusBar.js';
-import { listenPresentation, updatePresentation, updateOverlayState, getEventMetadata, updateEventMetadata } from './firebase.js';
+import { listenPresentation, updatePresentation, updateOverlayState, getEventMetadata, updateEventMetadata, getUserFeatures } from './firebase.js';
 
 const params = new URLSearchParams(window.location.search);
 const eventId = params.get('event_id') || 'demo';
@@ -74,4 +74,12 @@ async function init(user){
     });
 }
 
-requireAuth(`speakers.html?event_id=${eventId}`).then(u=>init(u));
+requireAuth(`speakers.html?event_id=${eventId}`).then(async u => {
+  const feats = await getUserFeatures(u.uid);
+  if (!feats.speaker) {
+    alert('Speaker panel not available for your plan.');
+    window.location.href = 'index.html';
+    return;
+  }
+  init(u);
+});

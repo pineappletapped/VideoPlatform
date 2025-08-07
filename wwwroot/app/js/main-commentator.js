@@ -1,7 +1,7 @@
 import { requireAuth, logout } from './auth.js';
 import './components/topBar.js';
 import { renderStatusBar } from './components/statusBar.js';
-import { getEventMetadata, updateEventMetadata, listenOverlayState, listenMatchLog, listenTeams } from './firebase.js';
+import { getEventMetadata, updateEventMetadata, listenOverlayState, listenMatchLog, listenTeams, getUserFeatures } from './firebase.js';
 import { getDatabaseInstance } from './firebaseApp.js';
 import { ref, onValue } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
 
@@ -166,4 +166,12 @@ async function init(user){
     listenOverlayState(eventId, state => { scoreboard = state && state.scoreboard; renderScoreboard(); });
 }
 
-requireAuth(`commentator.html?event_id=${eventId}`).then(u=>init(u));
+requireAuth(`commentator.html?event_id=${eventId}`).then(async u => {
+  const feats = await getUserFeatures(u.uid);
+  if (!feats.commentator) {
+    alert('Commentator panel not available for your plan.');
+    window.location.href = 'index.html';
+    return;
+  }
+  init(u);
+});

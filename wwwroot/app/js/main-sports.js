@@ -7,7 +7,7 @@ import { renderGolfPanel } from './components/golfPanel.js';
 import { renderStatsPanel } from './components/statsPanel.js';
 import { renderBrandingModal } from './components/brandingModal.js';
 import { renderSponsorsPanel } from './components/sponsorsPanel.js';
-import { getEventMetadata, updateEventMetadata, listenOverlayState, listenMatchLog, listenTeams } from './firebase.js';
+import { getEventMetadata, updateEventMetadata, listenOverlayState, listenMatchLog, listenTeams, getUserFeatures } from './firebase.js';
 import { getTeamLabel } from './sportsConfig.js';
 import { getDatabaseInstance } from './firebaseApp.js';
 import { ref, onValue } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
@@ -97,6 +97,7 @@ function renderLogs(){
 
 async function init() {
   const user = await requireAuth(`sports.html?event_id=${eventId}`);
+  const features = await getUserFeatures(user.uid);
   const meta = await getEventMetadata(eventId) || { eventType: 'sports', sport: 'Football' };
   if (!meta.eventType) meta.eventType = 'sports';
   if (!meta.sport) meta.sport = 'Football';
@@ -136,21 +137,32 @@ async function init() {
       renderGolfPanel(scoreboardPanel, eventId);
       teamsTab.classList.add('hidden');
       renderStatsPanel(statsPanel, eventId);
-      renderSponsorsPanel(sponsorsPanel, eventId);
+      if(features.sponsorship) renderSponsorsPanel(sponsorsPanel, eventId);
     } else {
       renderScoreboardPanel(scoreboardPanel, s, eventId);
       renderTeamsPanel(teamsPanel, eventId, s);
       renderStatsPanel(statsPanel, eventId);
-      renderSponsorsPanel(sponsorsPanel, eventId);
+      if(features.sponsorship) renderSponsorsPanel(sponsorsPanel, eventId);
       teamsTab.classList.remove('hidden');
     }
   }
 
   renderBySport(meta.sport);
 
-  listenTeams(eventId, data=>{ teams = data; renderScoreboard(); renderLogs(); });
+  listenTeams(eventId, data=>{ teams = data; renderScoreboard(); if(features.logging) renderLogs(); });
   listenOverlayState(eventId, state=>{ scoreboard = state && state.scoreboard; renderScoreboard(); });
-  listenMatchLog(eventId, data=>{ logs = data || []; renderLogs(); });
+  if(features.logging) listenMatchLog(eventId, data=>{ logs = data || []; renderLogs(); });
+
+  if(!features.sponsorship){
+    sponsorsTab.classList.add('hidden');
+    const btn = document.querySelector('#right-tabs [data-tab="sponsors"]');
+    btn?.classList.add('hidden');
+  }
+  if(!features.logging){
+    logsTab.classList.add('hidden');
+    const btn = document.querySelector('#right-tabs [data-tab="logs"]');
+    btn?.classList.add('hidden');
+  }
 
   setupTabs();
 }

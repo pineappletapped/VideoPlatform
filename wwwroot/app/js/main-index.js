@@ -1,5 +1,5 @@
 import { onAuth, login, register, logout } from './auth.js';
-import { getAllEventsMetadata, setEventMetadata, getUser, getAllUsers, getOverlayState, deleteEvent } from './firebase.js';
+import { getAllEventsMetadata, setEventMetadata, getUser, getAllUsers, getOverlayState, deleteEvent, getPlanFeatures } from './firebase.js';
 import './components/topBar.js';
 import { renderBrandingModal } from './components/brandingModal.js';
 let SQUARE_APP_ID = '';
@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let card, payments;
   let currentUserId = '';
   let currentUserTier = 'bronze';
+  let planFeatures = {};
   function showBrandModal(uid) {
     const modal = document.getElementById('branding-modal');
     renderBrandingModal(modal, { userId: uid });
@@ -65,13 +66,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       const sportsLink = ev.eventType === 'sports'
         ? `<a class="control-button btn-sm" href="sports.html?event_id=${id}">Sports Admin</a>`
         : '';
-      const commBtn = `<a class="control-button btn-sm" href="commentator.html?event_id=${id}" target="_blank">Commentator</a>`;
-      const speakBtn = `<a class="control-button btn-sm" href="speakers.html?event_id=${id}" target="_blank">Speakers</a>`;
+      const commBtn = planFeatures.commentator && ev.eventType === 'sports'
+        ? `<a class="control-button btn-sm" href="commentator.html?event_id=${id}" target="_blank">Commentator</a>` : '';
+      const speakBtn = planFeatures.speaker
+        ? `<a class="control-button btn-sm" href="speakers.html?event_id=${id}" target="_blank">Speakers</a>` : '';
       const imgSrc = states[idx]?.holdslate?.image;
       const img = imgSrc ?
         `<img src="${imgSrc}" alt="thumb" class="w-24 h-16 object-cover rounded" />` :
         `<div class="w-24 h-16 bg-gray-300 flex items-center justify-center rounded text-xs text-gray-500">No image</div>`;
-      const socialBtn = ev.eventType === 'sports'
+      const socialBtn = planFeatures.social && ev.eventType === 'sports'
         ? `<a class="control-button btn-sm" href="social.html?event_id=${id}">Social</a>`
         : '';
       const actionLinks = ev.eventType === 'sports'
@@ -121,6 +124,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       const locals = JSON.parse(localStorage.getItem('localUsers') || '{}');
       const localInfo = locals[user.email] || {};
       currentUserTier = uData.tier || localInfo.tier || 'bronze';
+      const plans = await getPlanFeatures().catch(()=>({}));
+      planFeatures = plans?.[currentUserTier] || {};
       if (!uData.subscription_id && user.email !== 'ryanadmin') {
         alert('No active subscription found for this account.');
         await logout();

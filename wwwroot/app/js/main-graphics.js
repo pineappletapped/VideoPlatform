@@ -11,7 +11,7 @@ import { renderBrandingModal } from './components/brandingModal.js';
 import { renderProfileWizard } from './components/profileWizard.js';
 import { renderCalendarDrawer } from './components/calendarDrawer.js';
 import { renderIntroPanel } from './components/introPanel.js';
-import { updateOverlayState, getOverlayState, getEventMetadata, updateEventMetadata, getGraphicsData, updateGraphicsData } from './firebase.js';
+import { updateOverlayState, getOverlayState, getEventMetadata, updateEventMetadata, getGraphicsData, updateGraphicsData, getUserFeatures } from './firebase.js';
 import { renderActiveGraphicsPanel } from './components/activeGraphicsPanel.js';
 import { renderBrandingPanel } from './components/brandingPanel.js';
 import { requireAuth, logout } from './auth.js';
@@ -22,9 +22,11 @@ const eventId = params.get('event_id') || 'demo';
 let currentUserId = '';
 
 let graphicsMode = 'live';
+let userFeatures = {};
 
 async function initializeApp(user) {
     currentUserId = user ? user.uid.replace('local-','') : '';
+    userFeatures = await getUserFeatures(user?.uid || '');
     let firebaseStatus = 'Connecting to Firebase...';
     try {
         await getOverlayState(eventId);
@@ -157,20 +159,24 @@ async function initializeComponents(eventData) {
 
     document.getElementById('top-bar').appendChild(topBar);
     renderStatusBar(document.getElementById('status-bar'), eventData, {listener:false, atem:false, obs:false, sport:true, clock:true});
-    updateGraphicsTabs(eventData.eventType || 'corporate', !!eventData.tournament);
+    updateGraphicsTabs(eventData.eventType || 'corporate', !!(eventData.tournament && userFeatures.tournament));
     if ((eventData.eventType || 'corporate') === 'sports') {
         const teamLabel = getTeamLabel(eventData.sport);
         const teamsTabBtn = document.querySelector('[data-tab="teams"]');
         if(teamsTabBtn) teamsTabBtn.textContent = teamLabel;
         renderScoreboardPanel(document.getElementById('scoreboard-panel'), eventData.sport, eventId);
         renderStatsPanel(document.getElementById('stats-panel'), eventId);
-        renderTeamsPanel(document.getElementById('teams-panel'), eventId, eventData.sport, !!eventData.tournament);
-        if(eventData.tournament){
+        const enableTournament = !!(eventData.tournament && userFeatures.tournament);
+        renderTeamsPanel(document.getElementById('teams-panel'), eventId, eventData.sport, enableTournament);
+        if(enableTournament){
             const tnPanel = document.getElementById('tournament-panel');
             if(tnPanel){
                 const { renderTournamentPanel } = await import('./components/tournamentPanel.js');
                 renderTournamentPanel(tnPanel, eventId, eventData.sport);
             }
+        } else {
+            document.querySelector('[data-tab="tournament"]')?.classList.add('hidden');
+            document.getElementById('tournament-panel')?.classList.add('hidden');
         }
     } else {
         renderProgramPreview(document.getElementById('schedule-panel'), eventData, onOverlayStateChange);
@@ -186,7 +192,14 @@ async function initializeComponents(eventData) {
     renderGraphicsPanel(document.getElementById('events-panel'), eventData, graphicsMode);
 
     renderActiveGraphicsPanel(document.getElementById('active-graphics'), eventId, graphicsMode);
-
+    if(!userFeatures.logging){
+        document.querySelector('#active-graphics [data-tab="logs"]')?.classList.add('hidden');
+        document.getElementById('logs-tab')?.classList.add('hidden');
+    }
+    if(!userFeatures.sponsorship){
+        document.querySelector('#active-graphics [data-tab="sponsors"]')?.classList.add('hidden');
+        document.getElementById('sponsors-tab')?.classList.add('hidden');
+    }
 
     const brandingModal = document.getElementById('branding-modal');
     renderBrandingModal(brandingModal, { eventId });

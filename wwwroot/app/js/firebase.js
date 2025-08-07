@@ -296,3 +296,19 @@ export function getPlanFeatures() {
 export function updatePlanFeature(plan, feature, value) {
   return update(ref(db, `planFeatures/${plan}`), { [feature]: value });
 }
+
+export async function getUserFeatures(userId) {
+  let tier = 'bronze';
+  if (userId && userId.startsWith('local-')) {
+    const email = userId.slice(6);
+    try {
+      const locals = JSON.parse(localStorage.getItem('localUsers') || '{}');
+      tier = locals[email]?.tier || 'bronze';
+    } catch {}
+  } else if (userId) {
+    const u = await getUser(userId).catch(() => null);
+    tier = u?.tier || 'bronze';
+  }
+  const plans = await getPlanFeatures().catch(() => ({}));
+  return plans?.[tier] || {};
+}
