@@ -11,7 +11,7 @@ import { renderBrandingModal } from './components/brandingModal.js';
 import { renderProfileWizard } from './components/profileWizard.js';
 import { renderCalendarDrawer } from './components/calendarDrawer.js';
 import { renderIntroPanel } from './components/introPanel.js';
-import { updateOverlayState, getOverlayState, getEventMetadata, updateEventMetadata, getGraphicsData, updateGraphicsData, getUserFeatures } from './firebase.js';
+import { updateOverlayState, getOverlayState, getEventMetadata, updateEventMetadata, getGraphicsData, updateGraphicsData, getUserFeatures, listenGraphicsNotify, clearGraphicsNotify } from './firebase.js';
 import { renderActiveGraphicsPanel } from './components/activeGraphicsPanel.js';
 import { renderBrandingPanel } from './components/brandingPanel.js';
 import { requireAuth, logout } from './auth.js';
@@ -23,6 +23,7 @@ let currentUserId = '';
 
 let graphicsMode = 'live';
 let userFeatures = {};
+let eventsNotify = false;
 
 async function initializeApp(user) {
     currentUserId = user ? user.uid.replace('local-','') : '';
@@ -69,7 +70,16 @@ function setupTabs() {
         });
     }
     document.querySelectorAll('.graphics-panel [data-tab]').forEach(btn => {
-        btn.addEventListener('click', () => setActiveTab(btn.getAttribute('data-tab'), '.graphics-panel'));
+        btn.addEventListener('click', () => {
+            const tab = btn.getAttribute('data-tab');
+            if(tab === 'events'){
+                clearGraphicsNotify(eventId, 'events');
+                const evBtn = document.querySelector('#graphics-tabs [data-tab="events"]');
+                evBtn?.classList.remove('animate-pulse','text-brand');
+                eventsNotify = false;
+            }
+            setActiveTab(tab, '.graphics-panel');
+        });
     });
     document.querySelectorAll('.av-panel [data-tab]').forEach(btn => {
         btn.addEventListener('click', () => setActiveTab(btn.getAttribute('data-tab'), '.av-panel'));
@@ -190,6 +200,16 @@ async function initializeComponents(eventData) {
         renderPresentationPanel(document.getElementById('presentation-panel'), eventId);
     }
     renderGraphicsPanel(document.getElementById('events-panel'), eventData, graphicsMode);
+
+    listenGraphicsNotify(eventId, data => {
+        if(data.events){
+            const btn = document.querySelector('#graphics-tabs [data-tab="events"]');
+            if(btn){
+                btn.classList.add('animate-pulse','text-brand');
+                eventsNotify = true;
+            }
+        }
+    });
 
     renderActiveGraphicsPanel(document.getElementById('active-graphics'), eventId, graphicsMode);
     if(!userFeatures.logging){

@@ -1,5 +1,5 @@
 import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
-import { listenMatchLog, updateOverlayState, listenOverlayState, getEventMetadata, listenTeams } from '../firebase.js';
+import { listenMatchLog, updateOverlayState, listenOverlayState, getEventMetadata, listenTeams, addMatchLog } from '../firebase.js';
 import { getDatabaseInstance } from '../firebaseApp.js';
 
 const db = getDatabaseInstance();
@@ -13,7 +13,8 @@ const SPORT_STAT_OPTIONS = {
     ]
 };
 
-export function renderStatsPanel(container, eventId = 'demo') {
+export function renderStatsPanel(container, eventId = 'demo', options = {}) {
+    const showOverlayControls = options.showOverlayControls !== false;
     let teams = null;
     let logs = [];
     let sport = 'Football';
@@ -84,17 +85,17 @@ export function renderStatsPanel(container, eventId = 'demo') {
         const rows = calcRows();
         const teamA = teams.teamA?.name || 'Team A';
         const teamB = teams.teamB?.name || 'Team B';
-        const highlight = visible ? 'ring-4 ring-green-400' : preview ? 'ring-4 ring-brand' : '';
-        const psHighlight = psVisible ? 'ring-4 ring-green-400' : psPreview ? 'ring-4 ring-brand' : '';
+        const highlight = showOverlayControls ? (visible ? 'ring-4 ring-green-400' : preview ? 'ring-4 ring-brand' : '') : '';
+        const psHighlight = showOverlayControls ? (psVisible ? 'ring-4 ring-green-400' : psPreview ? 'ring-4 ring-brand' : '') : '';
         container.innerHTML = `
             <div class='stats-panel ${highlight}'>
                 <h2 class="font-bold text-lg mb-2 flex items-center justify-between">
                     <span>Match Stats</span>
                     <div class="space-x-2">
                         <button id="ms-edit" class="control-button btn-sm">Edit</button>
-                        <button id="ms-preview" class="control-button btn-sm">Preview</button>
-                        <button id="ms-live" class="control-button btn-sm">Live</button>
-                        <button id="ms-hide" class="control-button btn-sm">Hide</button>
+                        ${showOverlayControls ? `<button id="ms-preview" class="control-button btn-sm">Preview</button>` : ''}
+                        ${showOverlayControls ? `<button id="ms-live" class="control-button btn-sm">Live</button>` : ''}
+                        ${showOverlayControls ? `<button id="ms-hide" class="control-button btn-sm">Hide</button>` : ''}
                     </div>
                 </h2>
                 <table class="w-full text-sm mb-2">
@@ -116,9 +117,11 @@ export function renderStatsPanel(container, eventId = 'demo') {
                         <input id='ps-fact' class='border p-1 flex-1' placeholder='Stat or Fact'>
                     </div>
                     <div class='space-x-2'>
+                        ${showOverlayControls ? `
                         <button id='ps-preview' class='control-button btn-sm'>Preview</button>
                         <button id='ps-live' class='control-button btn-sm'>Live</button>
-                        <button id='ps-hide' class='control-button btn-sm'>Hide</button>
+                        <button id='ps-hide' class='control-button btn-sm'>Hide</button>`
+                        : `<button id='ps-add' class='control-button btn-sm'>Add</button>`}
                     </div>
                 </div>
             </div>`;
@@ -161,6 +164,15 @@ export function renderStatsPanel(container, eventId = 'demo') {
         };
         const psHideBtn = container.querySelector('#ps-hide');
         if (psHideBtn) psHideBtn.onclick = () => updateOverlayState(eventId, { playerStatVisible: false, playerStatPreviewVisible: false });
+        const psAddBtn = container.querySelector('#ps-add');
+        if (psAddBtn) psAddBtn.onclick = async () => {
+            if (psFact || psPlayer) {
+                await addMatchLog(eventId, { ts: Date.now(), type: psFact, player: psPlayer }, true);
+                psPlayer = '';
+                psFact = '';
+                render();
+            }
+        };
 
         const modal = container.querySelector('#ms-modal');
         if (modal) {

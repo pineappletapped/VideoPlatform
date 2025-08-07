@@ -236,10 +236,13 @@ export function listenSponsorLog(eventId, cb) {
 }
 
 // Match log helpers
-export function addMatchLog(eventId, entry) {
+export function addMatchLog(eventId, entry, notify = false) {
   const r = ref(db, `matchLog/${eventId}`);
   const newRef = push(r);
-  return set(newRef, entry).then(() => newRef.key);
+  return set(newRef, entry).then(() => {
+    if (notify) set(ref(db, `graphicsNotify/${eventId}/events`), Date.now());
+    return newRef.key;
+  });
 }
 export function updateMatchLogEntry(eventId, id, entry) {
   return set(ref(db, `matchLog/${eventId}/${id}`), entry);
@@ -259,6 +262,14 @@ export function getMatchLog(eventId) {
     const val = snap.val() || {};
     return Object.entries(val).map(([k,v])=>({ id:k, ...v }));
   });
+}
+
+// Graphics notifications
+export function listenGraphicsNotify(eventId, cb) {
+  return onValue(ref(db, `graphicsNotify/${eventId}`), snap => cb(snap.val() || {}));
+}
+export function clearGraphicsNotify(eventId, key) {
+  return set(ref(db, `graphicsNotify/${eventId}/${key}`), null);
 }
 
 // Tournament helpers

@@ -101,9 +101,10 @@ function getScoreboardRef(eventId) {
     return ref(db, `scoreboard/${eventId}`);
 }
 
-export function renderScoreboardPanel(container, sport = 'Football', eventId = 'demo') {
+export function renderScoreboardPanel(container, sport = 'Football', eventId = 'demo', options = {}) {
     const cfg = sportsData[sport] || sportsData['Football'];
     const scoreboardStyles = getStylesForSport(sport);
+    const showOverlayControls = options.showOverlayControls !== false;
     const goalSport = (sportsData[sport]?.logEvents || []).some(e => e.toLowerCase() === 'goal');
 
     let teamsData = null;
@@ -189,17 +190,22 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         if(!data.shootout){
             data.shootout = { shots: (data.scores||[]).map(()=>Array.from({length:5}, () => ({ player:'', result:'' })) ) };
         }
-        container.innerHTML = `
-            <div class='scoreboard-panel'>
-                <h2 class="font-bold text-lg mb-2">${sport} Scoreboard</h2>
-                <div class="mb-2 flex gap-2">
+        const controlHtml = showOverlayControls ? `
                     <button id="sb-preview" class="control-button btn-sm btn-preview${sbPreview ? ' ring-2 ring-brand' : ''}">Preview</button>
                     <button id="sb-live" class="control-button btn-sm btn-live${sbVisible ? ' ring-2 ring-green-400' : ''}">Live</button>
                     ${cfg.scoreboard.breaks ? `<button id="sb-show-break" class="control-button btn-sm${breakVisible ? ' ring-2 ring-green-400' : ''}">Show Break</button>` : ''}
                     ${cfg.scoreboard.highBreak ? `<button id="sb-show-high" class="control-button btn-sm${highBreakVisible ? ' ring-2 ring-green-400' : ''}">Show High Break</button>` : ''}
                     <button id="sb-save" class="control-button btn-sm ml-auto">Save</button>
                     <button id="sb-edit" class="control-button btn-sm">Edit</button>
-                    <button id="sb-fav" class="control-button btn-sm">${favorites.scoreboard ? '★' : '☆'}</button>
+                    <button id="sb-fav" class="control-button btn-sm">${favorites.scoreboard ? '★' : '☆'}</button>`
+                : `
+                    <button id="sb-save" class="control-button btn-sm ml-auto">Save</button>
+                    <button id="sb-edit" class="control-button btn-sm">Edit</button>`;
+        container.innerHTML = `
+            <div class='scoreboard-panel'>
+                <h2 class="font-bold text-lg mb-2">${sport} Scoreboard</h2>
+                <div class="mb-2 flex gap-2">
+                    ${controlHtml}
                 </div>
                 <table id="sb-table" class="w-full text-sm"></table>
                 <div id="sb-modal" class="modal-overlay" style="display:none;">
@@ -681,7 +687,8 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             await updateOverlayState(eventId, { scoreboard: obj });
         }
 
-        container.querySelector('#sb-save').onclick = async () => {
+        const saveBtn = container.querySelector('#sb-save');
+        if (saveBtn) saveBtn.onclick = async () => {
             const newData = getFormData();
             if(currentData && newData.scores){
                 const diffA = (newData.scores[0]||0) - (currentData.scores?.[0]||0);
@@ -692,13 +699,15 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             await saveData(newData);
             currentData = newData;
         };
-        container.querySelector('#sb-preview').onclick = async () => {
+        const previewBtn = container.querySelector('#sb-preview');
+        if (previewBtn) previewBtn.onclick = async () => {
             const newData = getFormData();
             await saveData(newData);
             const show = !sbPreview;
             await updateOverlayState(eventId, { scoreboardPreviewVisible: show });
         };
-        container.querySelector('#sb-live').onclick = async () => {
+        const liveBtn = container.querySelector('#sb-live');
+        if (liveBtn) liveBtn.onclick = async () => {
             const newData = getFormData();
             await saveData(newData);
             const show = !sbVisible;
