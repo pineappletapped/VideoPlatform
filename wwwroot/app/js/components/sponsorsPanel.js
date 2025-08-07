@@ -83,6 +83,7 @@ export function renderSponsorsPanel(container, eventId){
         const rows = eventType==='corporate'
             ? [
                 ['intro','Info Window'],
+                ['presentationTop','Above Presentation'],
                 ['cornerTL','Top Left Corner'],
                 ['cornerTR','Top Right Corner'],
                 ['cornerBL','Bottom Left Corner'],
@@ -97,7 +98,8 @@ export function renderSponsorsPanel(container, eventId){
                 ['cornerTR','Top Right Corner'],
                 ['cornerBL','Bottom Left Corner'],
                 ['cornerBR','Bottom Right Corner'],
-                ['intro','Intro Graphic']
+                ['intro','Intro Graphic'],
+                ['presentationTop','Above Presentation']
               ];
         const placeTable = container.querySelector('#place-table');
         placeTable.innerHTML = rows.map(r=>{

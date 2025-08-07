@@ -12,11 +12,11 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
     let teamsData = null;
     let logVisible = false;
     let favRenderItems = [];
-    let sponsorPlacementLabels = { scoreboardTop:'Above Scoreboard', scoreboardBottom:'Below Scoreboard', formationBottom:'Bottom of Formation', substitutionTop:'Top of Substitution', cornerTL:'Top Left Corner', cornerTR:'Top Right Corner', cornerBL:'Bottom Left Corner', cornerBR:'Bottom Right Corner', intro:'Intro Graphic' };
+    let sponsorPlacementLabels = { scoreboardTop:'Above Scoreboard', scoreboardBottom:'Below Scoreboard', formationBottom:'Bottom of Formation', substitutionTop:'Top of Substitution', cornerTL:'Top Left Corner', cornerTR:'Top Right Corner', cornerBL:'Bottom Left Corner', cornerBR:'Bottom Right Corner', intro:'Intro Graphic', presentationTop:'Above Presentation' };
 
     getEventMetadata(eventId).then(meta=>{
         if(meta && meta.eventType === 'corporate'){
-            sponsorPlacementLabels = { intro:'Info Window', cornerTL:'Top Left Corner', cornerTR:'Top Right Corner', cornerBL:'Bottom Left Corner', cornerBR:'Bottom Right Corner' };
+            sponsorPlacementLabels = { intro:'Info Window', cornerTL:'Top Left Corner', cornerTR:'Top Right Corner', cornerBL:'Bottom Left Corner', cornerBR:'Bottom Right Corner', presentationTop:'Above Presentation' };
             render();
             renderFav();
         }

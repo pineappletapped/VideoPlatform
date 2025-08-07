@@ -28,6 +28,7 @@ let prevStingerData = null;
 let stingerTimeout = null;
 let prevPresentationVisible = false;
 let prevPresentationData = null;
+let prevPresentationSponsor = null;
 let prevSponsorLive = {};
 let prevFixturesVisible = false;
 let prevWeatherVisible = false;
@@ -961,6 +962,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     const live = (state && state.sponsorPlacementsLive) || {};
     const allPlacements = new Set([...Object.keys(prevSponsorLive), ...Object.keys(live)]);
     allPlacements.forEach(p=>{
+        if(p==='presentationTop') return;
         const vis = !!live[p];
         const idx = sponsorPlacements[p];
         const sponsor = sponsorsData[idx];
@@ -1215,6 +1217,8 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     let presOverlay = overlayContainer.querySelector('#presentation-overlay');
     const presData = state && state.presentation;
     const presShow = previewMode ? state && state.presentationPreviewVisible : state && state.presentationVisible;
+    const presSponsorLive = presShow && state && state.sponsorPlacementsLive && state.sponsorPlacementsLive.presentationTop;
+    const presSponsor = presSponsorLive ? sponsorsData[sponsorPlacements.presentationTop] : null;
     if(presShow && presData && presData.url){
         if(!presOverlay){
             presOverlay = document.createElement('div');
@@ -1222,11 +1226,35 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             overlayContainer.appendChild(presOverlay);
         }
         presOverlay.className = presData.mode === 'pip' ? 'presentation-overlay pip' : 'presentation-overlay full';
-        presOverlay.style.opacity = previewMode ? '0.6' : '1';
-        presOverlay.innerHTML = `<iframe src='${presData.url}#page=${presData.page||1}'></iframe>`;
+        if(presData.mode === 'pip'){
+            const x = presData.x ?? 60;
+            const y = presData.y ?? 60;
+            const w = presData.w ?? 40;
+            const h = presData.h ?? 40;
+            presOverlay.style.cssText = `top:${y}%;left:${x}%;width:${w}%;height:${h}%;opacity:${previewMode?'0.6':'1'};`;
+        } else {
+            presOverlay.style.opacity = previewMode ? '0.6' : '1';
+        }
+        const sponsorHtml = presSponsor ? `<img src='${presSponsor.logo}' class='presentation-sponsor'>` : '';
+        presOverlay.innerHTML = `${sponsorHtml}<iframe src='${presData.url}#page=${presData.page||1}'></iframe>`;
+        if(presSponsor && presSponsor !== prevPresentationSponsor){
+            addSponsorLog(eventId,{ts:Date.now(),placement:'presentationTop',sponsor:sponsorPlacements.presentationTop,action:'show'});
+        } else if(!presSponsor && prevPresentationSponsor){
+            addSponsorLog(eventId,{ts:Date.now(),placement:'presentationTop',sponsor:sponsorPlacements.presentationTop,action:'hide'});
+        }
+        prevPresentationSponsor = presSponsor;
     } else if(presOverlay){
         presOverlay.remove();
+        if(prevPresentationSponsor){
+            addSponsorLog(eventId,{ts:Date.now(),placement:'presentationTop',sponsor:sponsorPlacements.presentationTop,action:'hide'});
+            prevPresentationSponsor = null;
+        }
+    } else if(prevPresentationSponsor){
+        addSponsorLog(eventId,{ts:Date.now(),placement:'presentationTop',sponsor:sponsorPlacements.presentationTop,action:'hide'});
+        prevPresentationSponsor = null;
     }
+    prevPresentationVisible = presShow;
+    prevPresentationData = presData;
 }
 
 let lastState = null;
