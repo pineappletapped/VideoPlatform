@@ -14,6 +14,9 @@ export function renderGolfPanel(container, eventId){
 
     function defaultData(){
         return {
+            style:'golf-links',
+            transitionIn:'fade',
+            transitionOut:'fade',
             course:{ name:'', logo:'', holes:Array.from({length:18}).map(()=>({par:4,distance:0,notes:''})) },
             players:[{ name:'Player 1', total:0, thru:0, today:0 }]
         };
@@ -21,7 +24,7 @@ export function renderGolfPanel(container, eventId){
 
     async function save(){
         await set(getGolfRef(eventId), data);
-        await updateOverlayState(eventId, { scoreboard: { golf:data } });
+        await updateOverlayState(eventId, { scoreboard: { style:data.style, position:'bottom-center', transitionIn:data.transitionIn, transitionOut:data.transitionOut, golf:{ course:data.course, players:data.players } } });
     }
 
     function render(){
@@ -37,6 +40,8 @@ export function renderGolfPanel(container, eventId){
                 <h3 class="font-semibold mb-1">Players</h3>
                 <table class="w-full text-sm mb-2" id="players"><thead><tr><th>Name</th><th>Total</th><th>Thru</th><th>Today</th><th></th></tr></thead><tbody>${playerRows}</tbody></table>
                 <button id="add-player" class="control-button btn-xs mb-2">Add Player</button>
+                <div class="mb-2"><label class="text-sm">Style</label><select id="sb-style" class="border p-1 w-full"><option value="golf-links">Links Classic</option><option value="golf-green">Augusta Green</option><option value="golf-classic">Clubhouse Classic</option></select></div>
+                <div class="mb-2"><label class="text-sm">Transition</label><select id="sb-trans" class="border p-1 w-full"><option value="fade">Fade</option><option value="slide-left">Slide Left</option><option value="slide-right">Slide Right</option><option value="slide-up">Slide Up</option><option value="slide-down">Slide Down</option></select></div>
                 <div class="flex gap-2 mb-2">
                     <button id="prev" class="control-button btn-sm">Preview</button>
                     <button id="live" class="control-button btn-sm">Live</button>
@@ -44,6 +49,8 @@ export function renderGolfPanel(container, eventId){
                     <button id="save" class="control-button btn-sm ml-auto">Save</button>
                 </div>
             </div>`;
+        container.querySelector('#sb-style').value = data.style || 'golf-links';
+        container.querySelector('#sb-trans').value = data.transitionIn || 'fade';
         data.players.forEach((p,i)=>{
             container.querySelector(`#open-${i}`).onclick = ()=>window.open(`golf_player.html?event_id=${eventId}&player=${i}`,'_blank');
         });
@@ -62,6 +69,10 @@ export function renderGolfPanel(container, eventId){
                 p.thru = parseInt(container.querySelector(`#thru-${i}`).value)||0;
                 p.today = parseInt(container.querySelector(`#today-${i}`).value)||0;
             });
+            data.style = container.querySelector('#sb-style').value;
+            const trans = container.querySelector('#sb-trans').value;
+            data.transitionIn = trans;
+            data.transitionOut = trans;
             await save();
         };
         container.querySelector('#prev').onclick = async ()=>{ await save(); await updateOverlayState(eventId,{scoreboardPreviewVisible:true}); };

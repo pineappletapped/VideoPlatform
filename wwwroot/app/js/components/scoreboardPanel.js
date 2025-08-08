@@ -13,6 +13,14 @@ const DEFAULT_STYLES = [
     { id: 'basketball-catalyst', label: 'Court Catalyst' },
     { id: 'basketball-slick', label: 'Skyline Slick' },
     { id: 'basketball-retro', label: 'Hardwood Retro' },
+    // Netball
+    { id: 'netball-hoop', label: 'Hoop Highlight' },
+    { id: 'netball-chalk', label: 'Chalkboard Court' },
+    { id: 'netball-classic', label: 'Classic Netball' },
+    // Golf
+    { id: 'golf-links', label: 'Links Classic' },
+    { id: 'golf-green', label: 'Augusta Green' },
+    { id: 'golf-classic', label: 'Clubhouse Classic' },
     // American Football
     { id: 'af-bold', label: 'Grid Iron Bold' },
     { id: 'af-stripes', label: 'Energy Stripes' },
@@ -173,6 +181,9 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         if (cfg.scoreboard.overs) base.overs = scores.map(() => 0);
         if (cfg.scoreboard.balls) base.balls = scores.map(() => 0);
         if (cfg.scoreboard.wickets) base.wickets = scores.map(() => 0);
+        if (cfg.scoreboard.runRate) base.runRate = 0;
+        if (cfg.scoreboard.requiredRate) base.requiredRate = 0;
+        if (cfg.scoreboard.target) base.target = 0;
         if (cfg.scoreboard.breaks) base.currentBreak = 0;
         if (cfg.scoreboard.highBreak) base.highBreak = 0;
         if (cfg.scoreboard.turn) base.turn = 0;
@@ -346,6 +357,15 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         }
         if (cfg.scoreboard.wickets) {
             htmlParts.push(`<tr><td class="pr-2">Wkts:</td><td>${Array.from({length:count}).map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-wkt-${i}" value="${(data.wickets && data.wickets[i]) || 0}">`).join('')}</td></tr>`);
+        }
+        if (cfg.scoreboard.runRate) {
+            htmlParts.push(`<tr><td class="pr-2">Run Rate:</td><td><input type="number" step="0.01" class="border p-1 w-16" id="sb-runrate" value="${data.runRate || 0}"></td></tr>`);
+        }
+        if (cfg.scoreboard.requiredRate) {
+            htmlParts.push(`<tr><td class="pr-2">Req Rate:</td><td><input type="number" step="0.01" class="border p-1 w-16" id="sb-reqrate" value="${data.requiredRate || 0}"></td></tr>`);
+        }
+        if (cfg.scoreboard.target) {
+            htmlParts.push(`<tr><td class="pr-2">Target:</td><td><input type="number" class="border p-1 w-16" id="sb-target" value="${data.target || 0}"></td></tr>`);
         }
         const tnA = getTeam(0).name || 'Team 1';
         const tnB = getTeam(1).name || 'Team 2';
@@ -685,6 +705,9 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             if (cfg.scoreboard.overs) obj.overs = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-over-${i}`).value) || 0);
             if (cfg.scoreboard.balls) obj.balls = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-ball-${i}`).value) || 0);
             if (cfg.scoreboard.wickets) obj.wickets = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-wkt-${i}`).value) || 0);
+            if (cfg.scoreboard.runRate) obj.runRate = parseFloat(container.querySelector('#sb-runrate').value) || 0;
+            if (cfg.scoreboard.requiredRate) obj.requiredRate = parseFloat(container.querySelector('#sb-reqrate').value) || 0;
+            if (cfg.scoreboard.target) obj.target = parseInt(container.querySelector('#sb-target').value) || 0;
             if (cfg.scoreboard.breaks) obj.currentBreak = parseInt(container.querySelector('#sb-break').value) || 0;
             if (cfg.scoreboard.highBreak) obj.highBreak = parseInt(container.querySelector('#sb-highbreak').value) || 0;
             if (cfg.scoreboard.turn) obj.turn = parseInt(container.querySelector('#sb-turn').value) || 0;
@@ -808,8 +831,8 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             const textA = contrastColor(colA);
             const textB = contrastColor(colB);
             const textBrand = contrastColor(brand);
-            if(styleSel.value==='cricket'){
-                prevDiv.innerHTML = `<div class="sb-container sb-cricket" style="--sb-team-width:${longest}ch"><div class="sb-row"><span class="sb-team" style="background:${colA};color:${textA}">${nameA}</span><span class="sb-score" style="background:${brand};color:${textBrand}">0/0 (0.0)</span><span class="sb-team" style="background:${colB};color:${textB}">${nameB}</span></div></div>`;
+            if(styleSel.value.startsWith('cricket')){
+                prevDiv.innerHTML = `<div class="sb-container sb-cricket sb-${styleSel.value}" style="--sb-team-width:${longest}ch"><div class="sb-row"><span class="sb-team" style="background:${colA};color:${textA}">${nameA}</span><span class="sb-score" style="background:${brand};color:${textBrand}">0/0</span><span class="sb-overs">0.0</span><span class="sb-team" style="background:${colB};color:${textB}">${nameB}</span><span class="sb-score" style="background:${brand};color:${textBrand}">0/0</span><span class="sb-overs">0.0</span></div><div class="sb-row detail"><span class="sb-detail">RR 0</span><span class="sb-detail">Target 0</span><span class="sb-detail">Req 0</span></div></div>`;
             }else{
                 prevDiv.innerHTML = `
                 <div class="sb-container sb-${styleSel.value}" style="--sb-team-width:${longest}ch">

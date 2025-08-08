@@ -1,0 +1,42 @@
+.sb-basketball .sb-row { align-items:center; gap:0.5rem; }
+.sb-basketball .sb-time { margin-left:0.5rem; }
+
+/* Basketball styles */
+.sb-basketball-catalyst {
+  background: #1f1f1f;
+  padding: 0.25rem 0.75rem;
+  position: relative;
+}
+.sb-basketball-catalyst .sb-row::before {
+  content: "";
+  position: absolute;
+  top: 0; bottom: 0; left: 50%;
+  width: 4px;
+  background: var(--brand-primary);
+  transform: skewX(-20deg);
+}
+.sb-basketball-catalyst::after {
+  content: "";
+  position: absolute;
+  right: -0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #f97316 20%, #ea580c 60%);
+  box-shadow: 0 0 0 2px #fff inset;
+}
+
+.sb-basketball-slick {
+  background: rgba(0,0,0,0.5);
+  border-left: 4px solid var(--brand-primary);
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.75rem;
+}
+
+.sb-basketball-retro {
+  background: #deb887;
+  border: 4px solid #8b4513;
+  padding: 0.25rem 0.75rem;
+}

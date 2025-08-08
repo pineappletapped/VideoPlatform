@@ -1,6 +1,20 @@
 import { listenOverlayState, listenGraphicsData, listenBranding, listenSponsors, listenSponsorPlacements, addSponsorLog, updateEventMetadata, resolveAssetPath, updateOverlayState, listenTeams } from './firebase.js';
 import { getDatabaseInstance } from './firebaseApp.js';
 import { suggestAbbreviation } from './teamUtils.js';
+import { renderFootballScoreboard } from './templates/footballScoreboard.js';
+import { renderRugbyScoreboard } from './templates/rugbyScoreboard.js';
+import { renderHockeyScoreboard } from './templates/hockeyScoreboard.js';
+import { renderIceHockeyScoreboard } from './templates/iceHockeyScoreboard.js';
+import { renderBoxingScoreboard } from './templates/boxingScoreboard.js';
+import { renderDartsScoreboard } from './templates/dartsScoreboard.js';
+import { renderSnookerScoreboard } from './templates/snookerScoreboard.js';
+import { renderTennisScoreboard } from './templates/tennisScoreboard.js';
+import { renderTableTennisScoreboard } from './templates/tableTennisScoreboard.js';
+import { renderPoolScoreboard } from './templates/poolScoreboard.js';
+import { renderBasketballScoreboard } from './templates/basketballScoreboard.js';
+import { renderNetballScoreboard } from './templates/netballScoreboard.js';
+import { renderCricketScoreboard } from './templates/cricketScoreboard.js';
+import { renderGolfScoreboard } from './templates/golfScoreboard.js';
 import { ref, onValue, set } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
 
 const params = new URLSearchParams(window.location.search);
@@ -696,23 +710,54 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     const breakPlayer = state && state.breakPlayer;
     const highBreakVisible = state && state.highBreakVisible;
     if (scoreboardShow && scoreboardData) {
+        const sbSponsors = branding.sponsors || [];
+        const sbPlacement = branding.scheduleSponsorPlacement || 'bottom-spaced';
+        let sbSponsorHtml = '';
+        if(sbSponsors.length){
+            if(sbPlacement === 'top-right'){
+                const s = sbSponsors[0];
+                sbSponsorHtml = `<img src='${s.logo}' alt='${s.name}' style='height:50px;position:absolute;top:-2.5rem;right:0;'>`;
+            }else if(sbPlacement === 'bottom-centered'){
+                sbSponsorHtml = `<div style='display:flex;gap:1rem;justify-content:center;margin-top:0.25rem;'>${sbSponsors.map(s=>`<img src='${s.logo}' alt='${s.name}' style='height:50px;'>`).join('')}</div>`;
+            }else if(sbPlacement === 'bottom-sides'){
+                const l=sbSponsors[0]; const r=sbSponsors[1];
+                sbSponsorHtml=`${l?`<img src='${l.logo}' alt='${l.name}' style='height:50px;position:absolute;bottom:-3rem;left:0;'>`:''}${r?`<img src='${r.logo}' alt='${r.name}' style='height:50px;position:absolute;bottom:-3rem;right:0;'>`:''}`;
+            }else{
+                sbSponsorHtml = `<div style='display:flex;gap:1rem;justify-content:space-around;margin-top:0.25rem;'>${sbSponsors.slice(0,4).map(s=>`<img src='${s.logo}' alt='${s.name}' style='height:50px;'>`).join('')}</div>`;
+            }
+        }
         if(scoreboardData.golf){
             if(!scoreboardOverlay){
                 scoreboardOverlay = document.createElement('div');
                 scoreboardOverlay.id = 'scoreboard-overlay';
                 overlayContainer.appendChild(scoreboardOverlay);
                 playTransition(scoreboardOverlay,'in',scoreboardData.transitionIn);
+            } else if(!prevScoreboardVisible){
+                playTransition(scoreboardOverlay,'in',scoreboardData.transitionIn);
             }
-            const gd = scoreboardData.golf;
-            scoreboardOverlay.className = 'sb-container sb-style1';
+            const style = scoreboardData.style || 'golf-links';
+            const pos = scoreboardData.position || 'bottom-center';
+            scoreboardOverlay.className = `sb-container sb-golf sb-${style}`;
             scoreboardOverlay.style.position = 'absolute';
-            scoreboardOverlay.style.bottom = '2rem';
-            scoreboardOverlay.style.left = '50%';
-            scoreboardOverlay.style.transform = 'translateX(-50%)';
-            const rows = (gd.players||[]).slice().sort((a,b)=>(a.total||0)-(b.total||0)).map(p=>`<tr><td class='pr-4'>${p.name}</td><td>${p.total}</td><td>${p.thru||0}</td><td>${p.today>=0?`+${p.today}`:p.today}</td></tr>`).join('');
-            scoreboardOverlay.innerHTML = `<div class='sb-row'><span class='sb-team' style='background:#333'>${gd.course?.name||'Course'}</span></div><table class='golf-table text-sm mt-1'><thead><tr><th>Name</th><th>Tot</th><th>Thru</th><th>Today</th></tr></thead><tbody>${rows}</tbody></table>`;
-            return;
-        }
+            scoreboardOverlay.style.fontFamily = branding.font;
+            scoreboardOverlay.style.fontSize = '1.5rem';
+            scoreboardOverlay.style.pointerEvents = 'none';
+            scoreboardOverlay.style.left = '';
+            scoreboardOverlay.style.right = '';
+            scoreboardOverlay.style.top = '';
+            scoreboardOverlay.style.bottom = '';
+            scoreboardOverlay.style.transform = '';
+            if (pos === 'top-left') { scoreboardOverlay.style.top = '2rem'; scoreboardOverlay.style.left = '2rem'; }
+            else if (pos === 'top-right') { scoreboardOverlay.style.top = '2rem'; scoreboardOverlay.style.right = '2rem'; }
+            else if (pos === 'bottom-left') { scoreboardOverlay.style.bottom = '2rem'; scoreboardOverlay.style.left = '2rem'; }
+            else if (pos === 'bottom-right') { scoreboardOverlay.style.bottom = '2rem'; scoreboardOverlay.style.right = '2rem'; }
+            else if (pos === 'top-center') { scoreboardOverlay.style.top = '2rem'; scoreboardOverlay.style.left = '50%'; scoreboardOverlay.style.transform = 'translateX(-50%)'; }
+            else { scoreboardOverlay.style.bottom = '2rem'; scoreboardOverlay.style.left = '50%'; scoreboardOverlay.style.transform = 'translateX(-50%)'; }
+            const gd = scoreboardData.golf;
+            const brand = branding.primaryColor;
+            const textBrand = contrastColor(brand);
+            scoreboardOverlay.innerHTML = renderGolfScoreboard({ courseName: gd.course?.name || 'Course', players: gd.players || [], brand, textBrand, sbSponsorHtml, topImg, bottomImg });
+        } else {
         if (!scoreboardOverlay) {
             scoreboardOverlay = document.createElement('div');
             scoreboardOverlay.id = 'scoreboard-overlay';
@@ -725,7 +770,17 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         const pos = scoreboardData.position || 'bottom-center';
         let baseClass = '';
         if(style === 'football' || style.startsWith('football-')) baseClass = 'sb-football ';
-        else if(style.startsWith('basketball-')) baseClass = 'sb-basketball ';
+        else if(style === 'rugby' || style.startsWith('rugby-')) baseClass = 'sb-rugby ';
+        else if(style === 'hockey' || style.startsWith('hockey-')) baseClass = 'sb-hockey ';
+        else if(style === 'icehockey' || style.startsWith('icehockey-')) baseClass = 'sb-icehockey ';
+        else if(style === 'boxing' || style.startsWith('boxing-')) baseClass = 'sb-boxing ';
+        else if(style === 'darts' || style.startsWith('darts-')) baseClass = 'sb-darts ';
+        else if(style === 'snooker' || style.startsWith('snooker-')) baseClass = 'sb-snooker ';
+        else if(style === 'pool' || style.startsWith('pool-')) baseClass = 'sb-pool ';
+        else if(style === 'tabletennis' || style.startsWith('tt-')) baseClass = 'sb-tabletennis ';
+        else if(style === 'basketball' || style.startsWith('basketball-')) baseClass = 'sb-basketball ';
+        else if(style === 'netball' || style.startsWith('netball-')) baseClass = 'sb-netball ';
+        else if(style === 'cricket' || style.startsWith('cricket-')) baseClass = 'sb-cricket ';
         else if(style.startsWith('af-')) baseClass = 'sb-af ';
         else if(style === 'tennis' || style.startsWith('ten-')) baseClass = 'sb-tennis ';
         scoreboardOverlay.className = `sb-container ${baseClass}sb-${style}`;
@@ -814,55 +869,285 @@ function renderOverlayFromFirebase(state, graphics, branding) {
                 sbSponsorHtml = `<div style='display:flex;gap:1rem;justify-content:space-around;margin-top:0.25rem;'>${sbSponsors.slice(0,4).map(s=>`<img src='${s.logo}' alt='${s.name}' style='height:50px;'>`).join('')}</div>`;
             }
         }
-        const topSp = sponsorsData[sponsorPlacements.scoreboardTop];
-        const bottomSp = sponsorsData[sponsorPlacements.scoreboardBottom];
-        const topImg = topSp ? `<img src='${topSp.logo}' class='sb-sponsor top'>` : '';
-        const bottomImg = bottomSp ? `<img src='${bottomSp.logo}' class='sb-sponsor bottom'>` : '';
-        if(style==='cricket'){
+        if(style === 'cricket' || style.startsWith('cricket-')){
             const oA = scoreboardData.overs?.[0] ?? 0;
             const bA = scoreboardData.balls?.[0] ?? 0;
             const wA = scoreboardData.wickets?.[0] ?? 0;
             const oB = scoreboardData.overs?.[1] ?? 0;
             const bB = scoreboardData.balls?.[1] ?? 0;
             const wB = scoreboardData.wickets?.[1] ?? 0;
-            scoreboardOverlay.innerHTML = `
-            ${topImg}
-            <div class="sb-row">
-                <span class="sb-team${aClassA}" style="background:${colors[0]};color:${textA}">${names[0]}</span>
-                <span class="sb-score" style="background:${brand};color:${textBrand}">${sA}/${wA} (${oA}.${bA})</span>
-                <span class="sb-team${aClassB}" style="background:${colors[1]};color:${textB}">${names[1]}</span>
-            </div>
-            ${sbSponsorHtml}
-            ${bottomImg}`;
+            const runRate = scoreboardData.runRate ?? null;
+            const requiredRate = scoreboardData.requiredRate ?? null;
+            const target = scoreboardData.target ?? null;
+            scoreboardOverlay.innerHTML = renderCricketScoreboard({
+                names,
+                colors,
+                logos,
+                showLogos,
+                scoreA: sA,
+                scoreB: sB,
+                wicketsA: wA,
+                wicketsB: wB,
+                oversA: oA,
+                ballsA: bA,
+                oversB: oB,
+                ballsB: bB,
+                runRate,
+                requiredRate,
+                target,
+                sbSponsorHtml,
+                topImg,
+                bottomImg,
+                aClassA,
+                aClassB,
+                textA,
+                textB,
+                brand,
+                textBrand
+            });
         } else if(style==='football' || style.startsWith('football-')){
-            const timePart = timeStr ? `<span class="sb-time">${timeStr}</span>` : '';
-            const stopPart = scoreboardData.showStoppage && scoreboardData.stoppage ? `<span class="sb-time">+${scoreboardData.stoppage}</span>` : '';
-            scoreboardOverlay.innerHTML = `
-            ${topImg}
-            <div class="sb-row">
-                <span class="sb-team${aClassA}" style="background:${colors[0]};color:${textA}">${showLogos ? `<img src='${logos[0]}' class='sb-team-logo'>` : ''}${names[0]}</span>
-                <span class="sb-score" style="background:${brand};color:${textBrand}">${sA} - ${sB}</span>
-                <span class="sb-team${aClassB}" style="background:${colors[1]};color:${textB}">${showLogos ? `<img src='${logos[1]}' class='sb-team-logo'>` : ''}${names[1]}</span>
-                ${timePart}
-                ${stopPart}
-            </div>
-            ${sbSponsorHtml}
-            ${bottomImg}`;
-        } else if(style.startsWith('basketball-')){
-            const period = scoreboardData.period || 1;
-            const timePart = timeStr ? `<span class="sb-time">${timeStr}</span>` : '';
-            const periodPart = `<span class="sb-time">Q${period}</span>`;
-            scoreboardOverlay.innerHTML = `
-            ${topImg}
-            <div class="sb-row">
-                <span class="sb-team${aClassA}" style="background:${colors[0]};color:${textA}">${showLogos ? `<img src='${logos[0]}' class='sb-team-logo'>` : ''}${names[0]}</span>
-                <span class="sb-score" style="background:${brand};color:${textBrand}">${sA} - ${sB}</span>
-                <span class="sb-team${aClassB}" style="background:${colors[1]};color:${textB}">${showLogos ? `<img src='${logos[1]}' class='sb-team-logo'>` : ''}${names[1]}</span>
-                ${periodPart}
-                ${timePart}
-            </div>
-            ${sbSponsorHtml}
-            ${bottomImg}`;
+            scoreboardOverlay.innerHTML = renderFootballScoreboard({
+                names,
+                colors,
+                logos,
+                showLogos,
+                scoreA: sA,
+                scoreB: sB,
+                timeStr,
+                stoppage: scoreboardData.showStoppage && scoreboardData.stoppage ? scoreboardData.stoppage : null,
+                sbSponsorHtml,
+                topImg,
+                bottomImg,
+                aClassA,
+                aClassB,
+                textA,
+                textB,
+                brand,
+                textBrand
+            });
+        } else if(style==='rugby' || style.startsWith('rugby-')){
+            scoreboardOverlay.innerHTML = renderRugbyScoreboard({
+                names,
+                colors,
+                logos,
+                showLogos,
+                scoreA: sA,
+                scoreB: sB,
+                timeStr,
+                period: scoreboardData.period ? `H${scoreboardData.period}` : '',
+                triesA: scoreboardData.tries?.[0] ?? 0,
+                triesB: scoreboardData.tries?.[1] ?? 0,
+                convA: scoreboardData.conversions?.[0] ?? 0,
+                convB: scoreboardData.conversions?.[1] ?? 0,
+                penA: scoreboardData.penalties?.[0] ?? 0,
+                penB: scoreboardData.penalties?.[1] ?? 0,
+                sbSponsorHtml,
+                topImg,
+                bottomImg,
+                aClassA,
+                aClassB,
+                textA,
+                textB,
+                brand,
+                textBrand
+            });
+        } else if(style==='hockey' || style.startsWith('hockey-')){
+            scoreboardOverlay.innerHTML = renderHockeyScoreboard({
+                names,
+                colors,
+                logos,
+                showLogos,
+                scoreA: sA,
+                scoreB: sB,
+                timeStr,
+                period: scoreboardData.period ? `P${scoreboardData.period}` : '',
+                shotsA: scoreboardData.shotsOnGoal?.[0] ?? null,
+                shotsB: scoreboardData.shotsOnGoal?.[1] ?? null,
+                sbSponsorHtml,
+                topImg,
+                bottomImg,
+                aClassA,
+                aClassB,
+                textA,
+                textB,
+                brand,
+                textBrand
+            });
+        } else if(style==='icehockey' || style.startsWith('icehockey-')){
+            scoreboardOverlay.innerHTML = renderIceHockeyScoreboard({
+                names,
+                colors,
+                logos,
+                showLogos,
+                scoreA: sA,
+                scoreB: sB,
+                timeStr,
+                period: scoreboardData.period ? `P${scoreboardData.period}` : '',
+                shotsA: scoreboardData.shotsOnGoal?.[0] ?? null,
+                shotsB: scoreboardData.shotsOnGoal?.[1] ?? null,
+                ppA: scoreboardData.powerPlay?.[0] ?? false,
+                ppB: scoreboardData.powerPlay?.[1] ?? false,
+                sbSponsorHtml,
+                topImg,
+                bottomImg,
+                aClassA,
+                aClassB,
+                textA,
+                textB,
+                brand,
+                textBrand
+            });
+        } else if(style==='boxing' || style.startsWith('boxing-')){
+            scoreboardOverlay.innerHTML = renderBoxingScoreboard({
+                names,
+                colors,
+                logos,
+                showLogos,
+                scoreA: sA,
+                scoreB: sB,
+                timeStr,
+                round: scoreboardData.round || '',
+                sbSponsorHtml,
+                topImg,
+                bottomImg,
+                aClassA,
+                aClassB,
+                textA,
+                textB,
+                brand,
+                textBrand
+            });
+        } else if(style==='darts' || style.startsWith('darts-')){
+            scoreboardOverlay.innerHTML = renderDartsScoreboard({
+                names,
+                colors,
+                logos,
+                showLogos,
+                scoreA: sA,
+                scoreB: sB,
+                setsA: scoreboardData.sets?.[0] ?? 0,
+                setsB: scoreboardData.sets?.[1] ?? 0,
+                legsA: scoreboardData.legs?.[0] ?? 0,
+                legsB: scoreboardData.legs?.[1] ?? 0,
+                turn: scoreboardData.turn,
+                checkoutHtml,
+                sbSponsorHtml,
+                topImg,
+                bottomImg,
+                aClassA,
+                aClassB,
+                textA,
+                textB,
+                brand,
+                textBrand
+            });
+        } else if(style==='snooker' || style.startsWith('snooker-')){
+            scoreboardOverlay.innerHTML = renderSnookerScoreboard({
+                names,
+                colors,
+                logos,
+                showLogos,
+                scoreA: sA,
+                scoreB: sB,
+                framesA: scoreboardData.frames?.[0] ?? 0,
+                framesB: scoreboardData.frames?.[1] ?? 0,
+                breakA: scoreboardData.breaks?.[0] ?? 0,
+                breakB: scoreboardData.breaks?.[1] ?? 0,
+                hiA: scoreboardData.highBreak?.[0] ?? 0,
+                hiB: scoreboardData.highBreak?.[1] ?? 0,
+                turn: scoreboardData.turn,
+                sbSponsorHtml,
+                topImg,
+                bottomImg,
+                aClassA,
+                aClassB,
+                textA,
+                textB,
+                brand,
+                textBrand
+            });
+        } else if(style==='pool' || style.startsWith('pool-')){
+            scoreboardOverlay.innerHTML = renderPoolScoreboard({
+                names,
+                colors,
+                logos,
+                showLogos,
+                scoreA: sA,
+                scoreB: sB,
+                rack: scoreboardData.rack || '',
+                turn: scoreboardData.turn,
+                sbSponsorHtml,
+                topImg,
+                bottomImg,
+                aClassA,
+                aClassB,
+                textA,
+                textB,
+                brand,
+                textBrand
+            });
+        } else if(style==='tabletennis' || style.startsWith('tt-')){
+            scoreboardOverlay.innerHTML = renderTableTennisScoreboard({
+                names,
+                colors,
+                logos,
+                showLogos,
+                scoreA: sA,
+                scoreB: sB,
+                gamesA: scoreboardData.games?.[0] ?? 0,
+                gamesB: scoreboardData.games?.[1] ?? 0,
+                turn: scoreboardData.turn,
+                sbSponsorHtml,
+                topImg,
+                bottomImg,
+                aClassA,
+                aClassB,
+                textA,
+                textB,
+                brand,
+                textBrand
+            });
+        } else if(style==='basketball' || style.startsWith('basketball-')){
+            scoreboardOverlay.innerHTML = renderBasketballScoreboard({
+                names,
+                colors,
+                logos,
+                showLogos,
+                scoreA: sA,
+                scoreB: sB,
+                timeStr,
+                period: scoreboardData.period || 1,
+                sbSponsorHtml,
+                topImg,
+                bottomImg,
+                aClassA,
+                aClassB,
+                textA,
+                textB,
+                brand,
+                textBrand
+            });
+        } else if(style==='netball' || style.startsWith('netball-')){
+            scoreboardOverlay.innerHTML = renderNetballScoreboard({
+                names,
+                colors,
+                logos,
+                showLogos,
+                scoreA: sA,
+                scoreB: sB,
+                timeStr,
+                period: scoreboardData.period || 1,
+                turn: scoreboardData.turn,
+                sbSponsorHtml,
+                topImg,
+                bottomImg,
+                aClassA,
+                aClassB,
+                textA,
+                textB,
+                brand,
+                textBrand
+            });
         } else if(style.startsWith('af-')){
             const period = scoreboardData.period || 1;
             const timePart = timeStr ? `<span class="sb-time">${timeStr}</span>` : '';
@@ -879,24 +1164,28 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             ${sbSponsorHtml}
             ${bottomImg}`;
         } else if(style==='tennis' || style.startsWith('ten-')){
-            const setsA = scoreboardData.sets?.[0] ?? 0;
-            const setsB = scoreboardData.sets?.[1] ?? 0;
-            const gamesA = scoreboardData.games?.[0] ?? 0;
-            const gamesB = scoreboardData.games?.[1] ?? 0;
-            const pointNames = ['0','15','30','40','Ad'];
-            const ptsA = pointNames[sA] || '0';
-            const ptsB = pointNames[sB] || '0';
-            const serveA = scoreboardData.turn === 0 ? ' serve' : '';
-            const serveB = scoreboardData.turn === 1 ? ' serve' : '';
-            scoreboardOverlay.innerHTML = `
-            ${topImg}
-            <table class="sb-tennis-table">
-                <tr><th></th><th>Sets</th><th>Games</th><th>Pts</th></tr>
-                <tr><td class="sb-team${aClassA}${serveA}" style="background:${colors[0]};color:${textA}">${names[0]}</td><td>${setsA}</td><td>${gamesA}</td><td>${ptsA}</td></tr>
-                <tr><td class="sb-team${aClassB}${serveB}" style="background:${colors[1]};color:${textB}">${names[1]}</td><td>${setsB}</td><td>${gamesB}</td><td>${ptsB}</td></tr>
-            </table>
-            ${sbSponsorHtml}
-            ${bottomImg}`;
+            scoreboardOverlay.innerHTML = renderTennisScoreboard({
+                names,
+                colors,
+                logos,
+                showLogos,
+                scoreA: sA,
+                scoreB: sB,
+                setsA: scoreboardData.sets?.[0] ?? 0,
+                setsB: scoreboardData.sets?.[1] ?? 0,
+                gamesA: scoreboardData.games?.[0] ?? 0,
+                gamesB: scoreboardData.games?.[1] ?? 0,
+                turn: scoreboardData.turn,
+                sbSponsorHtml,
+                topImg,
+                bottomImg,
+                aClassA,
+                aClassB,
+                textA,
+                textB,
+                brand,
+                textBrand
+            });
         } else {
             scoreboardOverlay.innerHTML = `
             ${topImg}

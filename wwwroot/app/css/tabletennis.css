@@ -1,0 +1,25 @@
+.sb-tabletennis { background:var(--brand-secondary1, rgba(0,0,0,0.6)); border-radius:0.5rem; padding:0.25rem; }
+.sb-tabletennis-table { width:100%; border-collapse:collapse; }
+.sb-tabletennis-table th, .sb-tabletennis-table td { padding:0.25rem 0.5rem; text-align:center; }
+.sb-tabletennis-table th { background:var(--brand-secondary1, rgba(0,0,0,0.6)); color:#fff; }
+.sb-tabletennis-table td { background:rgba(0,0,0,0.5); color:#fff; }
+.sb-tabletennis-table .serve::before { content:'\25CF'; margin-right:0.25rem; font-size:0.8em; }
+
+/* Table tennis styles */
+.sb-tt-topspin {
+  background:#1e3a8a;
+  border-radius:0.25rem;
+  padding:0.25rem 0.75rem;
+}
+
+.sb-tt-smash {
+  background:linear-gradient(90deg,#111827,#374151);
+  border-bottom:4px solid #f59e0b;
+  padding:0.25rem 0.75rem;
+}
+
+.sb-tt-classic {
+  background:#f8fafc;
+  border:2px solid #111827;
+  padding:0.25rem 0.75rem;
+}
