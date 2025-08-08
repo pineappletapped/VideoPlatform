@@ -879,11 +879,45 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         const saveBtn = container.querySelector('#sb-save');
         if (saveBtn) saveBtn.onclick = async () => {
             const newData = getFormData();
-            if(currentData && newData.scores){
-                const diffA = (newData.scores[0]||0) - (currentData.scores?.[0]||0);
-                const diffB = (newData.scores[1]||0) - (currentData.scores?.[1]||0);
-                for(let i=0;i<diffA;i++) await addMatchLog(eventId,{ts:Date.now(),type:'Goal',team:'a',player:'',time:newData.time});
-                for(let i=0;i<diffB;i++) await addMatchLog(eventId,{ts:Date.now(),type:'Goal',team:'b',player:'',time:newData.time});
+            if (currentData && newData.scores) {
+                const diffs = [
+                    (newData.scores[0] || 0) - (currentData.scores?.[0] || 0),
+                    (newData.scores[1] || 0) - (currentData.scores?.[1] || 0)
+                ];
+                for (let t = 0; t < 2; t++) {
+                    for (let i = 0; i < diffs[t]; i++) {
+                        if (goalSport) {
+                            const res = await promptGoal(t);
+                            if (res) {
+                                const teamKey = t === 0 ? 'a' : 'b';
+                                const teamPlayers = getTeam(t).players || [];
+                                const scObj = teamPlayers.find(p => p.name === res.scorer);
+                                const asObj = teamPlayers.find(p => p.name === res.assist);
+                                await addMatchLog(eventId, {
+                                    ts: Date.now(),
+                                    type: 'Goal',
+                                    team: teamKey,
+                                    player: res.scorer,
+                                    playerName: res.scorer,
+                                    playerNumber: scObj?.number || '',
+                                    assist: res.assist,
+                                    assistNumber: asObj?.number || '',
+                                    time: newData.time
+                                });
+                            } else {
+                                newData.scores[t]--;
+                            }
+                        } else {
+                            await addMatchLog(eventId, {
+                                ts: Date.now(),
+                                type: 'Goal',
+                                team: t === 0 ? 'a' : 'b',
+                                player: '',
+                                time: newData.time
+                            });
+                        }
+                    }
+                }
             }
             await saveData(newData);
             currentData = newData;

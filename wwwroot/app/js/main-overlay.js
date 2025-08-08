@@ -714,7 +714,9 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     // Scoreboard Overlay
     let scoreboardOverlay = overlayContainer.querySelector('#scoreboard-overlay');
     const scoreboardData = state && state.scoreboard;
-    const scoreboardShow = previewMode ? state && state.scoreboardPreviewVisible : state && state.scoreboardVisible;
+    const scoreboardShow = previewMode
+        ? state && (state.scoreboardPreviewVisible || state.scoreboardVisible)
+        : state && state.scoreboardVisible;
     const breakVisible = state && state.breakVisible;
     const breakPlayer = state && state.breakPlayer;
     const highBreakVisible = state && state.highBreakVisible;
@@ -751,6 +753,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             scoreboardOverlay.style.fontFamily = branding.font;
             scoreboardOverlay.style.fontSize = '1.5rem';
             scoreboardOverlay.style.pointerEvents = 'none';
+            scoreboardOverlay.style.opacity = previewMode ? '0.6' : '1';
             scoreboardOverlay.style.left = '';
             scoreboardOverlay.style.right = '';
             scoreboardOverlay.style.top = '';
@@ -803,6 +806,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         scoreboardOverlay.style.fontFamily = branding.font;
         scoreboardOverlay.style.fontSize = '1.5rem';
         scoreboardOverlay.style.pointerEvents = 'none';
+        scoreboardOverlay.style.opacity = previewMode ? '0.6' : '1';
         scoreboardOverlay.style.left = '';
         scoreboardOverlay.style.right = '';
         scoreboardOverlay.style.top = '';
@@ -1595,7 +1599,9 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     // Stats Overlay
     let statOverlay = overlayContainer.querySelector('#stat-overlay');
     const statData = state && state.stat;
-    const statShow = previewMode ? state && state.statPreviewVisible : state && state.statVisible;
+    const statShow = previewMode
+        ? state && (state.statPreviewVisible || state.statVisible)
+        : state && state.statVisible;
     if (statShow && statData && statData.rows && statData.rows.length) {
         if (!statOverlay) {
             statOverlay = document.createElement('div');
@@ -1648,7 +1654,9 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     // Player Stat/Facts Overlay
     let playerStatOverlay = overlayContainer.querySelector('#player-stat-overlay');
     const playerStatData = state && state.playerStat;
-    const playerStatShow = previewMode ? state && state.playerStatPreviewVisible : state && state.playerStatVisible;
+    const playerStatShow = previewMode
+        ? state && (state.playerStatPreviewVisible || state.playerStatVisible)
+        : state && state.playerStatVisible;
     if (playerStatShow && playerStatData && playerStatData.player && playerStatData.fact) {
         if (!playerStatOverlay) {
             playerStatOverlay = document.createElement('div');
@@ -1668,7 +1676,9 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     // Stinger Overlay
     let stingerOverlay = overlayContainer.querySelector('#stinger-overlay');
     const stingerData = state && state.stinger;
-    const stingerShow = previewMode ? state && state.stingerPreviewVisible : state && state.stingerVisible;
+    const stingerShow = previewMode
+        ? state && (state.stingerPreviewVisible || state.stingerVisible)
+        : state && state.stingerVisible;
     const stingerChanged = stingerShow !== prevStingerVisible || JSON.stringify(stingerData) !== JSON.stringify(prevStingerData);
     if (stingerShow && stingerData) {
         if (!stingerOverlay) {
