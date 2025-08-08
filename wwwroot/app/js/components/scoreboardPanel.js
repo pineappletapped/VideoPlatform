@@ -286,6 +286,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         }
         const table = container.querySelector('#sb-table');
         const htmlParts = [];
+        const tennisPoints = ['0','15','30','40','Ad'];
         (data.scores || []).forEach((sc, i) => {
             const t = getTeam(i);
             const name = t.name || `Team ${i + 1}`;
@@ -294,7 +295,12 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             const activeClass = cfg.scoreboard.turn && data.turn === i ? ' class="active-player"' : '';
             const checkout = sport === 'Darts' ? getCheckout(sc) : null;
             const checkoutHtml = checkout ? `<span id="checkout-${i}" class="text-xs ml-2">${checkout}</span><button id="checkout-btn-${i}" class="control-button btn-xs ml-1">Show</button>` : '';
-            htmlParts.push(`<tr${activeClass}><td class="pr-2 whitespace-nowrap" style="background:${color};color:${textCol};min-width:6rem;text-align:center;">${name}</td><td><div class="flex items-center"><input type="number" id="team-score-${i}" class="border p-1 w-16 text-center" value="${sc}"><span id="score-btns-${i}" class="ml-1"></span>${checkoutHtml}</div></td></tr>`);
+            if (sport === 'Tennis') {
+                const opts = tennisPoints.map((p,idx)=>`<option value="${idx}"${sc===idx?' selected':''}>${p}</option>`).join('');
+                htmlParts.push(`<tr${activeClass}><td class="pr-2 whitespace-nowrap" style="background:${color};color:${textCol};min-width:6rem;text-align:center;">${name}</td><td><div class="flex items-center"><select id="team-score-${i}" class="border p-1 text-center">${opts}</select><span id="score-btns-${i}" class="ml-1"></span>${checkoutHtml}</div></td></tr>`);
+            } else {
+                htmlParts.push(`<tr${activeClass}><td class="pr-2 whitespace-nowrap" style="background:${color};color:${textCol};min-width:6rem;text-align:center;">${name}</td><td><div class="flex items-center"><input type="number" id="team-score-${i}" class="border p-1 w-16 text-center" value="${sc}"><span id="score-btns-${i}" class="ml-1"></span>${checkoutHtml}</div></td></tr>`);
+            }
         });
         if (cfg.scoreboard.periods) {
             htmlParts.push(`<tr><td class="pr-2">${cfg.scoreboard.periodLabel || 'Period'}:</td><td><input type="number" class="border p-1 w-16" id="sb-period" value="${data.period || 1}"></td></tr>`);
@@ -356,7 +362,8 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         if (cfg.scoreboard.turn) {
             const optA = getTeam(0).name || 'Team 1';
             const optB = getTeam(1).name || 'Team 2';
-            htmlParts.push(`<tr><td class="pr-2">In Play:</td><td><select id="sb-turn" class="border p-1"><option value="0">${optA}</option><option value="1">${optB}</option></select></td></tr>`);
+            const turnLabel = sport === 'Tennis' ? 'Serve' : 'In Play';
+            htmlParts.push(`<tr><td class="pr-2">${turnLabel}:</td><td><select id="sb-turn" class="border p-1"><option value="0">${optA}</option><option value="1">${optB}</option></select></td></tr>`);
         }
         table.innerHTML = htmlParts.join('');
 
@@ -423,36 +430,64 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                     btn.style.background = btnCfg.color || '#666';
                     if (btnCfg.textColor) btn.style.color = btnCfg.textColor;
                     btn.addEventListener('click', async () => {
-                        const val = parseInt(input.value) || 0;
-                        const newVal = val + btnCfg.value;
-                        input.value = newVal;
-                        data.scores[i] = newVal;
-                        const cSpan = container.querySelector(`#checkout-${i}`);
-                        if (cSpan) cSpan.textContent = getCheckout(newVal) || '';
-                        if (cfg.scoreboard.breaks && data.turn === i) {
-                            const br = container.querySelector('#sb-break');
-                            const hb = container.querySelector('#sb-highbreak');
-                            if (br) {
-                                br.value = (parseInt(br.value) || 0) + btnCfg.value;
-                                if (hb && parseInt(br.value) > (parseInt(hb.value) || 0)) hb.value = br.value;
+                        if (sport === 'Tennis') {
+                            const other = i === 0 ? 1 : 0;
+                            const otherInput = container.querySelector(`#team-score-${other}`);
+                            let val = parseInt(input.value) || 0;
+                            let otherVal = parseInt(otherInput?.value) || 0;
+                            if (val <= 2) {
+                                val += 1;
+                            } else if (val === 3) {
+                                if (otherVal === 4) {
+                                    val = 3; otherVal = 3;
+                                } else if (otherVal === 3) {
+                                    val = 4;
+                                } else {
+                                    val = 0; otherVal = 0;
+                                    const gInput = container.querySelector(`#sb-game-${i}`);
+                                    if (gInput) { gInput.value = (parseInt(gInput.value) || 0) + 1; data.games[i] = parseInt(gInput.value) || 0; }
+                                }
+                            } else if (val === 4) {
+                                val = 0; otherVal = 0;
+                                const gInput = container.querySelector(`#sb-game-${i}`);
+                                if (gInput) { gInput.value = (parseInt(gInput.value) || 0) + 1; data.games[i] = parseInt(gInput.value) || 0; }
                             }
-                        }
-                        if(goalSport && btnCfg.value === 1){
-                            const res = await promptGoal(i);
-                            if(res){
-                                const teamKey = i===0?'a':'b';
-                                const teamPlayers = getTeam(i).players || [];
-                                const scObj = teamPlayers.find(p=>p.name===res.scorer);
-                                const asObj = teamPlayers.find(p=>p.name===res.assist);
-                                await addMatchLog(eventId,{ts:Date.now(),type:'Goal',team:teamKey,player:res.scorer,playerName:res.scorer,playerNumber:scObj?.number||'',assist:res.assist,assistNumber:asObj?.number||'',time:currentTimeStr()});
-                                await saveData(getFormData());
-                            }else{
-                                input.value = val;
-                                data.scores[i] = val;
-                                if (cSpan) cSpan.textContent = getCheckout(val) || '';
-                            }
-                        }else{
+                            input.value = val;
+                            data.scores[i] = val;
+                            if (otherInput) { otherInput.value = otherVal; data.scores[other] = otherVal; }
                             await saveData(getFormData());
+                        } else {
+                            const val = parseInt(input.value) || 0;
+                            const newVal = val + btnCfg.value;
+                            input.value = newVal;
+                            data.scores[i] = newVal;
+                            const cSpan = container.querySelector(`#checkout-${i}`);
+                            if (cSpan) cSpan.textContent = getCheckout(newVal) || '';
+                            if (cfg.scoreboard.breaks && data.turn === i) {
+                                const br = container.querySelector('#sb-break');
+                                const hb = container.querySelector('#sb-highbreak');
+                                if (br) {
+                                    br.value = (parseInt(br.value) || 0) + btnCfg.value;
+                                    if (hb && parseInt(br.value) > (parseInt(hb.value) || 0)) hb.value = br.value;
+                                }
+                            }
+                            if(goalSport && btnCfg.value === 1){
+                                const res = await promptGoal(i);
+                                if(res){
+                                    const teamKey = i===0?'a':'b';
+                                    const teamPlayers = getTeam(i).players || [];
+                                    const scObj = teamPlayers.find(p=>p.name===res.scorer);
+                                    const asObj = teamPlayers.find(p=>p.name===res.assist);
+                                    await addMatchLog(eventId,{ts:Date.now(),type:'Goal',team:teamKey,player:res.scorer,playerName:res.scorer,playerNumber:scObj?.number||'',assist:res.assist,assistNumber:asObj?.number||'',time:currentTimeStr()});
+                                    await saveData(getFormData());
+                                }else{
+                                    input.value = val;
+                                    data.scores[i] = val;
+                                    if (cSpan) cSpan.textContent = getCheckout(val) || '';
+                                }
+                            }else{
+                                await saveData(getFormData());
+                            }
                         }
                     });
                     holder.appendChild(btn);

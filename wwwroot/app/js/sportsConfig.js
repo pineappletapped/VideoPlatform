@@ -98,7 +98,7 @@ export const sportsData = {
     playersPerTeam: 1,
     subs: 0,
     positions: ["Player"],
-    scoreboard: { sets: true, games: true },
+    scoreboard: { sets: true, games: true, turn: true },
     scoreboardStyles: ['ten-baseline','ten-chic','ten-digital','tennis','style1','style2','style3','style4','style5'],
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }],
     logEvents: ['Ace','Double Fault','Break Point','Set Won']

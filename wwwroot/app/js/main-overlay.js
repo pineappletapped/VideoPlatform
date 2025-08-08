@@ -883,12 +883,17 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             const setsB = scoreboardData.sets?.[1] ?? 0;
             const gamesA = scoreboardData.games?.[0] ?? 0;
             const gamesB = scoreboardData.games?.[1] ?? 0;
+            const pointNames = ['0','15','30','40','Ad'];
+            const ptsA = pointNames[sA] || '0';
+            const ptsB = pointNames[sB] || '0';
+            const serveA = scoreboardData.turn === 0 ? ' serve' : '';
+            const serveB = scoreboardData.turn === 1 ? ' serve' : '';
             scoreboardOverlay.innerHTML = `
             ${topImg}
             <table class="sb-tennis-table">
                 <tr><th></th><th>Sets</th><th>Games</th><th>Pts</th></tr>
-                <tr><td class="sb-team${aClassA}" style="background:${colors[0]};color:${textA}">${names[0]}</td><td>${setsA}</td><td>${gamesA}</td><td>${sA}</td></tr>
-                <tr><td class="sb-team${aClassB}" style="background:${colors[1]};color:${textB}">${names[1]}</td><td>${setsB}</td><td>${gamesB}</td><td>${sB}</td></tr>
+                <tr><td class="sb-team${aClassA}${serveA}" style="background:${colors[0]};color:${textA}">${names[0]}</td><td>${setsA}</td><td>${gamesA}</td><td>${ptsA}</td></tr>
+                <tr><td class="sb-team${aClassB}${serveB}" style="background:${colors[1]};color:${textB}">${names[1]}</td><td>${setsB}</td><td>${gamesB}</td><td>${ptsB}</td></tr>
             </table>
             ${sbSponsorHtml}
             ${bottomImg}`;
