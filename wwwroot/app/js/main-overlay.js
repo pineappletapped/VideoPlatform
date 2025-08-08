@@ -1740,6 +1740,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     prevPresentationVisible = presShow;
     prevPresentationData = presData;
 }
+}
 
 let lastState = null;
 let lastGraphics = null;
