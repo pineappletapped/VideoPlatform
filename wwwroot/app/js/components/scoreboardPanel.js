@@ -776,11 +776,13 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
 
         function updateDartStats(){
             const statDiv = container.querySelector('#dart-stats');
-            if(!statDiv) return;
+            if(!statDiv || !Array.isArray(data.dartStats)) return;
             const start = data.start || cfg.scoreboard.start || 0;
             const parts = data.dartStats.map((st,i)=>{
-                const avg = st.throws ? (((start - data.scores[i]) / st.throws) * 3).toFixed(1) : '0';
-                const teamName = getTeam(i).name || `Team ${i+1}`;
+                const score = (data.scores && data.scores[i]) || 0;
+                const avg = st.throws ? (((start - score) / st.throws) * 3).toFixed(1) : '0';
+                const team = getTeam(i) || {};
+                const teamName = team.name || `Team ${i+1}`;
                 return `${teamName}: 3DA ${avg} | HC ${st.highCheckout} | 180s ${st.count180} | 140+ ${st.count140} | 100+ ${st.count100}`;
             });
             statDiv.textContent = parts.join(' \u00A0 ');

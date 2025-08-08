@@ -1780,6 +1780,7 @@ listenGraphicsData(eventId, (graphics) => {
     lastGraphics = graphics || { lowerThirds: [], titleSlides: [], teams: {} };
     updateOverlay();
 });
+
 listenBranding(eventId, (branding) => {
     lastBranding = branding || DEFAULT_BRANDING;
     updateOverlay();
