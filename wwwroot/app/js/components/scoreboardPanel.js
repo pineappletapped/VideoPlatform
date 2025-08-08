@@ -13,6 +13,18 @@ const DEFAULT_STYLES = [
     { id: 'basketball-catalyst', label: 'Court Catalyst' },
     { id: 'basketball-slick', label: 'Skyline Slick' },
     { id: 'basketball-retro', label: 'Hardwood Retro' },
+    // Netball
+    { id: 'netball-hoop', label: 'Hoop Highlight' },
+    { id: 'netball-chalk', label: 'Chalkboard Court' },
+    { id: 'netball-classic', label: 'Classic Netball' },
+    // Golf
+    { id: 'golf-links', label: 'Links Classic' },
+    { id: 'golf-green', label: 'Augusta Green' },
+    { id: 'golf-classic', label: 'Clubhouse Classic' },
+    // Baseball
+    { id: 'baseball-diamond', label: 'Diamond Plate' },
+    { id: 'baseball-dugout', label: 'Dugout Chalk' },
+    { id: 'baseball-classic', label: 'Ballpark Classic' },
     // American Football
     { id: 'af-bold', label: 'Grid Iron Bold' },
     { id: 'af-stripes', label: 'Energy Stripes' },
@@ -21,6 +33,62 @@ const DEFAULT_STYLES = [
     { id: 'ten-baseline', label: 'Baseline Burst' },
     { id: 'ten-chic', label: 'Grand Slam Chic' },
     { id: 'ten-digital', label: 'Court Digital' },
+    // Volleyball
+    { id: 'volley-court', label: 'Indoor Court' },
+    { id: 'volley-beach', label: 'Beach Breeze' },
+    { id: 'volley-classic', label: 'Classic Volleyball' },
+    // Badminton
+    { id: 'badminton-shuttle', label: 'Shuttle Speed' },
+    { id: 'badminton-net', label: 'Net Play' },
+    { id: 'badminton-classic', label: 'Classic Badminton' },
+    // Squash
+    { id: 'squash-glass', label: 'Glass Court' },
+    { id: 'squash-court', label: 'Pro Court' },
+    { id: 'squash-classic', label: 'Classic Squash' },
+    // Gaelic Football
+    { id: 'gaelic-celtic', label: 'Celtic Knot' },
+    { id: 'gaelic-emerald', label: 'Emerald Field' },
+    { id: 'gaelic-classic', label: 'Classic Gaelic' },
+    // Hurling
+    { id: 'hurl-stick', label: 'Hurling Stick' },
+    { id: 'hurl-sliotar', label: 'Sliotar Spin' },
+    { id: 'hurl-classic', label: 'Classic Hurling' },
+    // Cricket
+    { id: 'cricket-pavilion', label: 'Pavilion Classic' },
+    { id: 'cricket-crease', label: 'Fresh Crease' },
+    { id: 'cricket-classic', label: 'Classic Cricket' },
+    // Hockey
+    { id: 'hockey-rink', label: 'Rink Roster' },
+    { id: 'hockey-ice', label: 'Icy Edge' },
+    { id: 'hockey-classic', label: 'Classic Hockey' },
+    // Ice Hockey
+    { id: 'icehockey-arena', label: 'Arena Lights' },
+    { id: 'icehockey-frost', label: 'Frozen Sheet' },
+    { id: 'icehockey-classic', label: 'Classic Ice' },
+    // Boxing
+    { id: 'boxing-ring', label: 'Ring Lights' },
+    { id: 'boxing-title', label: 'Title Belt' },
+    { id: 'boxing-vintage', label: 'Vintage Bout' },
+    // Darts
+    { id: 'darts-board', label: 'Board Focus' },
+    { id: 'darts-oche', label: 'Oche View' },
+    { id: 'darts-classic', label: 'Classic Darts' },
+    // Snooker
+    { id: 'snooker-table', label: 'Table Tradition' },
+    { id: 'snooker-chalk', label: 'Chalk Line' },
+    { id: 'snooker-classic', label: 'Classic Snooker' },
+    // Table Tennis
+    { id: 'tt-topspin', label: 'Topspin' },
+    { id: 'tt-smash', label: 'Power Smash' },
+    { id: 'tt-classic', label: 'Classic Table Tennis' },
+    // Pool
+    { id: 'pool-felt', label: 'Felt Green' },
+    { id: 'pool-chalk', label: 'Chalk Blue' },
+    { id: 'pool-classic', label: 'Classic Pool' },
+    // Rugby
+    { id: 'rugby-classic', label: 'Rugby Classic' },
+    { id: 'rugby-modern', label: 'Rugby Modern' },
+    { id: 'rugby-grass', label: 'Rugby Grass' },
     // Existing generic styles
     { id: 'football', label: 'Football Row' },
     { id: 'style1', label: 'Classic' },
@@ -169,10 +237,17 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             base.frameTarget = 1;
         }
         if (cfg.scoreboard.legs) base.legs = scores.map(() => 0);
+        if (cfg.scoreboard.goals) base.goals = scores.map(() => 0);
         if (cfg.scoreboard.points) base.points = scores.map(() => 0);
         if (cfg.scoreboard.overs) base.overs = scores.map(() => 0);
         if (cfg.scoreboard.balls) base.balls = scores.map(() => 0);
         if (cfg.scoreboard.wickets) base.wickets = scores.map(() => 0);
+        if (cfg.scoreboard.runRate) base.runRate = 0;
+        if (cfg.scoreboard.requiredRate) base.requiredRate = 0;
+        if (cfg.scoreboard.target) base.target = 0;
+        if (cfg.scoreboard.pitchCount) base.pitchCount = { balls: 0, strikes: 0 };
+        if (cfg.scoreboard.outs) base.outs = 0;
+        if (cfg.scoreboard.bases) base.bases = [false, false, false];
         if (cfg.scoreboard.breaks) base.currentBreak = 0;
         if (cfg.scoreboard.highBreak) base.highBreak = 0;
         if (cfg.scoreboard.turn) base.turn = 0;
@@ -335,6 +410,9 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         if (cfg.scoreboard.legs) {
             htmlParts.push(`<tr><td class="pr-2">Legs:</td><td>${Array.from({length:count}).map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-leg-${i}" value="${(data.legs && data.legs[i]) || 0}">`).join('')}</td></tr>`);
         }
+        if (cfg.scoreboard.goals) {
+            htmlParts.push(`<tr><td class="pr-2">Goals:</td><td>${Array.from({length:count}).map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-goal-${i}" value="${(data.goals && data.goals[i]) || 0}">`).join('')}</td></tr>`);
+        }
         if (cfg.scoreboard.points) {
             htmlParts.push(`<tr><td class="pr-2">Points:</td><td>${Array.from({length:count}).map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-point-${i}" value="${(data.points && data.points[i]) || 0}">`).join('')}</td></tr>`);
         }
@@ -346,6 +424,26 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         }
         if (cfg.scoreboard.wickets) {
             htmlParts.push(`<tr><td class="pr-2">Wkts:</td><td>${Array.from({length:count}).map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-wkt-${i}" value="${(data.wickets && data.wickets[i]) || 0}">`).join('')}</td></tr>`);
+        }
+        if (cfg.scoreboard.runRate) {
+            htmlParts.push(`<tr><td class="pr-2">Run Rate:</td><td><input type="number" step="0.01" class="border p-1 w-16" id="sb-runrate" value="${data.runRate || 0}"></td></tr>`);
+        }
+        if (cfg.scoreboard.requiredRate) {
+            htmlParts.push(`<tr><td class="pr-2">Req Rate:</td><td><input type="number" step="0.01" class="border p-1 w-16" id="sb-reqrate" value="${data.requiredRate || 0}"></td></tr>`);
+        }
+        if (cfg.scoreboard.target) {
+            htmlParts.push(`<tr><td class="pr-2">Target:</td><td><input type="number" class="border p-1 w-16" id="sb-target" value="${data.target || 0}"></td></tr>`);
+        }
+        if (cfg.scoreboard.pitchCount) {
+            const pc = data.pitchCount || { balls: 0, strikes: 0 };
+            htmlParts.push(`<tr><td class="pr-2">Count:</td><td><input type="number" class="border p-1 w-12 mx-1" id="sb-balls" value="${pc.balls}">B <input type="number" class="border p-1 w-12 mx-1" id="sb-strikes" value="${pc.strikes}">S</td></tr>`);
+        }
+        if (cfg.scoreboard.outs) {
+            htmlParts.push(`<tr><td class="pr-2">Outs:</td><td><input type="number" class="border p-1 w-12 mx-1" id="sb-outs" value="${data.outs || 0}"></td></tr>`);
+        }
+        if (cfg.scoreboard.bases) {
+            const bases = data.bases || [false,false,false];
+            htmlParts.push(`<tr><td class="pr-2">Bases:</td><td>${[1,2,3].map(i=>`<label class='mx-1'><input type='checkbox' id='sb-base${i}'${bases[i-1] ? ' checked' : ''}>${i}</label>`).join('')}</td></tr>`);
         }
         const tnA = getTeam(0).name || 'Team 1';
         const tnB = getTeam(1).name || 'Team 2';
@@ -362,7 +460,8 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         if (cfg.scoreboard.turn) {
             const optA = getTeam(0).name || 'Team 1';
             const optB = getTeam(1).name || 'Team 2';
-            const turnLabel = sport === 'Tennis' ? 'Serve' : 'In Play';
+            const serveSports = ['Tennis','Table Tennis','Volleyball','Badminton'];
+            const turnLabel = serveSports.includes(sport) ? 'Serve' : 'In Play';
             htmlParts.push(`<tr><td class="pr-2">${turnLabel}:</td><td><select id="sb-turn" class="border p-1"><option value="0">${optA}</option><option value="1">${optB}</option></select></td></tr>`);
         }
         table.innerHTML = htmlParts.join('');
@@ -413,12 +512,34 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         updateDartStats();
         (data.scores || []).forEach((_, i) => {
             const input = container.querySelector(`#team-score-${i}`);
+            const goalInput = container.querySelector(`#sb-goal-${i}`);
+            const pointInput = container.querySelector(`#sb-point-${i}`);
             if (input) {
                 input.addEventListener('input', () => {
                     const val = parseInt(input.value) || 0;
                     data.scores[i] = val;
                     const cSpan = container.querySelector(`#checkout-${i}`);
                     if (cSpan) cSpan.textContent = getCheckout(val) || '';
+                });
+            }
+            if (goalInput) {
+                goalInput.addEventListener('input', () => {
+                    const g = parseInt(goalInput.value) || 0;
+                    data.goals[i] = g;
+                    const p = parseInt(pointInput?.value) || 0;
+                    const total = g*3 + p;
+                    if(input){ input.value = total; }
+                    data.scores[i] = total;
+                });
+            }
+            if (pointInput) {
+                pointInput.addEventListener('input', () => {
+                    const p = parseInt(pointInput.value) || 0;
+                    data.points[i] = p;
+                    const g = parseInt(goalInput?.value) || 0;
+                    const total = g*3 + p;
+                    if(input){ input.value = total; }
+                    data.scores[i] = total;
                 });
             }
             const holder = container.querySelector(`#score-btns-${i}`);
@@ -456,6 +577,24 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                             data.scores[i] = val;
                             if (otherInput) { otherInput.value = otherVal; data.scores[other] = otherVal; }
                             await saveData(getFormData());
+                        } else if (cfg.scoreboard.goals && btnCfg.type === 'goal') {
+                            const g = (parseInt(goalInput?.value) || 0) + 1;
+                            if(goalInput) goalInput.value = g;
+                            data.goals[i] = g;
+                            const p = parseInt(pointInput?.value) || 0;
+                            const total = g*3 + p;
+                            if(input) input.value = total;
+                            data.scores[i] = total;
+                            await saveData(getFormData());
+                        } else if (cfg.scoreboard.points && btnCfg.type === 'point') {
+                            const p = (parseInt(pointInput?.value) || 0) + 1;
+                            if(pointInput) pointInput.value = p;
+                            data.points[i] = p;
+                            const g = parseInt(goalInput?.value) || 0;
+                            const total = g*3 + p;
+                            if(input) input.value = total;
+                            data.scores[i] = total;
+                            await saveData(getFormData());
                         } else {
                             const val = parseInt(input.value) || 0;
                             const newVal = val + btnCfg.value;
@@ -471,7 +610,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                                     if (hb && parseInt(br.value) > (parseInt(hb.value) || 0)) hb.value = br.value;
                                 }
                             }
-                            if(goalSport && btnCfg.value === 1){
+                            if(goalSport && btnCfg.label === 'Goal'){
                                 const res = await promptGoal(i);
                                 if(res){
                                     const teamKey = i===0?'a':'b';
@@ -637,11 +776,13 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
 
         function updateDartStats(){
             const statDiv = container.querySelector('#dart-stats');
-            if(!statDiv) return;
+            if(!statDiv || !Array.isArray(data.dartStats)) return;
             const start = data.start || cfg.scoreboard.start || 0;
             const parts = data.dartStats.map((st,i)=>{
-                const avg = st.throws ? (((start - data.scores[i]) / st.throws) * 3).toFixed(1) : '0';
-                const teamName = getTeam(i).name || `Team ${i+1}`;
+                const score = (data.scores && data.scores[i]) || 0;
+                const avg = st.throws ? (((start - score) / st.throws) * 3).toFixed(1) : '0';
+                const team = getTeam(i) || {};
+                const teamName = team.name || `Team ${i+1}`;
                 return `${teamName}: 3DA ${avg} | HC ${st.highCheckout} | 180s ${st.count180} | 140+ ${st.count140} | 100+ ${st.count100}`;
             });
             statDiv.textContent = parts.join(' \u00A0 ');
@@ -681,10 +822,20 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                 }
             }
             if (cfg.scoreboard.legs) obj.legs = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-leg-${i}`).value) || 0);
+            if (cfg.scoreboard.goals) obj.goals = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-goal-${i}`).value) || 0);
             if (cfg.scoreboard.points) obj.points = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-point-${i}`).value) || 0);
             if (cfg.scoreboard.overs) obj.overs = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-over-${i}`).value) || 0);
             if (cfg.scoreboard.balls) obj.balls = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-ball-${i}`).value) || 0);
             if (cfg.scoreboard.wickets) obj.wickets = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-wkt-${i}`).value) || 0);
+            if (cfg.scoreboard.runRate) obj.runRate = parseFloat(container.querySelector('#sb-runrate').value) || 0;
+            if (cfg.scoreboard.requiredRate) obj.requiredRate = parseFloat(container.querySelector('#sb-reqrate').value) || 0;
+            if (cfg.scoreboard.target) obj.target = parseInt(container.querySelector('#sb-target').value) || 0;
+            if (cfg.scoreboard.pitchCount) obj.pitchCount = {
+                balls: parseInt(container.querySelector('#sb-balls').value) || 0,
+                strikes: parseInt(container.querySelector('#sb-strikes').value) || 0
+            };
+            if (cfg.scoreboard.outs) obj.outs = parseInt(container.querySelector('#sb-outs').value) || 0;
+            if (cfg.scoreboard.bases) obj.bases = [1,2,3].map(i=>container.querySelector(`#sb-base${i}`).checked);
             if (cfg.scoreboard.breaks) obj.currentBreak = parseInt(container.querySelector('#sb-break').value) || 0;
             if (cfg.scoreboard.highBreak) obj.highBreak = parseInt(container.querySelector('#sb-highbreak').value) || 0;
             if (cfg.scoreboard.turn) obj.turn = parseInt(container.querySelector('#sb-turn').value) || 0;
@@ -808,8 +959,10 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             const textA = contrastColor(colA);
             const textB = contrastColor(colB);
             const textBrand = contrastColor(brand);
-            if(styleSel.value==='cricket'){
-                prevDiv.innerHTML = `<div class="sb-container sb-cricket" style="--sb-team-width:${longest}ch"><div class="sb-row"><span class="sb-team" style="background:${colA};color:${textA}">${nameA}</span><span class="sb-score" style="background:${brand};color:${textBrand}">0/0 (0.0)</span><span class="sb-team" style="background:${colB};color:${textB}">${nameB}</span></div></div>`;
+            if(styleSel.value.startsWith('cricket')){
+                prevDiv.innerHTML = `<div class="sb-container sb-cricket sb-${styleSel.value}" style="--sb-team-width:${longest}ch"><div class="sb-row"><span class="sb-team" style="background:${colA};color:${textA}">${nameA}</span><span class="sb-score" style="background:${brand};color:${textBrand}">0/0</span><span class="sb-overs">0.0</span><span class="sb-team" style="background:${colB};color:${textB}">${nameB}</span><span class="sb-score" style="background:${brand};color:${textBrand}">0/0</span><span class="sb-overs">0.0</span></div><div class="sb-row detail"><span class="sb-detail">RR 0</span><span class="sb-detail">Target 0</span><span class="sb-detail">Req 0</span></div></div>`;
+            }else if(styleSel.value.startsWith('gaelic') || styleSel.value.startsWith('hurl')){
+                prevDiv.innerHTML = `<div class="sb-container sb-${styleSel.value}" style="--sb-team-width:${longest}ch"><div class="sb-row"><span class="sb-team" style="background:${colA};color:${textA}">${nameA}</span><span class="sb-score" style="background:${brand};color:${textBrand}">0-0 | 0-0</span><span class="sb-team" style="background:${colB};color:${textB}">${nameB}</span></div></div>`;
             }else{
                 prevDiv.innerHTML = `
                 <div class="sb-container sb-${styleSel.value}" style="--sb-team-width:${longest}ch">

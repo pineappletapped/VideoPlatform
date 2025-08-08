@@ -355,8 +355,11 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
                             </div>
                             <div class="mb-2">
                                 <label class="block text-sm">Tees / Holes</label>
-                                <div id="course-holes" class="space-y-1"></div>
-                                <button type="button" id="course-add-hole" class="control-button btn-xs mt-1">Add Tee</button>
+                                <table class="w-full text-sm">
+                                    <thead><tr><th>#</th><th>Tee</th><th>Length</th><th>Par</th></tr></thead>
+                                    <tbody id="course-holes"></tbody>
+                                </table>
+                                <button type="button" id="course-add-hole" class="control-button btn-xs mt-1">Add Hole</button>
                             </div>
                             <div class="mb-2">
                                 <label class="block text-sm">Image URL</label>
@@ -802,18 +805,18 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
         styleSel.value = introSettings.course?.style || 'style1';
         transSel.value = introSettings.course?.transition || 'fade';
         const holesDiv = form.querySelector('#course-holes');
-        const holes = (introSettings.course?.holes && introSettings.course.holes.slice()) || [];
+        const holes = (introSettings.course?.holes && introSettings.course.holes.slice()) || Array.from({length:18}).map(() => ({tee:'', length:'', par:4}));
         function renderHoles(){
             holesDiv.innerHTML = holes.map((h,i)=>
-                `<div class="flex items-center gap-2"><span class="w-6 text-sm">${i+1}</span>`+
-                `<input class="border p-1 flex-1" name="tee-${i}" placeholder="Tee" value="${h.tee||''}" />`+
-                `<input class="border p-1 w-20" name="len-${i}" placeholder="Length" value="${h.length||''}" />`+
-                `<input class="border p-1 w-16" type="number" name="par-${i}" placeholder="Par" value="${h.par||''}" />`+
-                `</div>`).join('');
+                `<tr><td>${i+1}</td>`+
+                `<td><input class="border p-1 w-full" name="tee-${i}" value="${h.tee||''}" /></td>`+
+                `<td><input class="border p-1 w-20" name="len-${i}" value="${h.length||''}" /></td>`+
+                `<td><input class="border p-1 w-16" type="number" name="par-${i}" value="${h.par||4}" /></td></tr>`
+            ).join('');
         }
         renderHoles();
         const addHoleBtn = form.querySelector('#course-add-hole');
-        if(addHoleBtn) addHoleBtn.onclick = ()=>{ holes.push({tee:'', length:'', par:0}); renderHoles(); };
+        if(addHoleBtn) addHoleBtn.onclick = ()=>{ holes.push({tee:'', length:'', par:4}); renderHoles(); };
 
         modal.style.display='flex';
         form.onsubmit = async e=>{

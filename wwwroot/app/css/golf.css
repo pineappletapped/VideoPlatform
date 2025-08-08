@@ -1,0 +1,22 @@
+.sb-golf .golf-table td, .sb-golf .golf-table th { padding:0 0.4rem; text-align:center; }
+.sb-golf .sb-row { justify-content:center; }
+
+/* Golf styles */
+.sb-golf-links {
+  background:#0b3d02;
+  color:#fff;
+  border-bottom:4px solid #cbb26a;
+  padding:0.25rem 0.75rem;
+}
+.sb-golf-green {
+  background:#0b6623;
+  color:#fff;
+  border-bottom:4px solid #045318;
+  padding:0.25rem 0.75rem;
+}
+.sb-golf-classic {
+  background:#fff;
+  color:#000;
+  border:2px solid #045318;
+  padding:0.25rem 0.75rem;
+}

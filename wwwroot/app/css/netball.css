@@ -1,0 +1,29 @@
+.sb-netball .sb-row { align-items:center; gap:0.5rem; }
+.sb-netball .sb-time { margin-left:0.5rem; }
+.sb-netball .cp::before {
+  content: '•';
+  margin-right:0.25rem;
+  font-size:0.75rem;
+}
+
+/* Netball styles */
+.sb-netball-hoop {
+  background: #f9a8d4;
+  border-radius: 9999px;
+  padding: 0.25rem 0.75rem;
+}
+
+.sb-netball-chalk {
+  background: #1f2937;
+  border-left: 4px solid #f9a8d4;
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.75rem;
+}
+
+.sb-netball-classic {
+  background: #fff;
+  color: #000;
+  border: 2px solid #f9a8d4;
+  padding: 0.25rem 0.75rem;
+}
+.sb-netball-classic .sb-team { color:#000; }

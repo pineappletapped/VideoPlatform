@@ -182,7 +182,7 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                         </tbody>
                     </table>
                 </div>
-                ${sportsMode && teamsData ? `
+                ${teamsData ? `
                 <div class="mt-4">
                     <strong>In Game Events:</strong>
                     <div class="flex gap-2 mt-1 text-sm items-center">
@@ -274,7 +274,7 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
             idInput.value = '';
             modal.style.display = 'flex';
         };
-        if (sportsMode && teamsData) {
+        if (teamsData) {
             const typeSel = container.querySelector('#ige-type');
             const teamSel = container.querySelector('#ige-team');
             const playerSel = container.querySelector('#ige-player');

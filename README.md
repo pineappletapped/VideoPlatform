@@ -119,6 +119,23 @@ Scoreboard panel also includes **Match Log** buttons to record goals,
 substitutions and penalties with the current time. These entries can be shown as
 an overlay via the **Show Log** button.
 
+### Sport-specific scoreboards
+
+Each sport can now define its own scoreboard layout and stylesheet. Football was
+the first sport to use this modular approach, and rugby now joins it with
+dedicated JavaScript and CSS templates that mirror traditional broadcast
+scorebugs, including try/convert/penalty breakdowns. Hockey now has a tailored
+module with period tracking and shots-on-goal summaries, and ice hockey adds
+power-play indicators alongside SOG stats. Boxing introduces a ring-style bug
+with round and clock readouts, while darts shows remaining points with sets and
+  legs tracking plus a throw indicator. Tennis displays sets, games and points
+  with serve markers, snooker tracks frames, breaks and high breaks for each
+  player, table tennis shows games and points with a serve indicator, pool
+  displays rack counts with a break marker, basketball tracks quarters with a
+  game clock, netball highlights centre passes along with the timer, volleyball
+  tracks sets and rally points with a serve marker, and badminton shows games
+  and points with service indicators.
+
 ### Tournament Panel
 
 When an event is created in **Tournament Mode** an extra tab appears in the
@@ -134,9 +151,12 @@ average, counts 180s, 140s and 100+ scores and records the highest checkout of
 the match. Use the **New Leg** button to reset both players to 301 or 501 as
 configured.
 
-Cricket mode offers a dedicated scoreboard style showing runs, wickets and
-overs for both sides in a single bar. Choose between this and the regular
-styles from the options modal.
+Cricket mode offers a dedicated scoreboard showing runs, wickets and overs for
+both sides plus a secondary bar for run rate, target and required rate, closely
+matching the detail seen on Sky Sports broadcasts. Choose between this and the
+regular styles from the options modal. Tennis bugs show set and game progression
+with serve indicators, while snooker displays frame scores, current breaks and
+highest breaks. Golf introduces a leaderboard-style bug that highlights the course name and player totals, and the intro panel now includes an intuitive course editor for tees, yardages and pars. Baseball scorebugs track the inning along with pitch count, outs and base runners, American football layouts pair quarter and game clock readouts with gridiron-themed styling, volleyball scoreboards show set tallies with rally points and a serve indicator, badminton boards display games and points in a familiar tournament format, squash adds similar game and point tracking with serve markers, and Gaelic football and hurling bugs present goals and points in traditional GAA fashion.
 
 ### Logo Stingers
 

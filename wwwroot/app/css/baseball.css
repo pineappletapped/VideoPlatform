@@ -1,0 +1,22 @@
+.sb-baseball .sb-row { align-items:center; gap:0.5rem; }
+.sb-baseball .sb-row.detail { font-size:0.875rem; }
+.sb-baseball .sb-bases { display:flex; align-items:center; gap:0.25rem; margin-left:0.5rem; }
+.sb-baseball .sb-bases .base { width:0.6rem; height:0.6rem; border:2px solid #fff; transform:rotate(45deg); }
+.sb-baseball .sb-bases .base.on { background:#fff; }
+
+/* Baseball styles */
+.sb-baseball-diamond {
+  background:#0c4a6e;
+  padding:0.25rem 0.75rem;
+  border-radius:0.25rem;
+}
+.sb-baseball-dugout {
+  background:#1e293b;
+  border-left:4px solid var(--brand-primary);
+  padding:0.25rem 0.75rem;
+}
+.sb-baseball-classic {
+  background:#f8fafc;
+  border:4px solid #dc2626;
+  padding:0.25rem 0.75rem;
+}

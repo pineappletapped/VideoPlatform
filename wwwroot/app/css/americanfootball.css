@@ -1,0 +1,18 @@
+.sb-af .sb-row { align-items:center; gap:0.5rem; }
+.sb-af .sb-time { margin-left:0.5rem; }
+
+/* American football styles */
+.sb-af-bold {
+  background:#1f2937;
+  border-bottom:4px solid var(--brand-primary);
+  padding:0.25rem 0.75rem;
+}
+.sb-af-stripes {
+  background:linear-gradient(90deg,var(--brand-primary) 0%,var(--brand-primary) 10%,#111 10%,#111 100%);
+  padding:0.25rem 0.75rem;
+}
+.sb-af-horizon {
+  background:#111827;
+  border-top:4px solid var(--brand-primary);
+  padding:0.25rem 0.75rem;
+}

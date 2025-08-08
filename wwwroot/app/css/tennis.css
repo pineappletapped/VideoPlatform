@@ -1,0 +1,26 @@
+.sb-tennis { background:var(--brand-secondary1, rgba(0,0,0,0.6)); border-radius:0.5rem; padding:0.25rem; }
+.sb-tennis-table { width:100%; border-collapse:collapse; }
+.sb-tennis-table th, .sb-tennis-table td { padding:0.25rem 0.5rem; text-align:center; }
+.sb-tennis-table th { background:var(--brand-secondary1, rgba(0,0,0,0.6)); color:#fff; }
+.sb-tennis-table td { background:rgba(0,0,0,0.5); color:#fff; }
+.sb-tennis-table .serve::before { content:'\25CF'; margin-right:0.25rem; font-size:0.8em; }
+
+/* Tennis styles */
+.sb-ten-baseline {
+  background:#065f46;
+  border-radius:0.25rem;
+  padding:0.25rem 0.75rem;
+}
+
+.sb-ten-chic {
+  background:linear-gradient(90deg,#111827,#374151);
+  border-bottom:4px solid #fbbf24;
+  padding:0.25rem 0.75rem;
+}
+
+.sb-ten-digital {
+  background:#000;
+  border:2px solid #16a34a;
+  box-shadow:0 0 8px #16a34a;
+  padding:0.25rem 0.75rem;
+}

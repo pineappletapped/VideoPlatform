@@ -1,0 +1,19 @@
+.sb-gaelic .sb-row { align-items:center; gap:0.5rem; }
+.sb-gaelic .sb-time { margin-left:0.5rem; }
+
+/* Gaelic football styles */
+.sb-gaelic-celtic {
+  background:#065f46;
+  border-bottom:4px solid #fbbf24;
+  padding:0.25rem 0.75rem;
+}
+.sb-gaelic-emerald {
+  background:#1e3a8a;
+  border-bottom:4px solid #10b981;
+  padding:0.25rem 0.75rem;
+}
+.sb-gaelic-classic {
+  background:#f3f4f6;
+  border:2px solid #111827;
+  padding:0.25rem 0.75rem;
+}

@@ -1,0 +1,24 @@
+.sb-rugby .sb-row { align-items:center; gap:0.5rem; }
+.sb-rugby .sb-time { margin-left:0.5rem; }
+.sb-rugby-details { display:flex; justify-content:space-between; width:100%; font-size:0.875rem; margin-top:0.25rem; }
+.sb-rugby-details .sb-detail { padding:0.1rem 0.5rem; border-radius:0.25rem; }
+
+/* Rugby styles */
+.sb-rugby-classic {
+  background: #002b36;
+  border-bottom: 4px solid #b8860b;
+  padding: 0.25rem 0.75rem;
+}
+
+.sb-rugby-modern {
+  background: #000;
+  border: 2px solid var(--brand-primary);
+  box-shadow: 0 0 8px var(--brand-primary),0 0 16px var(--brand-primary);
+  padding: 0.25rem 0.75rem;
+}
+
+.sb-rugby-grass {
+  background: linear-gradient(90deg,#14532d,#22c55e);
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.75rem;
+}

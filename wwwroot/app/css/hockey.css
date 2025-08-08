@@ -1,0 +1,25 @@
+.sb-hockey .sb-row { align-items:center; gap:0.5rem; }
+.sb-hockey .sb-time { margin-left:0.5rem; }
+.sb-hockey-details { display:flex; justify-content:space-between; width:100%; font-size:0.875rem; margin-top:0.25rem; }
+.sb-hockey-details .sb-detail { padding:0.1rem 0.5rem; border-radius:0.25rem; }
+
+/* Hockey styles */
+.sb-hockey-rink {
+  background:#f8fafc;
+  border-top:4px solid #1d4ed8;
+  border-bottom:4px solid #dc2626;
+  padding:0.25rem 0.75rem;
+}
+
+.sb-hockey-ice {
+  background:linear-gradient(90deg,#3b82f6,#93c5fd);
+  border-radius:0.25rem;
+  padding:0.25rem 0.75rem;
+  box-shadow:0 0 10px rgba(0,0,0,0.6);
+}
+
+.sb-hockey-classic {
+  background:#0f172a;
+  border-bottom:4px solid #9ca3af;
+  padding:0.25rem 0.75rem;
+}

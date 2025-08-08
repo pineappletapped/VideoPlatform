@@ -1,0 +1,23 @@
+.sb-squash { background:var(--brand-secondary1, rgba(0,0,0,0.6)); border-radius:0.5rem; padding:0.25rem; }
+.sb-squash-table { width:100%; border-collapse:collapse; }
+.sb-squash-table th, .sb-squash-table td { padding:0.25rem 0.5rem; text-align:center; }
+.sb-squash-table th { background:var(--brand-secondary1, rgba(0,0,0,0.6)); color:#fff; }
+.sb-squash-table td { background:rgba(0,0,0,0.5); color:#fff; }
+.sb-squash-table .serve::before { content:'\25CF'; margin-right:0.25rem; font-size:0.8em; }
+
+/* Squash styles */
+.sb-squash-glass {
+  background:#1e293b;
+  border:2px solid #93c5fd;
+  padding:0.25rem 0.75rem;
+}
+.sb-squash-court {
+  background:#f59e0b;
+  border-bottom:4px solid #78350f;
+  padding:0.25rem 0.75rem;
+}
+.sb-squash-classic {
+  background:#f3f4f6;
+  border:2px solid #111827;
+  padding:0.25rem 0.75rem;
+}

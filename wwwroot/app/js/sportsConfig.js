@@ -18,14 +18,14 @@ export const sportsData = {
       "Flanker","Flanker","Number 8","Scrum-half","Fly-half",
       "Wing","Inside Centre","Outside Centre","Wing","Full-back"
     ],
-    scoreboard: { periods: 2, periodLabel: "Half", time: true, timeDirection: 'up' },
-    scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
-    scoringButtons: [
-      { label: "Try", value: 5, color: "#ef4444" },
-      { label: "Conv", value: 2, color: "#3b82f6" },
-      { label: "Pen", value: 3, color: "#fbbf24" },
-      { label: "Drop", value: 3, color: "#9ca3af" }
-    ],
+      scoreboard: { periods: 2, periodLabel: "Half", time: true, timeDirection: 'up' },
+      scoreboardStyles: ['rugby-classic','rugby-modern','rugby-grass','style1','style2','style3','style4','style5','h1','h2'],
+      scoringButtons: [
+        { label: "Try", value: 5, color: "#ef4444" },
+        { label: "Conv", value: 2, color: "#3b82f6" },
+        { label: "Pen", value: 3, color: "#fbbf24" },
+        { label: "Drop", value: 3, color: "#9ca3af" }
+      ],
     logEvents: ['Try','Conversion','Penalty','Drop Goal','Yellow Card','Red Card','Substitution']
   },
   "Hockey": {
@@ -34,7 +34,7 @@ export const sportsData = {
     subs: 5,
     positions: ["Goalkeeper","Defender","Midfielder","Forward"],
     scoreboard: { periods: 4, periodLabel: "Quarter", time: true, timeDirection: 'up' },
-    scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
+    scoreboardStyles: ['hockey-rink','hockey-ice','hockey-classic','style1','style2','style3','style4','style5','h1','h2'],
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }],
     logEvents: ['Goal','Substitution','Green Card','Yellow Card','Red Card']
   },
@@ -44,7 +44,7 @@ export const sportsData = {
     subs: 6,
     positions: ["Goalie","Defense","Center","Winger"],
     scoreboard: { periods: 3, periodLabel: "Period", time: true, timeDirection: 'down' },
-    scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
+    scoreboardStyles: ['icehockey-arena','icehockey-frost','icehockey-classic','style1','style2','style3','style4','style5','h1','h2'],
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }],
     logEvents: ['Goal','Penalty','Power Play','Substitution','Timeout']
   },
@@ -54,7 +54,7 @@ export const sportsData = {
     subs: 0,
     positions: ["Fighter"],
     scoreboard: { round: true, time: true, timeDirection: 'down' },
-    scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
+    scoreboardStyles: ['boxing-ring','boxing-title','boxing-vintage','style1','style2','style3','style4','style5','h1','h2'],
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }],
     logEvents: ['Knockdown','Knockout','Warning','Round End']
   },
@@ -64,7 +64,7 @@ export const sportsData = {
     subs: 0,
     positions: ["Player"],
     scoreboard: { sets: true, legs: true, turn: true, start: 501, checkout: true },
-    scoreboardStyles: ['style1','style2','style3','style4','style5'],
+    scoreboardStyles: ['darts-board','darts-oche','darts-classic','style1','style2','style3','style4','style5'],
     scoringButtons: [
       { label: "-1", value: -1, color: "#10b981" },
       { label: "-5", value: -5, color: "#3b82f6" },
@@ -80,7 +80,7 @@ export const sportsData = {
     subs: 0,
     positions: ["Player"],
     scoreboard: { frames: true, breaks: true, highBreak: true, turn: true },
-    scoreboardStyles: ['style1','style2','style3','style4','style5'],
+    scoreboardStyles: ['snooker-table','snooker-chalk','snooker-classic','style1','style2','style3','style4','style5'],
     scoringButtons: [
       { label: "Red", value: 1, color: "#b00000" },
       { label: "Yel", value: 2, color: "#ffd400", textColor: "#000" },
@@ -108,8 +108,8 @@ export const sportsData = {
     playersPerTeam: 1,
     subs: 0,
     positions: ["Player"],
-    scoreboard: { games: true, points: true },
-    scoreboardStyles: ['style1','style2','style3','style4','style5'],
+    scoreboard: { games: true, points: true, turn: true },
+    scoreboardStyles: ['tt-topspin','tt-smash','tt-classic','style1','style2','style3','style4','style5'],
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }],
     logEvents: ['Point','Fault','Timeout','Game Won']
   },
@@ -118,8 +118,8 @@ export const sportsData = {
     playersPerTeam: 1,
     subs: 0,
     positions: ["Player"],
-    scoreboard: { frames: true },
-    scoreboardStyles: ['style1','style2','style3','style4','style5'],
+    scoreboard: { frames: true, turn: true },
+    scoreboardStyles: ['pool-felt','pool-chalk','pool-classic','style1','style2','style3','style4','style5'],
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }],
     logEvents: ['Ball Potted','Foul','Rack Won','Break']
   },
@@ -143,7 +143,7 @@ export const sportsData = {
     subs: 5,
     positions: ["GS","GA","WA","C","WD","GD","GK"],
     scoreboard: { periods: 4, periodLabel: "Quarter", time: true, timeDirection: 'down' },
-    scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
+    scoreboardStyles: ['netball-hoop','netball-chalk','netball-classic','style1','style2','style3','style4','style5','h1','h2'],
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }],
     logEvents: ['Goal','Turnover','Interception','Timeout','Substitution']
   },
@@ -152,8 +152,8 @@ export const sportsData = {
     playersPerTeam: 11,
     subs: 5,
     positions: ["Batter","Bowler","All-rounder","Wicketkeeper"],
-    scoreboard: { overs: true, wickets: true, balls: true, turn: true },
-    scoreboardStyles: ['cricket','style1','style2'],
+    scoreboard: { overs: true, wickets: true, balls: true, turn: true, runRate: true, requiredRate: true, target: true },
+    scoreboardStyles: ['cricket-pavilion','cricket-crease','cricket-classic','style1','style2','style3','style4','style5','h1','h2'],
     scoringButtons: [
       { label: "+1", value: 1, color: "#10b981" },
       { label: "Wkt", value: "w", color: "#ef4444" }
@@ -166,7 +166,7 @@ export const sportsData = {
     subs: 0,
     positions: ["Player"],
     scoreboard: { golf: true },
-    scoreboardStyles: ['style1'],
+    scoreboardStyles: ['golf-links','golf-green','golf-classic','style1','style2','style3','style4','style5','h1','h2'],
     scoringButtons: [],
     logEvents: ['Birdie','Eagle','Bogey','Par','Hole In One']
   },
@@ -178,8 +178,8 @@ export const sportsData = {
       "Pitcher","Catcher","First Base","Second Base","Shortstop",
       "Third Base","Left Field","Center Field","Right Field"
     ],
-    scoreboard: { periods: 9, periodLabel: "Inning" },
-    scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
+    scoreboard: { periods: 9, periodLabel: "Inning", pitchCount: true, outs: true, bases: true },
+    scoreboardStyles: ['baseball-diamond','baseball-dugout','baseball-classic','style1','style2','style3','style4','style5','h1','h2'],
     scoringButtons: [{ label: "Run", value: 1, color: "#10b981" }],
     logEvents: ['Home Run','Strikeout','Walk','Error','Substitution']
   },
@@ -203,8 +203,8 @@ export const sportsData = {
     playersPerTeam: 6,
     subs: 6,
     positions: ["Setter","Opposite","Outside","Middle","Libero","Defensive Specialist"],
-    scoreboard: { games: true, points: true },
-    scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
+    scoreboard: { sets: true, turn: true },
+    scoreboardStyles: ['volley-court','volley-beach','volley-classic','style1','style2','style3','style4','style5','h1','h2'],
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }],
     logEvents: ['Point','Ace','Block','Timeout','Substitution']
   },
@@ -213,8 +213,8 @@ export const sportsData = {
     playersPerTeam: 1,
     subs: 0,
     positions: ["Player"],
-    scoreboard: { games: true, points: true },
-    scoreboardStyles: ['style1','style2','style3','style4','style5'],
+    scoreboard: { games: true, turn: true },
+    scoreboardStyles: ['badminton-shuttle','badminton-net','badminton-classic','style1','style2','style3','style4','style5'],
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }],
     logEvents: ['Point','Fault','Timeout','Game Won']
   },
@@ -223,8 +223,8 @@ export const sportsData = {
     playersPerTeam: 1,
     subs: 0,
     positions: ["Player"],
-    scoreboard: { games: true, points: true },
-    scoreboardStyles: ['style1','style2','style3','style4','style5'],
+    scoreboard: { games: true, points: true, turn: true },
+    scoreboardStyles: ['squash-glass','squash-court','squash-classic','style1','style2','style3','style4','style5'],
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }],
     logEvents: ['Point','Stroke','Timeout','Game Won']
   },
@@ -238,11 +238,11 @@ export const sportsData = {
       "Centre Forward","Wing Forward","Corner Forward","Full Forward",
       "Corner Forward"
     ],
-    scoreboard: { periods: 2, periodLabel: "Half", time: true, timeDirection: 'up' },
-    scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
+    scoreboard: { periods: 2, periodLabel: "Half", time: true, timeDirection: 'up', goals: true, points: true },
+    scoreboardStyles: ['gaelic-celtic','gaelic-emerald','gaelic-classic','style1','style2','style3','style4','style5','h1','h2'],
     scoringButtons: [
-      { label: "Point", value: 1, color: "#10b981" },
-      { label: "Goal", value: 3, color: "#ef4444" }
+      { label: "Point", value: 1, color: "#10b981", type: 'point' },
+      { label: "Goal", value: 3, color: "#ef4444", type: 'goal' }
     ],
     logEvents: ['Point','Goal','Free Kick','Substitution','Yellow Card','Red Card']
   },
@@ -256,11 +256,11 @@ export const sportsData = {
       "Centre Forward","Wing Forward","Corner Forward","Full Forward",
       "Corner Forward"
     ],
-    scoreboard: { periods: 2, periodLabel: "Half", time: true, timeDirection: 'up' },
-    scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
+    scoreboard: { periods: 2, periodLabel: "Half", time: true, timeDirection: 'up', goals: true, points: true },
+    scoreboardStyles: ['hurl-stick','hurl-sliotar','hurl-classic','style1','style2','style3','style4','style5','h1','h2'],
     scoringButtons: [
-      { label: "Point", value: 1, color: "#10b981" },
-      { label: "Goal", value: 3, color: "#ef4444" }
+      { label: "Point", value: 1, color: "#10b981", type: 'point' },
+      { label: "Goal", value: 3, color: "#ef4444", type: 'goal' }
     ],
     logEvents: ['Point','Goal','Free Puck','Substitution','Yellow Card','Red Card']
   }
