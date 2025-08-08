@@ -1477,7 +1477,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     // Formation Overlay
     let formOverlay = overlayContainer.querySelector('#formation-overlay');
     const formData = state && state.formation;
-    const formShow = state && state.formationVisible;
+    const formShow = previewMode ? state && state.formationPreviewVisible : state && state.formationVisible;
     if (formShow && formData) {
         if (!formOverlay) {
             formOverlay = document.createElement('div');
@@ -1486,6 +1486,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             overlayContainer.appendChild(formOverlay);
         }
         const showPhoto = teamsData && teamsData.showPhotosFormation;
+        formOverlay.style.opacity = previewMode ? '0.6' : '1';
         const pitchHtml = `<div class='formation-pitch'>`+
             formData.players.map(p=>{
                 const photo = showPhoto && p.photo ? `<img src='${p.photo}' class='formation-photo'>` : '';
@@ -1533,13 +1534,14 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     // Results Overlay
     let resOverlay = overlayContainer.querySelector('#results-overlay');
     const resData = state && state.results;
-    const resShow = state && state.resultsVisible || state && state.resultsPreviewVisible;
+    const resShow = previewMode ? state && state.resultsPreviewVisible : state && state.resultsVisible;
     if(resShow && resData){
         if(!resOverlay){
             resOverlay = document.createElement('div');
             resOverlay.id = 'results-overlay';
             overlayContainer.appendChild(resOverlay);
         }
+        resOverlay.style.opacity = previewMode ? '0.6' : '1';
         const scorersA = (resData.teamA.scorers||[]).map(s=>`<div>${s}</div>`).join('');
         const scorersB = (resData.teamB.scorers||[]).map(s=>`<div>${s}</div>`).join('');
         const body = `<div class='results-teams'>${resData.teamA.name} ${resData.teamA.score} - ${resData.teamB.score} ${resData.teamB.name}</div>`+
@@ -1554,7 +1556,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     // Standings Overlay
     let standOverlay = overlayContainer.querySelector('#standings-overlay');
     const standData = state && state.standings;
-    const standShow = state && state.standingsVisible;
+    const standShow = previewMode ? state && state.standingsPreviewVisible : state && state.standingsVisible;
     if(standShow && standData){
         if(!standOverlay){
             standOverlay = document.createElement('div');
@@ -1563,6 +1565,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         }
         const rows = (standData.rows||[]).map((r,i)=>`<tr><td>${i+1}</td><td>${r.name}</td><td>${r.played}</td><td>${r.won}</td><td>${r.draw}</td><td>${r.lost}</td><td>${r.for}</td><td>${r.against}</td><td>${r.diff}</td><td>${r.points}</td></tr>`).join('');
         const body = `<table class='standings-table'><thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>F</th><th>A</th><th>GD</th><th>Pts</th></tr></thead><tbody>${rows}</tbody></table>`;
+        standOverlay.style.opacity = previewMode ? '0.6' : '1';
         standOverlay.innerHTML = buildInfoWindow('Standings', body, branding, standData.sponsor, standData.style||'style1');
     } else if(standOverlay){
         standOverlay.remove();
@@ -1571,7 +1574,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     // Match Log Overlay
     let logOverlay = overlayContainer.querySelector('#log-overlay');
     const logData = state && state.matchLog;
-    const logShow = state && state.matchLogVisible;
+    const logShow = previewMode ? state && state.matchLogPreviewVisible : state && state.matchLogVisible;
     if(logShow && logData && logData.length){
         if(!logOverlay){
             logOverlay = document.createElement('div');
@@ -1583,6 +1586,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             const teamName = teamObj ? teamObj.name : e.team;
             return `<div>${e.time} - ${teamName} ${e.type}${e.player?` - ${e.player}`:''}</div>`;
         }).join('');
+        logOverlay.style.opacity = previewMode ? '0.6' : '1';
         logOverlay.innerHTML = `<div class='results-box' style='font-family:${branding.font};max-height:80vh;overflow-y:auto;'>${rows}</div>`;
     } else if(logOverlay){
         logOverlay.remove();
