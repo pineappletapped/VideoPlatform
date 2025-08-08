@@ -1373,8 +1373,8 @@ function renderOverlayFromFirebase(state, graphics, branding) {
                 overlayContainer.appendChild(hb);
             }
             hb.innerHTML = `<div class='lower-third-default' style='position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);font-family:${branding.font};'>Highest Break: ${scoreboardData.highBreak}</div>`;
-        } else {
-            if(hb) hb.remove();
+        } else if(hb){
+            hb.remove();
         }
     }
     if (!scoreboardShow && scoreboardOverlay && prevScoreboardVisible) {
