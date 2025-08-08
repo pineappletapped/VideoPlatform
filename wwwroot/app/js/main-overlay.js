@@ -32,6 +32,8 @@ let prevPresentationSponsor = null;
 let prevSponsorLive = {};
 let prevFixturesVisible = false;
 let prevWeatherVisible = false;
+let prevEndSlateVisible = false;
+let prevEndSlateData = null;
 let prevEventTitleVisible = false;
 let prevSpeakersBannerVisible = false;
 const placementClassMap = {
@@ -90,9 +92,15 @@ function playTransition(el, type, name) {
         if (type === 'out') el.remove();
         return;
     }
-    const cls = `${type === 'in' ? 'slide-in' : 'slide-out'}-${name.replace('slide-','')}`;
-    const fadeCls = name === 'fade' ? (type === 'in' ? 'fade-in' : 'fade-out') : cls;
-    el.classList.add(fadeCls);
+    let cls;
+    if (name === 'fade') {
+        cls = type === 'in' ? 'fade-in' : 'fade-out';
+    } else if (name === 'dip') {
+        cls = type === 'in' ? 'dip-in' : 'dip-out';
+    } else {
+        cls = `${type === 'in' ? 'slide-in' : 'slide-out'}-${name.replace('slide-','')}`;
+    }
+    el.classList.add(cls);
     if (type === 'out') {
         el.addEventListener('animationend', () => el.remove(), { once: true });
     }
@@ -618,6 +626,40 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         weatherOverlay.remove();
     }
     prevWeatherVisible = weatherShow;
+
+    let endSlateOverlay = overlayContainer.querySelector('#end-slate-overlay');
+    const endSlateData = state && state.endSlate;
+    const endSlateShow = previewMode ? state && state.endSlatePreviewVisible : state && state.endSlateVisible;
+    if(endSlateShow && endSlateData){
+        if(!endSlateOverlay){
+            endSlateOverlay = document.createElement('div');
+            endSlateOverlay.id = 'end-slate-overlay';
+            overlayContainer.appendChild(endSlateOverlay);
+        }
+        endSlateOverlay.style.position = 'absolute';
+        endSlateOverlay.style.top = '0';
+        endSlateOverlay.style.left = '0';
+        endSlateOverlay.style.width = '100vw';
+        endSlateOverlay.style.height = '100vh';
+        endSlateOverlay.style.display = 'flex';
+        endSlateOverlay.style.flexDirection = 'column';
+        endSlateOverlay.style.justifyContent = 'center';
+        endSlateOverlay.style.alignItems = endSlateData.position === 'left' ? 'flex-start' : endSlateData.position === 'right' ? 'flex-end' : 'center';
+        endSlateOverlay.style.background = endSlateData.transition === 'dip' ? branding.primaryColor : 'transparent';
+        endSlateOverlay.style.opacity = previewMode ? '0.6' : '1';
+        const logoSrc = endSlateData.logoSource === 'primary' ? resolveAssetPath(branding.logoPrimary) : endSlateData.logoSource === 'secondary' ? resolveAssetPath(branding.logoSecondary) : (endSlateData.customLogo || '');
+        const imgHtml = logoSrc ? `<img src='${logoSrc}' alt='logo' style='max-height:30vh;max-width:80vw;'>` : '';
+        const textHtml = endSlateData.text ? `<div style='margin-top:1rem;font-size:1.5rem;text-align:center;'>${endSlateData.text}</div>` : '';
+        endSlateOverlay.innerHTML = `${imgHtml}${textHtml}`;
+        if(!prevEndSlateVisible || JSON.stringify(endSlateData)!==JSON.stringify(prevEndSlateData)){
+            playTransition(endSlateOverlay,'in', endSlateData.transition || 'fade');
+        }
+    } else if(endSlateOverlay){
+        playTransition(endSlateOverlay,'out', prevEndSlateData && prevEndSlateData.transition || 'fade');
+        endSlateOverlay = null;
+    }
+    prevEndSlateVisible = endSlateShow;
+    prevEndSlateData = endSlateData;
 
     let bannerOverlay = overlayContainer.querySelector('#speakers-banner-overlay');
     const bannerData = state && state.speakersBanner;

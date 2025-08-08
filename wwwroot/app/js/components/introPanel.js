@@ -95,6 +95,12 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
                         </li>
                     `).join('')}
                 </ul>
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="flex-1">End Slate</span>
+                    <button class="control-button btn-sm" id="endslate-preview">Preview</button>
+                    <button class="control-button btn-sm" id="endslate-live">Live</button>
+                    <button class="control-button btn-sm" id="endslate-edit">Edit</button>
+                </div>
                 <div id="hs-modal" class="modal-overlay" style="display:none;">
                     <div class="modal-window">
                         <h3 class="font-bold text-lg mb-2" id="hs-modal-title">Add Intro Graphic</h3>
@@ -196,6 +202,48 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
                             <div class="flex gap-2 mt-4">
                                 <button type="submit" class="control-button btn-sm">Save</button>
                                 <button type="button" id="hs-weather-cancel" class="control-button btn-sm bg-gray-400 hover:bg-gray-600">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div id="hs-endslate-modal" class="modal-overlay" style="display:none;">
+                    <div class="modal-window">
+                        <h3 class="font-bold text-lg mb-2">End Slate</h3>
+                        <form id="hs-endslate-form">
+                            <div class="mb-2">
+                                <label class="block text-sm">Logo Source</label>
+                                <select class="border p-1 w-full" name="logoSource">
+                                    <option value="primary">Event Logo 1</option>
+                                    <option value="secondary">Event Logo 2</option>
+                                    <option value="custom">Custom</option>
+                                </select>
+                            </div>
+                            <div class="mb-2" id="hs-endslate-custom">
+                                <label class="block text-sm">Custom Logo URL</label>
+                                <input class="border p-1 w-full" name="customLogo" />
+                            </div>
+                            <div class="mb-2">
+                                <label class="block text-sm">Position</label>
+                                <select class="border p-1 w-full" name="position">
+                                    <option value="center">Center</option>
+                                    <option value="left">Left</option>
+                                    <option value="right">Right</option>
+                                </select>
+                            </div>
+                            <div class="mb-2">
+                                <label class="block text-sm">Text Line</label>
+                                <input class="border p-1 w-full" name="text" />
+                            </div>
+                            <div class="mb-2">
+                                <label class="block text-sm">Transition</label>
+                                <select class="border p-1 w-full" name="transition">
+                                    <option value="fade">Fade In</option>
+                                    <option value="dip">Dip Colour</option>
+                                </select>
+                            </div>
+                            <div class="flex gap-2 mt-4">
+                                <button type="submit" class="control-button btn-sm">Save</button>
+                                <button type="button" id="hs-endslate-cancel" class="control-button btn-sm bg-gray-400 hover:bg-gray-600">Cancel</button>
                             </div>
                         </form>
                     </div>
@@ -457,6 +505,21 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
         const weatherEdit = container.querySelector('#weather-edit');
         if(weatherEdit) weatherEdit.onclick = () => showWeatherModal();
 
+        const esPrev = container.querySelector('#endslate-preview');
+        if(esPrev) esPrev.onclick = () => {
+            const data = introSettings.endSlate || {};
+            updateOverlayState(eid,{ endSlate:data, endSlatePreviewVisible:true, endSlateVisible:false });
+            if(onOverlayStateChange) onOverlayStateChange({ endSlatePreviewVisible:true, endSlate:data });
+        };
+        const esLive = container.querySelector('#endslate-live');
+        if(esLive) esLive.onclick = () => {
+            const data = introSettings.endSlate || {};
+            updateOverlayState(eid,{ endSlate:data, endSlateVisible:true, endSlatePreviewVisible:false });
+            if(onOverlayStateChange) onOverlayStateChange({ endSlateVisible:true, endSlate:data, endSlatePreviewVisible:false });
+        };
+        const esEdit = container.querySelector('#endslate-edit');
+        if(esEdit) esEdit.onclick = () => showEndSlateModal();
+
         const schedPrev = container.querySelector('#schedule-preview');
         if(schedPrev) schedPrev.onclick = () => {
             updateOverlayState(eid,{ previewProgramVisible:true, liveProgramVisible:false });
@@ -579,6 +642,39 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
             modal.style.display='none';
         };
         form.querySelector('#hs-weather-cancel').onclick = ()=>{ modal.style.display='none'; };
+    }
+
+    function showEndSlateModal(){
+        const modal = container.querySelector('#hs-endslate-modal');
+        const form = container.querySelector('#hs-endslate-form');
+        if(!modal || !form) return;
+        const data = introSettings.endSlate || {};
+        form.logoSource.value = data.logoSource || 'primary';
+        form.customLogo.value = data.customLogo || '';
+        form.position.value = data.position || 'center';
+        form.text.value = data.text || '';
+        form.transition.value = data.transition || 'fade';
+        const customDiv = form.querySelector('#hs-endslate-custom');
+        customDiv.style.display = form.logoSource.value === 'custom' ? 'block' : 'none';
+        form.logoSource.onchange = () => {
+            customDiv.style.display = form.logoSource.value === 'custom' ? 'block' : 'none';
+        };
+        modal.style.display='flex';
+        form.onsubmit = async e=>{
+            e.preventDefault();
+            const f = new FormData(form);
+            introSettings.endSlate = {
+                logoSource: f.get('logoSource'),
+                customLogo: f.get('customLogo'),
+                position: f.get('position'),
+                text: f.get('text'),
+                transition: f.get('transition')
+            };
+            await set(getIntroSettingsRef(eid), introSettings);
+            await updateOverlayState(eid,{ holdslateSettings:introSettings });
+            modal.style.display='none';
+        };
+        form.querySelector('#hs-endslate-cancel').onclick = ()=>{ modal.style.display='none'; };
     }
 
     function showEventTitleModal(){
