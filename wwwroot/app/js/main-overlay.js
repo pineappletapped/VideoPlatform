@@ -15,6 +15,8 @@ import { renderBasketballScoreboard } from './templates/basketballScoreboard.js'
 import { renderNetballScoreboard } from './templates/netballScoreboard.js';
 import { renderCricketScoreboard } from './templates/cricketScoreboard.js';
 import { renderGolfScoreboard } from './templates/golfScoreboard.js';
+import { renderAmericanFootballScoreboard } from './templates/americanFootballScoreboard.js';
+import { renderBaseballScoreboard } from './templates/baseballScoreboard.js';
 import { ref, onValue, set } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
 
 const params = new URLSearchParams(window.location.search);
@@ -781,6 +783,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         else if(style === 'basketball' || style.startsWith('basketball-')) baseClass = 'sb-basketball ';
         else if(style === 'netball' || style.startsWith('netball-')) baseClass = 'sb-netball ';
         else if(style === 'cricket' || style.startsWith('cricket-')) baseClass = 'sb-cricket ';
+        else if(style === 'baseball' || style.startsWith('baseball-')) baseClass = 'sb-baseball ';
         else if(style.startsWith('af-')) baseClass = 'sb-af ';
         else if(style === 'tennis' || style.startsWith('ten-')) baseClass = 'sb-tennis ';
         scoreboardOverlay.className = `sb-container ${baseClass}sb-${style}`;
@@ -1148,21 +1151,49 @@ function renderOverlayFromFirebase(state, graphics, branding) {
                 brand,
                 textBrand
             });
+        } else if(style==='baseball' || style.startsWith('baseball-')){
+            scoreboardOverlay.innerHTML = renderBaseballScoreboard({
+                names,
+                colors,
+                logos,
+                showLogos,
+                scoreA: sA,
+                scoreB: sB,
+                inning: scoreboardData.period || 1,
+                balls: scoreboardData.pitchCount?.balls || 0,
+                strikes: scoreboardData.pitchCount?.strikes || 0,
+                outs: scoreboardData.outs || 0,
+                bases: scoreboardData.bases || [false,false,false],
+                sbSponsorHtml,
+                topImg,
+                bottomImg,
+                aClassA,
+                aClassB,
+                textA,
+                textB,
+                brand,
+                textBrand
+            });
         } else if(style.startsWith('af-')){
-            const period = scoreboardData.period || 1;
-            const timePart = timeStr ? `<span class="sb-time">${timeStr}</span>` : '';
-            const periodPart = `<span class="sb-time">Q${period}</span>`;
-            scoreboardOverlay.innerHTML = `
-            ${topImg}
-            <div class="sb-row">
-                <span class="sb-team${aClassA}" style="background:${colors[0]};color:${textA}">${showLogos ? `<img src='${logos[0]}' class='sb-team-logo'>` : ''}${names[0]}</span>
-                <span class="sb-score" style="background:${brand};color:${textBrand}">${sA} - ${sB}</span>
-                <span class="sb-team${aClassB}" style="background:${colors[1]};color:${textB}">${showLogos ? `<img src='${logos[1]}' class='sb-team-logo'>` : ''}${names[1]}</span>
-                ${periodPart}
-                ${timePart}
-            </div>
-            ${sbSponsorHtml}
-            ${bottomImg}`;
+            scoreboardOverlay.innerHTML = renderAmericanFootballScoreboard({
+                names,
+                colors,
+                logos,
+                showLogos,
+                scoreA: sA,
+                scoreB: sB,
+                timeStr,
+                period: scoreboardData.period || 1,
+                sbSponsorHtml,
+                topImg,
+                bottomImg,
+                aClassA,
+                aClassB,
+                textA,
+                textB,
+                brand,
+                textBrand
+            });
         } else if(style==='tennis' || style.startsWith('ten-')){
             scoreboardOverlay.innerHTML = renderTennisScoreboard({
                 names,

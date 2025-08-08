@@ -178,8 +178,8 @@ export const sportsData = {
       "Pitcher","Catcher","First Base","Second Base","Shortstop",
       "Third Base","Left Field","Center Field","Right Field"
     ],
-    scoreboard: { periods: 9, periodLabel: "Inning" },
-    scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
+    scoreboard: { periods: 9, periodLabel: "Inning", pitchCount: true, outs: true, bases: true },
+    scoreboardStyles: ['baseball-diamond','baseball-dugout','baseball-classic','style1','style2','style3','style4','style5','h1','h2'],
     scoringButtons: [{ label: "Run", value: 1, color: "#10b981" }],
     logEvents: ['Home Run','Strikeout','Walk','Error','Substitution']
   },

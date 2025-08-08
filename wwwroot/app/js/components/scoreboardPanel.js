@@ -21,6 +21,10 @@ const DEFAULT_STYLES = [
     { id: 'golf-links', label: 'Links Classic' },
     { id: 'golf-green', label: 'Augusta Green' },
     { id: 'golf-classic', label: 'Clubhouse Classic' },
+    // Baseball
+    { id: 'baseball-diamond', label: 'Diamond Plate' },
+    { id: 'baseball-dugout', label: 'Dugout Chalk' },
+    { id: 'baseball-classic', label: 'Ballpark Classic' },
     // American Football
     { id: 'af-bold', label: 'Grid Iron Bold' },
     { id: 'af-stripes', label: 'Energy Stripes' },
@@ -184,6 +188,9 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         if (cfg.scoreboard.runRate) base.runRate = 0;
         if (cfg.scoreboard.requiredRate) base.requiredRate = 0;
         if (cfg.scoreboard.target) base.target = 0;
+        if (cfg.scoreboard.pitchCount) base.pitchCount = { balls: 0, strikes: 0 };
+        if (cfg.scoreboard.outs) base.outs = 0;
+        if (cfg.scoreboard.bases) base.bases = [false, false, false];
         if (cfg.scoreboard.breaks) base.currentBreak = 0;
         if (cfg.scoreboard.highBreak) base.highBreak = 0;
         if (cfg.scoreboard.turn) base.turn = 0;
@@ -366,6 +373,17 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         }
         if (cfg.scoreboard.target) {
             htmlParts.push(`<tr><td class="pr-2">Target:</td><td><input type="number" class="border p-1 w-16" id="sb-target" value="${data.target || 0}"></td></tr>`);
+        }
+        if (cfg.scoreboard.pitchCount) {
+            const pc = data.pitchCount || { balls: 0, strikes: 0 };
+            htmlParts.push(`<tr><td class="pr-2">Count:</td><td><input type="number" class="border p-1 w-12 mx-1" id="sb-balls" value="${pc.balls}">B <input type="number" class="border p-1 w-12 mx-1" id="sb-strikes" value="${pc.strikes}">S</td></tr>`);
+        }
+        if (cfg.scoreboard.outs) {
+            htmlParts.push(`<tr><td class="pr-2">Outs:</td><td><input type="number" class="border p-1 w-12 mx-1" id="sb-outs" value="${data.outs || 0}"></td></tr>`);
+        }
+        if (cfg.scoreboard.bases) {
+            const bases = data.bases || [false,false,false];
+            htmlParts.push(`<tr><td class="pr-2">Bases:</td><td>${[1,2,3].map(i=>`<label class='mx-1'><input type='checkbox' id='sb-base${i}'${bases[i-1] ? ' checked' : ''}>${i}</label>`).join('')}</td></tr>`);
         }
         const tnA = getTeam(0).name || 'Team 1';
         const tnB = getTeam(1).name || 'Team 2';
@@ -708,6 +726,12 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             if (cfg.scoreboard.runRate) obj.runRate = parseFloat(container.querySelector('#sb-runrate').value) || 0;
             if (cfg.scoreboard.requiredRate) obj.requiredRate = parseFloat(container.querySelector('#sb-reqrate').value) || 0;
             if (cfg.scoreboard.target) obj.target = parseInt(container.querySelector('#sb-target').value) || 0;
+            if (cfg.scoreboard.pitchCount) obj.pitchCount = {
+                balls: parseInt(container.querySelector('#sb-balls').value) || 0,
+                strikes: parseInt(container.querySelector('#sb-strikes').value) || 0
+            };
+            if (cfg.scoreboard.outs) obj.outs = parseInt(container.querySelector('#sb-outs').value) || 0;
+            if (cfg.scoreboard.bases) obj.bases = [1,2,3].map(i=>container.querySelector(`#sb-base${i}`).checked);
             if (cfg.scoreboard.breaks) obj.currentBreak = parseInt(container.querySelector('#sb-break').value) || 0;
             if (cfg.scoreboard.highBreak) obj.highBreak = parseInt(container.querySelector('#sb-highbreak').value) || 0;
             if (cfg.scoreboard.turn) obj.turn = parseInt(container.querySelector('#sb-turn').value) || 0;
