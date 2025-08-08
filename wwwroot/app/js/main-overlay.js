@@ -1372,18 +1372,22 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             }
             hb.innerHTML = `<div class='lower-third-default' style='position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);font-family:${branding.font};'>Highest Break: ${scoreboardData.highBreak}</div>`;
         } else {
-            overlayContainer.querySelector('#high-break')?.remove();
+            const hb = overlayContainer.querySelector('#high-break');
+            if(hb) hb.remove();
         }
-    } else if (scoreboardOverlay && prevScoreboardVisible) {
-        playTransition(scoreboardOverlay,'out',prevScoreboardData?.transitionOut);
-        if(prevScoreboardVisible){
-            const topSp = sponsorsData[sponsorPlacements.scoreboardTop];
-            const bottomSp = sponsorsData[sponsorPlacements.scoreboardBottom];
-            if(topSp) addSponsorLog(eventId,{ts:Date.now(),placement:'scoreboardTop',sponsor:sponsorPlacements.scoreboardTop,action:'hide'});
-            if(bottomSp) addSponsorLog(eventId,{ts:Date.now(),placement:'scoreboardBottom',sponsor:sponsorPlacements.scoreboardBottom,action:'hide'});
+    } else {
+        if (scoreboardOverlay && prevScoreboardVisible) {
+            playTransition(scoreboardOverlay,'out',prevScoreboardData?.transitionOut);
+            if(prevScoreboardVisible){
+                const topSp = sponsorsData[sponsorPlacements.scoreboardTop];
+                const bottomSp = sponsorsData[sponsorPlacements.scoreboardBottom];
+                if(topSp) addSponsorLog(eventId,{ts:Date.now(),placement:'scoreboardTop',sponsor:sponsorPlacements.scoreboardTop,action:'hide'});
+                if(bottomSp) addSponsorLog(eventId,{ts:Date.now(),placement:'scoreboardBottom',sponsor:sponsorPlacements.scoreboardBottom,action:'hide'});
+            }
+            scoreboardOverlay = null;
+            const hb = overlayContainer.querySelector('#high-break');
+            if(hb) hb.remove();
         }
-        scoreboardOverlay = null;
-        overlayContainer.querySelector('#high-break')?.remove();
     }
     prevScoreboardVisible = scoreboardShow;
     prevScoreboardData = scoreboardData;
