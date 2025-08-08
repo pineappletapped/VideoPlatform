@@ -53,6 +53,42 @@ const DEFAULT_STYLES = [
     { id: 'hurl-stick', label: 'Hurling Stick' },
     { id: 'hurl-sliotar', label: 'Sliotar Spin' },
     { id: 'hurl-classic', label: 'Classic Hurling' },
+    // Cricket
+    { id: 'cricket-pavilion', label: 'Pavilion Classic' },
+    { id: 'cricket-crease', label: 'Fresh Crease' },
+    { id: 'cricket-classic', label: 'Classic Cricket' },
+    // Hockey
+    { id: 'hockey-rink', label: 'Rink Roster' },
+    { id: 'hockey-ice', label: 'Icy Edge' },
+    { id: 'hockey-classic', label: 'Classic Hockey' },
+    // Ice Hockey
+    { id: 'icehockey-arena', label: 'Arena Lights' },
+    { id: 'icehockey-frost', label: 'Frozen Sheet' },
+    { id: 'icehockey-classic', label: 'Classic Ice' },
+    // Boxing
+    { id: 'boxing-ring', label: 'Ring Lights' },
+    { id: 'boxing-title', label: 'Title Belt' },
+    { id: 'boxing-vintage', label: 'Vintage Bout' },
+    // Darts
+    { id: 'darts-board', label: 'Board Focus' },
+    { id: 'darts-oche', label: 'Oche View' },
+    { id: 'darts-classic', label: 'Classic Darts' },
+    // Snooker
+    { id: 'snooker-table', label: 'Table Tradition' },
+    { id: 'snooker-chalk', label: 'Chalk Line' },
+    { id: 'snooker-classic', label: 'Classic Snooker' },
+    // Table Tennis
+    { id: 'tt-topspin', label: 'Topspin' },
+    { id: 'tt-smash', label: 'Power Smash' },
+    { id: 'tt-classic', label: 'Classic Table Tennis' },
+    // Pool
+    { id: 'pool-felt', label: 'Felt Green' },
+    { id: 'pool-chalk', label: 'Chalk Blue' },
+    { id: 'pool-classic', label: 'Classic Pool' },
+    // Rugby
+    { id: 'rugby-classic', label: 'Rugby Classic' },
+    { id: 'rugby-modern', label: 'Rugby Modern' },
+    { id: 'rugby-grass', label: 'Rugby Grass' },
     // Existing generic styles
     { id: 'football', label: 'Football Row' },
     { id: 'style1', label: 'Classic' },

@@ -19,7 +19,7 @@ export const sportsData = {
       "Wing","Inside Centre","Outside Centre","Wing","Full-back"
     ],
       scoreboard: { periods: 2, periodLabel: "Half", time: true, timeDirection: 'up' },
-      scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
+      scoreboardStyles: ['rugby-classic','rugby-modern','rugby-grass','style1','style2','style3','style4','style5','h1','h2'],
       scoringButtons: [
         { label: "Try", value: 5, color: "#ef4444" },
         { label: "Conv", value: 2, color: "#3b82f6" },
