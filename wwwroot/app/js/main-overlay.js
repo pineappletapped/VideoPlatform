@@ -1374,19 +1374,16 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         } else if(hb){
             hb.remove();
         }
-    } else {
-        if (scoreboardOverlay && prevScoreboardVisible) {
-            playTransition(scoreboardOverlay,'out',prevScoreboardData?.transitionOut);
-            if(prevScoreboardVisible){
-                const topSp = sponsorsData[sponsorPlacements.scoreboardTop];
-                const bottomSp = sponsorsData[sponsorPlacements.scoreboardBottom];
-                if(topSp) addSponsorLog(eventId,{ts:Date.now(),placement:'scoreboardTop',sponsor:sponsorPlacements.scoreboardTop,action:'hide'});
-                if(bottomSp) addSponsorLog(eventId,{ts:Date.now(),placement:'scoreboardBottom',sponsor:sponsorPlacements.scoreboardBottom,action:'hide'});
-            }
-            scoreboardOverlay = null;
-            const hb = overlayContainer.querySelector('#high-break');
-            if(hb) hb.remove();
-        }
+    }
+    if (!scoreboardShow && scoreboardOverlay && prevScoreboardVisible) {
+        playTransition(scoreboardOverlay,'out',prevScoreboardData?.transitionOut);
+        const topSp = sponsorsData[sponsorPlacements.scoreboardTop];
+        const bottomSp = sponsorsData[sponsorPlacements.scoreboardBottom];
+        if(topSp) addSponsorLog(eventId,{ts:Date.now(),placement:'scoreboardTop',sponsor:sponsorPlacements.scoreboardTop,action:'hide'});
+        if(bottomSp) addSponsorLog(eventId,{ts:Date.now(),placement:'scoreboardBottom',sponsor:sponsorPlacements.scoreboardBottom,action:'hide'});
+        scoreboardOverlay = null;
+        const hb = overlayContainer.querySelector('#high-break');
+        if(hb) hb.remove();
     }
     prevScoreboardVisible = scoreboardShow;
     prevScoreboardData = scoreboardData;
