@@ -1,5 +1,5 @@
 import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
-import { listenMatchLog, updateOverlayState, listenOverlayState, getEventMetadata } from '../firebase.js';
+import { listenMatchLog, updateOverlayState, listenOverlayState, getEventMetadata, listenTeams, addMatchLog } from '../firebase.js';
 import { getDatabaseInstance } from '../firebaseApp.js';
 
 const db = getDatabaseInstance();
@@ -13,7 +13,8 @@ const SPORT_STAT_OPTIONS = {
     ]
 };
 
-export function renderStatsPanel(container, eventId = 'demo') {
+export function renderStatsPanel(container, eventId = 'demo', options = {}) {
+    const showOverlayControls = options.showOverlayControls !== false;
     let teams = null;
     let logs = [];
     let sport = 'Football';
@@ -22,12 +23,13 @@ export function renderStatsPanel(container, eventId = 'demo') {
     let preview = false;
     let psVisible = false;
     let psPreview = false;
+    let psTeam = 'a';
     let psPlayer = '';
     let psFact = '';
 
     const configRef = ref(db, `matchStatsConfig/${eventId}`);
 
-    onValue(ref(db, `teams/${eventId}`), snap => { teams = snap.val(); render(); });
+    listenTeams(eventId, data => { teams = data; render(); });
     listenMatchLog(eventId, data => { logs = data || []; render(); });
     listenOverlayState(eventId, state => {
         visible = !!(state && state.statVisible);
@@ -84,17 +86,26 @@ export function renderStatsPanel(container, eventId = 'demo') {
         const rows = calcRows();
         const teamA = teams.teamA?.name || 'Team A';
         const teamB = teams.teamB?.name || 'Team B';
-        const highlight = visible ? 'ring-4 ring-green-400' : preview ? 'ring-4 ring-brand' : '';
-        const psHighlight = psVisible ? 'ring-4 ring-green-400' : psPreview ? 'ring-4 ring-brand' : '';
+        const teamList = teams.teams ? teams.teams.map((t,i)=>({id:String(i),name:t.name||`Team ${i+1}`,players:t.players||[]})) : [
+            {id:'a',name:teamA,players:teams.teamA?.players||[]},
+            {id:'b',name:teamB,players:teams.teamB?.players||[]}
+        ];
+        if(!teamList.find(t=>t.id===psTeam)) psTeam = teamList[0]?.id || 'a';
+        const players = teamList.find(t=>t.id===psTeam)?.players || [];
+        if(!players.find(p=>p.name===psPlayer)) psPlayer = '';
+        const teamOptions = teamList.map(t=>`<option value="${t.id}" ${t.id===psTeam?'selected':''}>${t.name}</option>`).join('');
+        const playerOptions = `<option value="" disabled ${psPlayer?'':'selected'}>Select Player</option>` +
+            players.map(p=>`<option value="${p.name}" ${p.name===psPlayer?'selected':''}>${p.name}</option>`).join('');
+        const highlight = showOverlayControls ? (visible ? 'ring-4 ring-green-400' : preview ? 'ring-4 ring-brand' : '') : '';
+        const psHighlight = showOverlayControls ? (psVisible ? 'ring-4 ring-green-400' : psPreview ? 'ring-4 ring-brand' : '') : '';
         container.innerHTML = `
             <div class='stats-panel ${highlight}'>
                 <h2 class="font-bold text-lg mb-2 flex items-center justify-between">
                     <span>Match Stats</span>
                     <div class="space-x-2">
                         <button id="ms-edit" class="control-button btn-sm">Edit</button>
-                        <button id="ms-preview" class="control-button btn-sm">Preview</button>
-                        <button id="ms-live" class="control-button btn-sm">Live</button>
-                        <button id="ms-hide" class="control-button btn-sm">Hide</button>
+                        ${showOverlayControls ? `<button id="ms-preview" class="control-button btn-sm btn-preview">Preview</button>` : ''}
+                        ${showOverlayControls ? `<button id="ms-live" class="control-button btn-sm btn-live">Live</button>` : ''}
                     </div>
                 </h2>
                 <table class="w-full text-sm mb-2">
@@ -112,13 +123,15 @@ export function renderStatsPanel(container, eventId = 'demo') {
                 <div class='player-stat mt-4 ${psHighlight}'>
                     <h3 class='font-bold text-md mb-2'>Player Stat / Fact</h3>
                     <div class='flex gap-2 mb-2'>
-                        <input id='ps-player' class='border p-1 flex-1' placeholder='Player Name'>
+                        <select id='ps-team' class='border p-1 flex-1'>${teamOptions}</select>
+                        <select id='ps-player' class='border p-1 flex-1'>${playerOptions}</select>
                         <input id='ps-fact' class='border p-1 flex-1' placeholder='Stat or Fact'>
                     </div>
                     <div class='space-x-2'>
-                        <button id='ps-preview' class='control-button btn-sm'>Preview</button>
-                        <button id='ps-live' class='control-button btn-sm'>Live</button>
-                        <button id='ps-hide' class='control-button btn-sm'>Hide</button>
+                        ${showOverlayControls ? `
+                        <button id='ps-preview' class='control-button btn-sm btn-preview'>Preview</button>
+                        <button id='ps-live' class='control-button btn-sm btn-live'>Live</button>`
+                        : `<button id='ps-add' class='control-button btn-sm'>Add</button>`}
                     </div>
                 </div>
             </div>`;
@@ -128,39 +141,50 @@ export function renderStatsPanel(container, eventId = 'demo') {
         const previewBtn = container.querySelector('#ms-preview');
         if (previewBtn) previewBtn.onclick = () => {
             const rows = calcRows();
+            const show = !preview;
             updateOverlayState(eventId, {
                 stat: { teamA, teamB, rows, style: config.style, position: config.position, transition: config.transition },
-                statPreviewVisible: true,
+                statPreviewVisible: show,
                 statVisible: false
             });
         };
         const liveBtn = container.querySelector('#ms-live');
         if (liveBtn) liveBtn.onclick = () => {
             const rows = calcRows();
+            const show = !visible;
             updateOverlayState(eventId, {
                 stat: { teamA, teamB, rows, style: config.style, position: config.position, transition: config.transition },
-                statVisible: true,
+                statVisible: show,
                 statPreviewVisible: false
             });
         };
-        const hideBtn = container.querySelector('#ms-hide');
-        if (hideBtn) hideBtn.onclick = () => updateOverlayState(eventId, { statVisible: false, statPreviewVisible: false });
 
         // Player stat handlers
-        const psPlayerInput = container.querySelector('#ps-player');
+        const psTeamSel = container.querySelector('#ps-team');
+        const psPlayerSel = container.querySelector('#ps-player');
         const psFactInput = container.querySelector('#ps-fact');
-        if (psPlayerInput) { psPlayerInput.value = psPlayer; psPlayerInput.oninput = e => psPlayer = e.target.value; }
+        if (psTeamSel) psTeamSel.onchange = e => { psTeam = e.target.value; psPlayer = ''; render(); };
+        if (psPlayerSel) { psPlayerSel.value = psPlayer; psPlayerSel.onchange = e => psPlayer = e.target.value; }
         if (psFactInput) { psFactInput.value = psFact; psFactInput.oninput = e => psFact = e.target.value; }
         const psPreviewBtn = container.querySelector('#ps-preview');
         if (psPreviewBtn) psPreviewBtn.onclick = () => {
-            updateOverlayState(eventId, { playerStat: { player: psPlayer, fact: psFact }, playerStatPreviewVisible: true, playerStatVisible: false });
+            const show = !psPreview;
+            updateOverlayState(eventId, { playerStat: { player: psPlayer, fact: psFact }, playerStatPreviewVisible: show, playerStatVisible: false });
         };
         const psLiveBtn = container.querySelector('#ps-live');
         if (psLiveBtn) psLiveBtn.onclick = () => {
-            updateOverlayState(eventId, { playerStat: { player: psPlayer, fact: psFact }, playerStatVisible: true, playerStatPreviewVisible: false });
+            const show = !psVisible;
+            updateOverlayState(eventId, { playerStat: { player: psPlayer, fact: psFact }, playerStatVisible: show, playerStatPreviewVisible: false });
         };
-        const psHideBtn = container.querySelector('#ps-hide');
-        if (psHideBtn) psHideBtn.onclick = () => updateOverlayState(eventId, { playerStatVisible: false, playerStatPreviewVisible: false });
+        const psAddBtn = container.querySelector('#ps-add');
+        if (psAddBtn) psAddBtn.onclick = async () => {
+            if (psFact || psPlayer) {
+                await addMatchLog(eventId, { ts: Date.now(), type: psFact, player: psPlayer }, true);
+                psPlayer = '';
+                psFact = '';
+                render();
+            }
+        };
 
         const modal = container.querySelector('#ms-modal');
         if (modal) {

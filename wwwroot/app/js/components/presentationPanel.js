@@ -33,9 +33,36 @@ export function renderPresentationPanel(container, eventId){
                         <option value='pip'>Picture in Picture</option>
                     </select>
                 </div>
-                <div class='flex gap-2'>
+                <div class='flex gap-2 mb-2'>
+                    <button id='pres-prev' class='control-button btn-sm'>Prev</button>
+                    <button id='pres-next' class='control-button btn-sm'>Next</button>
                     <button id='pres-show' class='control-button btn-sm'>Live</button>
                     <button id='pres-hide' class='control-button btn-sm'>Hide</button>
+                    <button id='pres-edit' class='control-button btn-sm'>Edit</button>
+                </div>
+                <div id='pres-modal' class='modal-overlay' style='display:none;'>
+                    <div class='modal-window'>
+                        <div class='mb-2'>
+                            <label class='block text-sm'>Left (%)</label>
+                            <input type='number' id='pip-x' class='border p-1 w-full' min='0' max='100'>
+                        </div>
+                        <div class='mb-2'>
+                            <label class='block text-sm'>Top (%)</label>
+                            <input type='number' id='pip-y' class='border p-1 w-full' min='0' max='100'>
+                        </div>
+                        <div class='mb-2'>
+                            <label class='block text-sm'>Width (%)</label>
+                            <input type='number' id='pip-w' class='border p-1 w-full' min='1' max='100'>
+                        </div>
+                        <div class='mb-4'>
+                            <label class='block text-sm'>Height (%)</label>
+                            <input type='number' id='pip-h' class='border p-1 w-full' min='1' max='100'>
+                        </div>
+                        <div class='flex gap-2'>
+                            <button id='pip-save' class='control-button btn-sm'>Save</button>
+                            <button id='pip-cancel' class='control-button btn-sm bg-gray-400 hover:bg-gray-600'>Cancel</button>
+                        </div>
+                    </div>
                 </div>
             </div>`;
         const modeSel = container.querySelector('#pres-mode');
@@ -49,12 +76,49 @@ export function renderPresentationPanel(container, eventId){
                 await updatePresentation(eventId, data);
             }
         });
+        container.querySelector('#pres-prev')?.addEventListener('click',()=>{
+            if(!data || !data.url) return;
+            if((data.page||1) > 1){
+                data.page -= 1;
+                updatePresentation(eventId,{ page:data.page });
+                updateOverlayState(eventId,{ presentation:Object.assign({}, data) });
+                render();
+            }
+        });
+        container.querySelector('#pres-next')?.addEventListener('click',()=>{
+            if(!data || !data.url) return;
+            data.page = (data.page||1) + 1;
+            updatePresentation(eventId,{ page:data.page });
+            updateOverlayState(eventId,{ presentation:Object.assign({}, data) });
+            render();
+        });
         container.querySelector('#pres-show')?.addEventListener('click',()=>{
             const mode = modeSel.value;
             updateOverlayState(eventId,{ presentation: Object.assign({}, data, { mode }), presentationVisible:true, presentationPreviewVisible:false });
         });
         container.querySelector('#pres-hide')?.addEventListener('click',()=>{
             updateOverlayState(eventId,{ presentationVisible:false, presentationPreviewVisible:false });
+        });
+        container.querySelector('#pres-edit')?.addEventListener('click',()=>{
+            const modal = container.querySelector('#pres-modal');
+            if(!modal) return;
+            modal.style.display='flex';
+            modal.querySelector('#pip-x').value = data?.x ?? 60;
+            modal.querySelector('#pip-y').value = data?.y ?? 60;
+            modal.querySelector('#pip-w').value = data?.w ?? 40;
+            modal.querySelector('#pip-h').value = data?.h ?? 40;
+        });
+        const modal = container.querySelector('#pres-modal');
+        modal?.querySelector('#pip-cancel')?.addEventListener('click',()=>{ modal.style.display='none'; });
+        modal?.querySelector('#pip-save')?.addEventListener('click',async()=>{
+            if(!data) data = {};
+            data.x = parseFloat(modal.querySelector('#pip-x').value)||0;
+            data.y = parseFloat(modal.querySelector('#pip-y').value)||0;
+            data.w = parseFloat(modal.querySelector('#pip-w').value)||40;
+            data.h = parseFloat(modal.querySelector('#pip-h').value)||40;
+            await updatePresentation(eventId,{ x:data.x, y:data.y, w:data.w, h:data.h });
+            await updateOverlayState(eventId,{ presentation:Object.assign({}, data) });
+            modal.style.display='none';
         });
     }
 }

@@ -1,7 +1,7 @@
 import { requireAuth, logout } from './auth.js';
 import './components/topBar.js';
 import { renderStatusBar } from './components/statusBar.js';
-import { listenPresentation, updatePresentation, updateOverlayState, getEventMetadata, updateEventMetadata } from './firebase.js';
+import { listenPresentation, updatePresentation, updateOverlayState, getEventMetadata, updateEventMetadata, getUserFeatures } from './firebase.js';
 
 const params = new URLSearchParams(window.location.search);
 const eventId = params.get('event_id') || 'demo';
@@ -17,11 +17,11 @@ async function uploadToServer(file){
     return j && j.url;
 }
 
-async function init(user){
-    const ev = await getEventMetadata(eventId) || {};
+async function init(user, ev){
+    const meta = ev || await getEventMetadata(eventId) || {};
     updateEventMetadata(eventId, { lastOpened: Date.now() }).catch(()=>{});
     const tb = document.createElement('top-bar');
-    tb.setAttribute('event-name', ev.title || eventId);
+    tb.setAttribute('event-name', meta.title || eventId);
     tb.addEventListener('logout', logout);
     document.getElementById('top-bar').appendChild(tb);
     renderStatusBar(document.getElementById('status-bar'), { id:eventId, status:'Speakers', firebaseStatus:'Connected' }, { overlay:false, listener:false, sport:false, clock:true, atem:false, obs:false });
@@ -74,4 +74,13 @@ async function init(user){
     });
 }
 
-requireAuth(`speakers.html?event_id=${eventId}`).then(u=>init(u));
+requireAuth(`speakers.html?event_id=${eventId}`).then(async u => {
+  const ev = await getEventMetadata(eventId).catch(()=>({})) || {};
+  const feats = await getUserFeatures(ev.owner || u.uid);
+  if (!feats.speaker) {
+    alert('Speaker panel not available for your plan.');
+    window.location.href = 'index.html';
+    return;
+  }
+  init(u, ev);
+});

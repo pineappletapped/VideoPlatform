@@ -1,10 +1,6 @@
-import { setBranding, getBranding, resolveAssetPath } from '../firebase.js';
-import { getDatabaseInstance } from '../firebaseApp.js';
-import { ref, set, get } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
+import { setBranding, getBranding, resolveAssetPath, getTeams } from '../firebase.js';
 import { sportsData, getTeamLabel } from '../sportsConfig.js';
 import { renderTeamsPanel } from './teamsPanel.js';
-
-const db = getDatabaseInstance();
 
 async function uploadToServer(file, path) {
     try {
@@ -26,7 +22,6 @@ export function renderProfileWizard(container, eventData) {
     const sport = eventData.sport || 'Football';
     let step = 1;
 
-    const teamsRef = ref(db, `teams/${eventId}`);
 
     async function renderBrandingStep() {
         const branding = await getBranding(eventId) || {
@@ -91,14 +86,14 @@ export function renderProfileWizard(container, eventData) {
     }
 
     async function renderTeamsStep() {
-        const snap = await get(teamsRef);
+        const snap = await getTeams(eventId);
         const cfg = sportsData[sport] || sportsData['Football'];
         const label = getTeamLabel(sport);
         const playerSlots = cfg.playersPerTeam + (cfg.subs || 0);
         const players = Array.from({ length: playerSlots }).map(() => ({ name: '', number: '', pos: '' }));
         const nameA = cfg.playersPerTeam === 1 ? 'Player 1' : 'Team A';
         const nameB = cfg.playersPerTeam === 1 ? 'Player 2' : 'Team B';
-        const data = snap.val() || { teamA:{ name:nameA, logo:'', players: players.slice() }, teamB:{ name:nameB, logo:'', players: players.slice() } };
+        const data = snap || { teamA:{ name:nameA, logo:'', players: players.slice() }, teamB:{ name:nameB, logo:'', players: players.slice() } };
         container.innerHTML = `
             <div class="modal-overlay">
                 <div class="modal-window max-h-[95vh] overflow-y-auto">

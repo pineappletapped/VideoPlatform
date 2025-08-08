@@ -1,11 +1,10 @@
 import { onAuth, login, register, logout } from './auth.js';
-import { getAllEventsMetadata, setEventMetadata, getUser, getAllUsers, getOverlayState, deleteEvent } from './firebase.js';
+import { getAllEventsMetadata, setEventMetadata, getUser, getAllUsers, getOverlayState, deleteEvent, getPlanFeatures } from './firebase.js';
 import './components/topBar.js';
 import { renderBrandingModal } from './components/brandingModal.js';
 let SQUARE_APP_ID = '';
 let SQUARE_LOCATION_ID = '';
 let SQUARE_PLANS = {};
-const PLAN_LIMITS = { bronze: 1, silver: 3, gold: 8 };
 import { sportsData } from './sportsConfig.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -41,6 +40,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let card, payments;
   let currentUserId = '';
   let currentUserTier = 'bronze';
+  let planFeatures = {};
   function showBrandModal(uid) {
     const modal = document.getElementById('branding-modal');
     renderBrandingModal(modal, { userId: uid });
@@ -59,19 +59,22 @@ document.addEventListener('DOMContentLoaded', async () => {
       const ev = entry.data;
       const id = entry.id;
       const name = ev.title || id;
-      const typeInfo = ev.eventType === 'sports' ? `Sports Event > ${ev.sport}` : 'Corporate Event';
+      const corpLabel = ev.corporateType ? ev.corporateType.charAt(0).toUpperCase() + ev.corporateType.slice(1) : 'Conference';
+      const typeInfo = ev.eventType === 'sports' ? `Sports Event > ${ev.sport}` : `Corporate Event > ${corpLabel}`;
       const gfx = `graphics.html?event_id=${id}`;
       const ovl = `overlay.html?event_id=${id}`;
       const sportsLink = ev.eventType === 'sports'
         ? `<a class="control-button btn-sm" href="sports.html?event_id=${id}">Sports Admin</a>`
         : '';
-      const commBtn = `<a class="control-button btn-sm" href="commentator.html?event_id=${id}" target="_blank">Commentator</a>`;
-      const speakBtn = `<a class="control-button btn-sm" href="speakers.html?event_id=${id}" target="_blank">Speakers</a>`;
+      const commBtn = planFeatures.commentator && ev.eventType === 'sports'
+        ? `<a class="control-button btn-sm" href="commentator.html?event_id=${id}" target="_blank">Commentator</a>` : '';
+      const speakBtn = planFeatures.speaker
+        ? `<a class="control-button btn-sm" href="speakers.html?event_id=${id}" target="_blank">Speakers</a>` : '';
       const imgSrc = states[idx]?.holdslate?.image;
       const img = imgSrc ?
         `<img src="${imgSrc}" alt="thumb" class="w-24 h-16 object-cover rounded" />` :
         `<div class="w-24 h-16 bg-gray-300 flex items-center justify-center rounded text-xs text-gray-500">No image</div>`;
-      const socialBtn = ev.eventType === 'sports'
+      const socialBtn = planFeatures.social && ev.eventType === 'sports'
         ? `<a class="control-button btn-sm" href="social.html?event_id=${id}">Social</a>`
         : '';
       const actionLinks = ev.eventType === 'sports'
@@ -102,7 +105,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       };
     });
-    const limit = PLAN_LIMITS[currentUserTier] || 1;
+    const limit = planFeatures.maxEvents || 1;
     const count = entries.length;
     allowanceDiv.innerHTML = `Events used: ${count}/${limit}` + (count >= limit ? ` <a href="account.html" class="underline text-brand">Upgrade</a>` : '');
     openCreateBtn.disabled = count >= limit;
@@ -121,6 +124,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       const locals = JSON.parse(localStorage.getItem('localUsers') || '{}');
       const localInfo = locals[user.email] || {};
       currentUserTier = uData.tier || localInfo.tier || 'bronze';
+      const plans = await getPlanFeatures().catch(()=>({}));
+      planFeatures = plans?.[currentUserTier] || {};
       if (!uData.subscription_id && user.email !== 'ryanadmin') {
         alert('No active subscription found for this account.');
         await logout();
@@ -250,6 +255,13 @@ document.addEventListener('DOMContentLoaded', async () => {
               <option value="corporate">Corporate Event</option>
               <option value="sports">Sports Event</option>
             </select>
+            <div id="corp-wrap" class="mb-2">
+              <select name="corporateType" class="border p-1 w-full">
+                <option value="conference">Conference</option>
+                <option value="podcast">Podcast</option>
+                <option value="panel">Panel Discussion</option>
+              </select>
+            </div>
             <div id="sport-wrap" class="mb-2 hidden">
               <select name="sport" class="border p-1 w-full">
                 ${Object.keys(sportsData).map(s=>`<option value="${s}">${s}</option>`).join('')}
@@ -269,11 +281,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     const form = createModal.querySelector('#create-form');
     const typeSel = createModal.querySelector('#create-type');
     const sportWrap = createModal.querySelector('#sport-wrap');
+    const corpWrap = createModal.querySelector('#corp-wrap');
     const tournamentWrap = createModal.querySelector('#tournament-wrap');
+    const allowTournament = !!planFeatures.tournament;
+    if(!allowTournament) tournamentWrap.remove();
     typeSel.onchange = () => {
-      const show = typeSel.value === 'sports';
-      sportWrap.style.display = show ? 'block' : 'none';
-      tournamentWrap.style.display = show ? 'block' : 'none';
+      const sports = typeSel.value === 'sports';
+      sportWrap.style.display = sports ? 'block' : 'none';
+      if(allowTournament){
+        tournamentWrap.style.display = sports ? 'block' : 'none';
+      }
+      corpWrap.style.display = sports ? 'none' : 'block';
     };
     createModal.querySelector('#create-cancel').onclick = () => {
       createModal.classList.add('hidden');
@@ -285,7 +303,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       const meta = { title: data.title, eventType: data.eventType, owner: currentUserId };
       if (data.eventType === 'sports') {
         meta.sport = data.sport;
-        if (data.tournament === 'on') meta.tournament = true;
+        if (data.tournament === 'on' && allowTournament) meta.tournament = true;
+      } else {
+        meta.corporateType = data.corporateType || 'conference';
       }
       await setEventMetadata(data.id, meta);
       window.location.href = `graphics.html?event_id=${data.id}&setup=1`;

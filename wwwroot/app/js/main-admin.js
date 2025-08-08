@@ -4,12 +4,11 @@ import './components/topBar.js';
 import { renderStatusBar } from './components/statusBar.js';
 import { renderBrandingModal } from './components/brandingModal.js';
 
-const BILLING_PLANS = {
-  bronze: 'Bronze \u00a33.75/month',
-  silver: 'Silver \u00a36/month',
-  gold: 'Gold \u00a315/month'
-};
-const PLAN_PRICING = { bronze: 3.75, silver: 6, gold: 15 };
+const PLAN_NAMES = { bronze: 'Bronze', silver: 'Silver', gold: 'Gold' };
+const PLANS = Object.keys(PLAN_NAMES);
+let BILLING_PLANS = {};
+let PLAN_PRICING = {};
+let PLAN_DATA = {};
 const PLAN_FEATURES = {
   commentator: 'Commentator Panel',
   speaker: 'Speaker Panel',
@@ -34,6 +33,13 @@ async function init() {
   topBar.addEventListener('edit-account', () => window.location.href = 'account.html');
   document.getElementById('top-bar').appendChild(topBar);
   renderStatusBar(document.getElementById('status-bar'), { id:'admin', status:'Admin', firebaseStatus:'Connected' }, { overlay:false, listener:false, sport:false, clock:true, atem:false, obs:false });
+
+  PLAN_DATA = await getPlanFeatures().catch(()=>({}));
+  PLANS.forEach(p => {
+    const price = PLAN_DATA[p]?.price || 0;
+    BILLING_PLANS[p] = `${PLAN_NAMES[p]} £${price}/month`;
+    PLAN_PRICING[p] = price;
+  });
 
   loadUsers();
   loadEvents();
@@ -130,7 +136,8 @@ async function loadEvents() {
     }).map(id => {
       const ev = events[id];
       const ownerEmail = users[ev.owner]?.email || ev.owner || '';
-      const typeInfo = ev.eventType === 'sports' ? `Sports > ${ev.sport || ''}` : 'Corporate';
+      const corpLabel = ev.corporateType ? ev.corporateType.charAt(0).toUpperCase() + ev.corporateType.slice(1) : 'Conference';
+      const typeInfo = ev.eventType === 'sports' ? `Sports > ${ev.sport || ''}` : `Corporate > ${corpLabel}`;
       const last = ev.lastOpened ? new Date(ev.lastOpened).toLocaleString() : 'N/A';
       const sportsBtn = ev.eventType === 'sports' ? `<a class="control-button btn-sm" href="sports.html?event_id=${id}">Sports Admin</a>` : '';
       const commBtn = ev.eventType === 'sports' ? `<a class="control-button btn-sm" href="commentator.html?event_id=${id}" target="_blank">Commentator</a>` : '';
@@ -192,7 +199,7 @@ async function loadReporting() {
     const avg = s.count ? (s.events / s.count).toFixed(1) : '0';
     html += `<div class="bg-white text-black p-3 rounded shadow">
       <div class="font-semibold">${BILLING_PLANS[tier]}</div>
-      <div class="text-sm">Users: ${s.count} &bull; Cancelled: ${s.cancelled} &bull; Revenue: \u00a3${revenue.toFixed(2)} &bull; Avg dashboards: ${avg}</div>
+      <div class="text-sm">Users: ${s.count} &bull; Cancelled: ${s.cancelled} &bull; Revenue: £${revenue.toFixed(2)} &bull; Avg dashboards: ${avg}</div>
     </div>`;
   });
   html += '</div>';
@@ -202,11 +209,26 @@ async function loadReporting() {
 async function loadTiers() {
   const div = document.getElementById('tiers');
   if (!div) return;
-  const data = await getPlanFeatures().catch(()=>({}));
-  const plans = Object.keys(BILLING_PLANS);
+  const data = PLAN_DATA;
+  const plans = PLANS;
   let html = '<table class="min-w-full bg-white text-black rounded"><thead><tr><th class="p-2 border"></th>';
   plans.forEach(p=>{ html += `<th class="p-2 border capitalize">${p}</th>`; });
   html += '</tr></thead><tbody>';
+
+  html += '<tr><td class="p-2 border font-semibold">Event Limit</td>';
+  plans.forEach(p => {
+    const limit = data?.[p]?.maxEvents || 0;
+    html += `<td class="p-2 border text-center"><input type="number" class="w-16 text-center border" data-plan="${p}" data-field="maxEvents" value="${limit}"></td>`;
+  });
+  html += '</tr>';
+
+  html += '<tr><td class="p-2 border font-semibold">Price (£/month)</td>';
+  plans.forEach(p => {
+    const price = data?.[p]?.price || 0;
+    html += `<td class="p-2 border text-center"><input type="number" step="0.01" class="w-20 text-center border" data-plan="${p}" data-field="price" value="${price}"></td>`;
+  });
+  html += '</tr>';
+
   Object.keys(PLAN_FEATURES).forEach(feat => {
     html += `<tr><td class="p-2 border font-semibold">${PLAN_FEATURES[feat]}</td>`;
     plans.forEach(p => {
@@ -222,9 +244,25 @@ async function loadTiers() {
       const plan = cb.getAttribute('data-plan');
       const feat = cb.getAttribute('data-feature');
       updatePlanFeature(plan, feat, cb.checked);
+      if (!PLAN_DATA[plan]) PLAN_DATA[plan] = {};
+      PLAN_DATA[plan][feat] = cb.checked;
     };
   });
-}
+  div.querySelectorAll('input[data-field]').forEach(inp => {
+    inp.onchange = () => {
+      const plan = inp.getAttribute('data-plan');
+      const field = inp.getAttribute('data-field');
+      const val = field === 'price' ? parseFloat(inp.value) || 0 : parseInt(inp.value,10) || 0;
+      updatePlanFeature(plan, field, val);
+      if (!PLAN_DATA[plan]) PLAN_DATA[plan] = {};
+      PLAN_DATA[plan][field] = val;
+        if (field === 'price') {
+          BILLING_PLANS[plan] = `${PLAN_NAMES[plan]} £${val}/month`;
+          PLAN_PRICING[plan] = val;
+        }
+      };
+    });
+  }
 
 function setupTabs() {
   const buttons = document.querySelectorAll('.tabs [data-tab]');

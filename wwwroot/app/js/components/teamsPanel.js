@@ -1,13 +1,5 @@
-import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
-import { getDatabaseInstance } from "../firebaseApp.js";
-import { listenMatchLog } from "../firebase.js";
+import { listenMatchLog, listenTeams, setTeams } from "../firebase.js";
 import { sportsData, getTeamLabel } from "../sportsConfig.js";
-
-const db = getDatabaseInstance();
-
-function getTeamsRef(eventId){
-    return ref(db, `teams/${eventId}`);
-}
 
 async function uploadToServer(file, path){
     try{
@@ -29,7 +21,8 @@ export function renderTeamsPanel(container, eventId, sport='Football', tournamen
     const label = getTeamLabel(sport);
     let currentData = null;
     let matchLogs = [];
-    onValue(getTeamsRef(eventId), snap=>{ currentData = snap.val() || defaultData(); renderList(); });
+    let teamsEventId = eventId;
+    listenTeams(eventId, (data, baseId)=>{ teamsEventId = baseId; currentData = data || defaultData(); renderList(); });
     listenMatchLog(eventId, logs=>{ matchLogs = logs || []; renderList(); });
 
     function defaultData(){
@@ -44,9 +37,9 @@ export function renderTeamsPanel(container, eventId, sport='Football', tournamen
         const nameA = cfg.playersPerTeam === 1 ? 'Player 1' : 'Team A';
         const nameB = cfg.playersPerTeam === 1 ? 'Player 2' : 'Team B';
         if(!tournament){
-            return { teamA:{name:nameA, players:players.slice()}, teamB:{name:nameB, players:players.slice()}, showPhotosFormation:false, showPhotosStats:false, showPhotosSubs:false };
+            return { teamA:{name:nameA, color:'#333', logo:'', players:players.slice()}, teamB:{name:nameB, color:'#333', logo:'', players:players.slice()}, showPhotosFormation:false, showPhotosStats:false, showPhotosSubs:false };
         }else{
-            return { teams:[{name:cfg.playersPerTeam === 1 ? 'Player 1' : 'Team 1', players:players.slice()},{name:cfg.playersPerTeam === 1 ? 'Player 2' : 'Team 2', players:players.slice()}], currentA:0, currentB:1, showPhotosFormation:false, showPhotosStats:false, showPhotosSubs:false };
+            return { teams:[{name:cfg.playersPerTeam === 1 ? 'Player 1' : 'Team 1', color:'#333', logo:'', players:players.slice()},{name:cfg.playersPerTeam === 1 ? 'Player 2' : 'Team 2', color:'#333', logo:'', players:players.slice()}], currentA:0, currentB:1, showPhotosFormation:false, showPhotosStats:false, showPhotosSubs:false };
         }
     }
 
@@ -56,8 +49,8 @@ export function renderTeamsPanel(container, eventId, sport='Football', tournamen
         const photoIcon = p=> p?'<span class="text-green-400 ml-1">✔</span>':'';
         const cardMark = (name, key) => {
             const t = key === 'teamA' ? 'a' : 'b';
-            const hasY = matchLogs.some(l=>l.team===t && l.playerName===name && l.type==='yellow card');
-            const hasR = matchLogs.some(l=>l.team===t && l.playerName===name && l.type==='red card');
+            const hasY = matchLogs.some(l=>l.team===t && l.playerName===name && l.type?.toLowerCase()==='yellow card');
+            const hasR = matchLogs.some(l=>l.team===t && l.playerName===name && l.type?.toLowerCase()==='red card');
             let m = '';
             if(hasY) m += '<span class="ml-1 text-yellow-400">Y</span>';
             if(hasR) m += '<span class="ml-1 text-red-500">R</span>';
@@ -105,22 +98,39 @@ export function renderTeamsPanel(container, eventId, sport='Football', tournamen
             <tr draggable="true" data-status="${pl.status}" data-prefix="${prefix}">
                 <td><input data-field="name" class="border p-1 w-full" value="${pl.name}"></td>
                 <td><input data-field="num" class="border p-1 w-12" value="${pl.number||''}"></td>
-                <td><select data-field="pos" class="border p-1 w-full"><option value=""></option>${posOpts}</select></td>
-                <td><select data-field="status" class="border p-1 w-full"><option value="starting">Starting</option><option value="sub">Sub</option><option value="not">Not playing</option></select></td>
+                <td><select data-field="pos" class="border p-1 w-24"><option value=""></option>${posOpts}</select></td>
+                <td><select data-field="status" class="border p-1 w-24"><option value="starting">Starting</option><option value="sub">Sub</option><option value="not">Not playing</option></select></td>
                 <td><input data-field="photo" class="border p-1 w-full mb-1" placeholder="Photo URL" value="${pl.photo||''}"><input type="file" data-field="file" class="text-xs" accept="image/*"></td>
             </tr>`;
         const nameALabel = cfg.playersPerTeam === 1 ? 'Player 1 Name' : 'Team A Name';
         const nameBLabel = cfg.playersPerTeam === 1 ? 'Player 2 Name' : 'Team B Name';
         const buildRows = (prefix, team) => team.players.map(pl=>rowTpl(prefix, pl)).join('');
+        const teamOptions = tournament ? currentData.teams.map((t,i)=>`<option value="${i}">${t.name||`Team ${i+1}`}</option>`).join('') : '';
+        const selectors = tournament ? `
+            <div class="flex items-center gap-2 mb-2">
+                <label class="text-sm">Team A<select id="sel-team-a" class="border p-1 ml-1">${teamOptions}</select></label>
+                <label class="text-sm">Team B<select id="sel-team-b" class="border p-1 ml-1">${teamOptions}</select></label>
+                <button id="add-team" class="control-button btn-xs ml-2">Add Team/Player</button>
+            </div>
+        ` : '';
         return `
             <h3 class="font-bold text-lg mb-2">Edit ${label}</h3>
+            ${selectors}
             <div class="flex gap-4 text-sm mb-4">
                 <div class="flex-1 min-w-0">
                     <label class="block text-sm mb-1">${nameALabel}</label>
                     <input class="border p-1 w-full mb-2" id="team-a-name" value="${teamA.name}">
-                    <div class="flex gap-2 mb-2">
-                        <button id="a-show-start" class="control-button btn-xs">Starters</button>
-                        <button id="a-show-bench" class="control-button btn-xs">Bench</button>
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-xs">Color</span><input type="color" id="team-a-color" value="${teamA.color||'#333333'}" class="border p-1">
+                    </div>
+                    <div class="mb-2">
+                        <input class="border p-1 w-full mb-1" id="team-a-logo" placeholder="Logo URL" value="${teamA.logo||''}">
+                        <input type="file" accept="image/*" id="team-a-logo-file" class="text-xs">
+                    </div>
+                    <div class="flex gap-2 mb-2" id="a-filters">
+                        <button id="a-show-all" data-filter="all" class="control-button btn-xs">All</button>
+                        <button id="a-show-start" data-filter="starting" class="control-button btn-xs">Starters</button>
+                        <button id="a-show-bench" data-filter="sub" class="control-button btn-xs">Bench</button>
                         <button id="a-import" class="control-button btn-xs">Import CSV</button>
                         <button id="a-export" class="control-button btn-xs">Export CSV</button>
                         <input type="file" accept=".csv" id="a-csv" class="hidden">
@@ -130,9 +140,17 @@ export function renderTeamsPanel(container, eventId, sport='Football', tournamen
                 <div class="flex-1 min-w-0">
                     <label class="block text-sm mb-1">${nameBLabel}</label>
                     <input class="border p-1 w-full mb-2" id="team-b-name" value="${teamB.name}">
-                    <div class="flex gap-2 mb-2">
-                        <button id="b-show-start" class="control-button btn-xs">Starters</button>
-                        <button id="b-show-bench" class="control-button btn-xs">Bench</button>
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-xs">Color</span><input type="color" id="team-b-color" value="${teamB.color||'#333333'}" class="border p-1">
+                    </div>
+                    <div class="mb-2">
+                        <input class="border p-1 w-full mb-1" id="team-b-logo" placeholder="Logo URL" value="${teamB.logo||''}">
+                        <input type="file" accept="image/*" id="team-b-logo-file" class="text-xs">
+                    </div>
+                    <div class="flex gap-2 mb-2" id="b-filters">
+                        <button id="b-show-all" data-filter="all" class="control-button btn-xs">All</button>
+                        <button id="b-show-start" data-filter="starting" class="control-button btn-xs">Starters</button>
+                        <button id="b-show-bench" data-filter="sub" class="control-button btn-xs">Bench</button>
                         <button id="b-import" class="control-button btn-xs">Import CSV</button>
                         <button id="b-export" class="control-button btn-xs">Export CSV</button>
                         <input type="file" accept=".csv" id="b-csv" class="hidden">
@@ -152,6 +170,7 @@ export function renderTeamsPanel(container, eventId, sport='Football', tournamen
         const tA = tournament ? currentData.teams[aIdx] : currentData.teamA;
         const tB = tournament ? currentData.teams[bIdx] : currentData.teamB;
         const posOpts = cfg.positions.map(p=>`<option value="${p}">${p}</option>`).join('');
+        const filterState = { a: 'all', b: 'all' };
 
         function renderBody(prefix, team){
             const body = win.querySelector(`#${prefix}-body`);
@@ -159,8 +178,8 @@ export function renderTeamsPanel(container, eventId, sport='Football', tournamen
                 <tr draggable="true" data-status="${pl.status}" data-prefix="${prefix}">
                     <td><input data-field="name" class="border p-1 w-full" value="${pl.name}"></td>
                     <td><input data-field="num" class="border p-1 w-12" value="${pl.number||''}"></td>
-                    <td><select data-field="pos" class="border p-1 w-full"><option value=""></option>${posOpts}</select></td>
-                    <td><select data-field="status" class="border p-1 w-full"><option value="starting">Starting</option><option value="sub">Sub</option><option value="not">Not playing</option></select></td>
+                    <td><select data-field="pos" class="border p-1 w-24"><option value=""></option>${posOpts}</select></td>
+                    <td><select data-field="status" class="border p-1 w-24"><option value="starting">Starting</option><option value="sub">Sub</option><option value="not">Not playing</option></select></td>
                     <td><input data-field="photo" class="border p-1 w-full mb-1" placeholder="Photo URL" value="${pl.photo||''}"><input type="file" data-field="file" class="text-xs" accept="image/*"></td>
                 </tr>`).join('');
             body.querySelectorAll('tr').forEach((tr,i)=>{
@@ -173,7 +192,7 @@ export function renderTeamsPanel(container, eventId, sport='Football', tournamen
                 fileInp.addEventListener('change', async ()=>{
                     const file = fileInp.files[0];
                     if(file){
-                        const path = `uploads/${eventId}/teams/${prefix}_${i}_${file.name}`;
+                        const path = `uploads/${teamsEventId}/teams/${prefix}_${i}_${file.name}`;
                         const url = await uploadToServer(file, path);
                         if(url) tr.querySelector('input[data-field="photo"]').value = url;
                     }
@@ -192,18 +211,68 @@ export function renderTeamsPanel(container, eventId, sport='Football', tournamen
                 });
                 stSel.addEventListener('change', ()=>{ tr.dataset.status = stSel.value; });
             });
+            filterRows(prefix, filterState[prefix]);
         }
 
         let dragSrc = null;
         renderBody('a', tA);
         renderBody('b', tB);
 
+        const selA = win.querySelector('#sel-team-a');
+        const selB = win.querySelector('#sel-team-b');
+        if(selA) selA.value = aIdx;
+        if(selB) selB.value = bIdx;
+        if(selA) selA.onchange = ()=>{ currentData.currentA = parseInt(selA.value,10); setTeams(teamsEventId, currentData); showEditModal(); };
+        if(selB) selB.onchange = ()=>{ currentData.currentB = parseInt(selB.value,10); setTeams(teamsEventId, currentData); showEditModal(); };
+        const addBtn = win.querySelector('#add-team');
+        if(addBtn) addBtn.onclick = ()=>{
+            const count = cfg.playersPerTeam + (cfg.subs||0);
+            const players = Array.from({length:count}).map((_,i)=>({
+                name:'', number:'', pos:'', photo:'', status: i < cfg.playersPerTeam ? 'starting' : 'sub'
+            }));
+            const name = cfg.playersPerTeam === 1 ? `Player ${currentData.teams.length+1}` : `Team ${currentData.teams.length+1}`;
+            currentData.teams.push({ name, color:'#333', logo:'', players });
+            currentData.currentA = currentData.teams.length-1;
+            setTeams(teamsEventId, currentData);
+            showEditModal();
+        };
+
+        const aLogoFile = win.querySelector('#team-a-logo-file');
+        const bLogoFile = win.querySelector('#team-b-logo-file');
+        aLogoFile.addEventListener('change', async ()=>{
+            const file = aLogoFile.files[0];
+            if(file){
+                const path = `uploads/${teamsEventId}/teams/a_logo_${file.name}`;
+                const url = await uploadToServer(file, path);
+                if(url) win.querySelector('#team-a-logo').value = url;
+            }
+        });
+        bLogoFile.addEventListener('change', async ()=>{
+            const file = bLogoFile.files[0];
+            if(file){
+                const path = `uploads/${teamsEventId}/teams/b_logo_${file.name}`;
+                const url = await uploadToServer(file, path);
+                if(url) win.querySelector('#team-b-logo').value = url;
+            }
+        });
+
         function filterRows(prefix, status){
+            filterState[prefix] = status;
             const body = win.querySelector(`#${prefix}-body`);
-            body.querySelectorAll('tr').forEach(tr=>{ tr.style.display = tr.dataset.status===status ? '' : 'none'; });
+            body.querySelectorAll('tr').forEach(tr=>{
+                tr.style.display = (status === 'all' || tr.dataset.status===status) ? '' : 'none';
+            });
+            const buttons = win.querySelectorAll(`#${prefix}-filters button[data-filter]`);
+            buttons.forEach(btn=>{
+                const active = btn.dataset.filter === status;
+                btn.classList.toggle('bg-black', active);
+                btn.classList.toggle('text-white', active);
+            });
         }
+        win.querySelector('#a-show-all').onclick = ()=>filterRows('a','all');
         win.querySelector('#a-show-start').onclick = ()=>filterRows('a','starting');
         win.querySelector('#a-show-bench').onclick = ()=>filterRows('a','sub');
+        win.querySelector('#b-show-all').onclick = ()=>filterRows('b','all');
         win.querySelector('#b-show-start').onclick = ()=>filterRows('b','starting');
         win.querySelector('#b-show-bench').onclick = ()=>filterRows('b','sub');
 
@@ -265,19 +334,19 @@ export function renderTeamsPanel(container, eventId, sport='Football', tournamen
             let newData;
             if(tournament){
                 const teams = currentData.teams.slice();
-                teams[aIdx] = { ...tA, name: win.querySelector('#team-a-name').value, players: aPlayers };
-                teams[bIdx] = { ...tB, name: win.querySelector('#team-b-name').value, players: bPlayers };
+                teams[aIdx] = { ...tA, name: win.querySelector('#team-a-name').value, color: win.querySelector('#team-a-color').value, logo: win.querySelector('#team-a-logo').value, players: aPlayers };
+                teams[bIdx] = { ...tB, name: win.querySelector('#team-b-name').value, color: win.querySelector('#team-b-color').value, logo: win.querySelector('#team-b-logo').value, players: bPlayers };
                 newData = { ...currentData, teams };
             }else{
                 newData = {
-                    teamA: { ...tA, name: win.querySelector('#team-a-name').value, players: aPlayers },
-                    teamB: { ...tB, name: win.querySelector('#team-b-name').value, players: bPlayers },
+                    teamA: { ...tA, name: win.querySelector('#team-a-name').value, color: win.querySelector('#team-a-color').value, logo: win.querySelector('#team-a-logo').value, players: aPlayers },
+                    teamB: { ...tB, name: win.querySelector('#team-b-name').value, color: win.querySelector('#team-b-color').value, logo: win.querySelector('#team-b-logo').value, players: bPlayers },
                     showPhotosFormation: currentData.showPhotosFormation,
                     showPhotosStats: currentData.showPhotosStats,
                     showPhotosSubs: currentData.showPhotosSubs
                 };
             }
-            await set(getTeamsRef(eventId), newData);
+            await setTeams(teamsEventId, newData);
             modal.style.display='none';
         };
     }

@@ -73,6 +73,61 @@ export function getOverlayState(eventId) {
   return get(ref(db, `overlays/${eventId}`)).then(snap => snap.val());
 }
 
+// Teams helpers
+export function listenTeams(eventId, cb) {
+  const r = ref(db, `teams/${eventId}`);
+  let innerUnsub = null;
+  const outerUnsub = onValue(r, snap => {
+    const val = snap.val();
+    if (val && val.link) {
+      if (innerUnsub) innerUnsub();
+      innerUnsub = onValue(ref(db, `teams/${val.link}`), s2 => cb(s2.val(), val.link));
+    } else {
+      if (innerUnsub) {
+        innerUnsub();
+        innerUnsub = null;
+      }
+      cb(val, eventId);
+    }
+  });
+  return () => {
+    outerUnsub();
+    if (innerUnsub) innerUnsub();
+  };
+}
+
+export async function getTeams(eventId) {
+  const snap = await get(ref(db, `teams/${eventId}`));
+  const val = snap.val();
+  if (val && val.link) {
+    const snap2 = await get(ref(db, `teams/${val.link}`));
+    return snap2.val();
+  }
+  return val;
+}
+
+export function setTeams(eventId, data) {
+  return set(ref(db, `teams/${eventId}`), data);
+}
+
+// Speakers helpers
+export function listenSpeakers(eventId, cb) {
+  return onValue(ref(db, `speakers/${eventId}`), snap => cb(snap.val()));
+}
+
+export function setSpeakers(eventId, data) {
+  return set(ref(db, `speakers/${eventId}`), data);
+}
+
+// Speaker banner helpers
+export function listenSpeakerBanners(eventId, cb) {
+  return onValue(ref(db, `speakerBanners/${eventId}`), snap => cb(snap.val()));
+}
+
+export function setSpeakerBanners(eventId, data) {
+  return set(ref(db, `speakerBanners/${eventId}`), data);
+}
+
 // Graphics helpers (eventId-scoped)
 export function setGraphicsData(eventId, graphics, mode = 'live') {
   const path = mode === 'dev' ? `graphicsDev/${eventId}` : `graphics/${eventId}`;
@@ -199,10 +254,13 @@ export function listenSponsorLog(eventId, cb) {
 }
 
 // Match log helpers
-export function addMatchLog(eventId, entry) {
+export function addMatchLog(eventId, entry, notify = false) {
   const r = ref(db, `matchLog/${eventId}`);
   const newRef = push(r);
-  return set(newRef, entry).then(() => newRef.key);
+  return set(newRef, entry).then(() => {
+    if (notify) set(ref(db, `graphicsNotify/${eventId}/events`), Date.now());
+    return newRef.key;
+  });
 }
 export function updateMatchLogEntry(eventId, id, entry) {
   return set(ref(db, `matchLog/${eventId}/${id}`), entry);
@@ -222,6 +280,19 @@ export function getMatchLog(eventId) {
     const val = snap.val() || {};
     return Object.entries(val).map(([k,v])=>({ id:k, ...v }));
   });
+}
+export function setMatchLog(eventId, entries) {
+  const obj = {};
+  entries.forEach(e => { const id = e.id || push(ref(db, `matchLog/${eventId}`)).key; obj[id] = { ...e }; });
+  return set(ref(db, `matchLog/${eventId}`), obj);
+}
+
+// Graphics notifications
+export function listenGraphicsNotify(eventId, cb) {
+  return onValue(ref(db, `graphicsNotify/${eventId}`), snap => cb(snap.val() || {}));
+}
+export function clearGraphicsNotify(eventId, key) {
+  return set(ref(db, `graphicsNotify/${eventId}/${key}`), null);
 }
 
 // Tournament helpers
@@ -258,4 +329,20 @@ export function getPlanFeatures() {
 }
 export function updatePlanFeature(plan, feature, value) {
   return update(ref(db, `planFeatures/${plan}`), { [feature]: value });
+}
+
+export async function getUserFeatures(userId) {
+  let tier = 'bronze';
+  if (userId && userId.startsWith('local-')) {
+    const email = userId.slice(6);
+    try {
+      const locals = JSON.parse(localStorage.getItem('localUsers') || '{}');
+      tier = locals[email]?.tier || 'bronze';
+    } catch {}
+  } else if (userId) {
+    const u = await getUser(userId).catch(() => null);
+    tier = u?.tier || 'bronze';
+  }
+  const plans = await getPlanFeatures().catch(() => ({}));
+  return plans?.[tier] || {};
 }

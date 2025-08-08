@@ -1,4 +1,4 @@
-import { listenOverlayState, listenGraphicsData, listenBranding, listenSponsors, listenSponsorPlacements, addSponsorLog, updateEventMetadata, resolveAssetPath } from './firebase.js';
+import { listenOverlayState, listenGraphicsData, listenBranding, listenSponsors, listenSponsorPlacements, addSponsorLog, updateEventMetadata, resolveAssetPath, updateOverlayState, listenTeams } from './firebase.js';
 import { getDatabaseInstance } from './firebaseApp.js';
 import { suggestAbbreviation } from './teamUtils.js';
 import { ref, onValue, set } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
@@ -19,13 +19,44 @@ let prevScoreboardData = null;
 let prevStoppageVisible = false;
 let prevLowerThirdId = null;
 let prevLowerThirdData = null;
+let prevLowerThirdKey = '';
 let prevFormationVisible = false;
 let prevTableVisible = false;
 let prevResultsVisible = false;
 let prevStingerVisible = false;
 let prevStingerData = null;
+let stingerTimeout = null;
 let prevPresentationVisible = false;
 let prevPresentationData = null;
+let prevPresentationSponsor = null;
+let prevSponsorLive = {};
+let prevFixturesVisible = false;
+let prevWeatherVisible = false;
+let prevEndSlateVisible = false;
+let prevEndSlateData = null;
+let prevEventTitleVisible = false;
+let prevSpeakersBannerVisible = false;
+const placementClassMap = {
+    scoreboardTop: 'sb-sponsor top',
+    scoreboardBottom: 'sb-sponsor bottom',
+    formationBottom: 'sb-sponsor bottom',
+    substitutionTop: 'sb-sponsor top',
+    cornerTL: 'corner-sponsor tl',
+    cornerTR: 'corner-sponsor tr',
+    cornerBL: 'corner-sponsor bl',
+    cornerBR: 'corner-sponsor br',
+    intro: 'intro-sponsor'
+};
+
+const WEATHER_ICONS = {
+    sun: `<svg width="40" height="40" viewBox="0 0 64 64"><circle cx="32" cy="32" r="12" fill="yellow"/><g stroke="yellow" stroke-width="4"><line x1="32" y1="4" x2="32" y2="16"/><line x1="32" y1="48" x2="32" y2="60"/><line x1="4" y1="32" x2="16" y2="32"/><line x1="48" y1="32" x2="60" y2="32"/><line x1="12" y1="12" x2="20" y2="20"/><line x1="44" y1="44" x2="52" y2="52"/><line x1="12" y1="52" x2="20" y2="44"/><line x1="44" y1="20" x2="52" y2="12"/></g></svg>`,
+    cloud: `<svg width="40" height="40" viewBox="0 0 64 64"><ellipse cx="32" cy="40" rx="20" ry="12" fill="#ccc"/><ellipse cx="24" cy="34" rx="12" ry="8" fill="#ccc"/><ellipse cx="40" cy="34" rx="12" ry="8" fill="#ccc"/></svg>`,
+    rain: `<svg width="40" height="40" viewBox="0 0 64 64"><ellipse cx="32" cy="32" rx="20" ry="12" fill="#ccc"/><ellipse cx="24" cy="26" rx="12" ry="8" fill="#ccc"/><ellipse cx="40" cy="26" rx="12" ry="8" fill="#ccc"/><line x1="22" y1="44" x2="22" y2="56" stroke="#00f" stroke-width="4"/><line x1="32" y1="44" x2="32" y2="56" stroke="#00f" stroke-width="4"/><line x1="42" y1="44" x2="42" y2="56" stroke="#00f" stroke-width="4"/></svg>`,
+    thunder: `<svg width="40" height="40" viewBox="0 0 64 64"><ellipse cx="32" cy="28" rx="20" ry="12" fill="#ccc"/><ellipse cx="24" cy="22" rx="12" ry="8" fill="#ccc"/><ellipse cx="40" cy="22" rx="12" ry="8" fill="#ccc"/><polygon points="30,32 24,48 32,48 28,60 40,40 32,40" fill="yellow"/></svg>`,
+    snow: `<svg width="40" height="40" viewBox="0 0 64 64"><ellipse cx="32" cy="32" rx="20" ry="12" fill="#ccc"/><ellipse cx="24" cy="26" rx="12" ry="8" fill="#ccc"/><ellipse cx="40" cy="26" rx="12" ry="8" fill="#ccc"/><g stroke="#00f" stroke-width="3"><line x1="22" y1="44" x2="22" y2="52"/><line x1="18" y1="48" x2="26" y2="48"/><line x1="32" y1="44" x2="32" y2="52"/><line x1="28" y1="48" x2="36" y2="48"/><line x1="42" y1="44" x2="42" y2="52"/><line x1="38" y1="48" x2="46" y2="48"/></g></svg>`,
+    wind: `<svg width="40" height="40" viewBox="0 0 64 64"><path d="M8 24c4-4 12-4 16 0s12 4 16 0" stroke="#ccc" stroke-width="4" fill="none"/><path d="M8 40c4-4 12-4 16 0s12 4 16 0" stroke="#ccc" stroke-width="4" fill="none"/></svg>`,
+    suncloud: `<svg width="40" height="40" viewBox="0 0 64 64"><circle cx="20" cy="20" r="10" fill="yellow"/><g stroke="yellow" stroke-width="3"><line x1="20" y1="4" x2="20" y2="12"/><line x1="20" y1="28" x2="20" y2="36"/><line x1="4" y1="20" x2="12" y2="20"/><line x1="28" y1="20" x2="36" y2="20"/><line x1="8" y1="8" x2="12" y2="12"/><line x1="28" y1="28" x2="32" y2="32"/><line x1="8" y1="32" x2="12" y2="28"/><line x1="28" y1="12" x2="32" y2="8"/></g><ellipse cx="40" cy="40" rx="20" ry="12" fill="#ccc"/><ellipse cx="32" cy="34" rx="12" ry="8" fill="#ccc"/><ellipse cx="48" cy="34" rx="12" ry="8" fill="#ccc"/></svg>`
+};
 
 function contrastColor(hex) {
     let c = hex.replace('#', '');
@@ -35,6 +66,16 @@ function contrastColor(hex) {
     const b = parseInt(c.substr(4,2),16);
     const lum = (0.299*r + 0.587*g + 0.114*b)/255;
     return lum > 0.6 ? '#000' : '#fff';
+}
+
+function buildInfoWindow(title, bodyHtml, branding, sponsorKey, style='style1'){
+    const sponsor = sponsorsData[sponsorKey];
+    const sponsorHtml = sponsor ? `<div class='info-window-sponsor'><img src='${sponsor.logo}' alt='${sponsor.name}'></div>` : '';
+    const headColor = contrastColor(branding.primaryColor);
+    return `<div class='info-window info-window-${style}' style='font-family:${branding.font};'>`+
+        `<div class='info-window-head' style='background:${branding.primaryColor};color:${headColor};'>${title}</div>`+
+        `<div class='info-window-body'>${bodyHtml}${sponsorHtml}</div>`+
+        `</div>`;
 }
 
 function parseTime(str){
@@ -51,9 +92,15 @@ function playTransition(el, type, name) {
         if (type === 'out') el.remove();
         return;
     }
-    const cls = `${type === 'in' ? 'slide-in' : 'slide-out'}-${name.replace('slide-','')}`;
-    const fadeCls = name === 'fade' ? (type === 'in' ? 'fade-in' : 'fade-out') : cls;
-    el.classList.add(fadeCls);
+    let cls;
+    if (name === 'fade') {
+        cls = type === 'in' ? 'fade-in' : 'fade-out';
+    } else if (name === 'dip') {
+        cls = type === 'in' ? 'dip-in' : 'dip-out';
+    } else {
+        cls = `${type === 'in' ? 'slide-in' : 'slide-out'}-${name.replace('slide-','')}`;
+    }
+    el.classList.add(cls);
     if (type === 'out') {
         el.addEventListener('animationend', () => el.remove(), { once: true });
     }
@@ -84,7 +131,11 @@ function applyBranding(branding = DEFAULT_BRANDING) {
     document.documentElement.style.setProperty('--brand-secondary2', branding.secondaryColor2);
     ['tl','tr','bl','br'].forEach(pos=>{
         const img=document.getElementById(`logo-${pos}`);
-        if(img) img.src = (branding.logos && branding.logos[pos]) ? branding.logos[pos] : '';
+        const url = (branding.logos && branding.logos[pos]) ? resolveAssetPath(branding.logos[pos]) : '';
+        if(img && img.getAttribute('data-src') !== url){
+            if(url) img.src = url; else img.removeAttribute('src');
+            img.setAttribute('data-src', url);
+        }
     });
 }
 
@@ -120,7 +171,7 @@ async function renderIntroOverlay(introData, branding, introSettings = {}, score
     let weatherHtml = '';
     if (introSettings.weatherSlots && introSettings.weatherSlots.length) {
         const header = introSettings.weatherLoc ? `<div style="text-align:center;font-size:1.25rem;margin-bottom:0.5rem;">${introSettings.weatherLoc}</div>` : '';
-        const slotHtml = introSettings.weatherSlots.map(s=>`<div style='display:flex;flex-direction:column;align-items:center;padding:0 0.5rem;'><div>${s.time}</div><div>${s.icon}</div><div>${s.temp}</div></div>`).join('');
+        const slotHtml = introSettings.weatherSlots.map(s=>`<div style='display:flex;flex-direction:column;align-items:center;padding:0 0.5rem;'><div>${s.time}</div><div>${WEATHER_ICONS[s.icon] || ''}</div><div>${s.temp}</div></div>`).join('');
         weatherHtml = `<div style="margin-top:1rem;font-size:1.5rem;">${header}<div style='display:flex;justify-content:center;'>${slotHtml}</div></div>`;
     }
     holdslateOverlay.innerHTML = `<div style="width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;">${titleHtml}${teamsHtml}${locationHtml}${sponsorHtml}${messageHtml}${countdownHtml}${weatherHtml}</div>`;
@@ -195,39 +246,41 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     } else if (previewMode) {
         document.getElementById('preview-lower-third').innerHTML = '';
     }
-    if (!previewMode && lowerThird) {
-        const pos = lowerThird.position || 'bottom-left';
-        let stylePos = '';
-        if (pos.startsWith('custom')) {
-            const [x,y] = pos.split(':')[1].split(',');
-            stylePos = `top:${y}px;left:${x}px;`;
-        } else if (pos === 'bottom-right') stylePos = 'bottom:2rem;right:2rem;';
-        else if (pos === 'top-left') stylePos = 'top:2rem;left:2rem;';
-        else if (pos === 'top-right') stylePos = 'top:2rem;right:2rem;';
-        else stylePos = 'bottom:2rem;left:2rem;';
-        const styleClass = `lower-third-${lowerThird.style || 'default'}`;
+    if (!previewMode) {
         const containerEl = document.getElementById('lower-third');
-        const oldEl = containerEl.firstElementChild;
-        if (oldEl && prevLowerThirdId && prevLowerThirdId !== liveLowerThirdId) {
-            playTransition(oldEl,'out',prevLowerThirdData?.transitionOut);
+        if (lowerThird) {
+            const key = liveLowerThirdId + JSON.stringify(lowerThird);
+            if (key !== prevLowerThirdKey) {
+                const oldEl = containerEl.firstElementChild;
+                if (oldEl) playTransition(oldEl,'out',prevLowerThirdData?.transitionOut);
+                const pos = lowerThird.position || 'bottom-left';
+                let stylePos = '';
+                if (pos.startsWith('custom')) {
+                    const [x,y] = pos.split(':')[1].split(',');
+                    stylePos = `top:${y}px;left:${x}px;`;
+                } else if (pos === 'bottom-right') stylePos = 'bottom:2rem;right:2rem;';
+                else if (pos === 'top-left') stylePos = 'top:2rem;left:2rem;';
+                else if (pos === 'top-right') stylePos = 'top:2rem;right:2rem;';
+                else stylePos = 'bottom:2rem;left:2rem;';
+                const styleClass = `lower-third-${lowerThird.style || 'default'}`;
+                const ltWrap = document.createElement('div');
+                ltWrap.className = styleClass;
+                ltWrap.style.position = 'absolute';
+                ltWrap.style.cssText += stylePos + `min-width:300px;font-family:${branding.font};`;
+                ltWrap.innerHTML = `${branding.logoPrimary ? `<img src='${resolveAssetPath(branding.logoPrimary)}' alt='Logo' style='height:32px;display:inline-block;margin-right:1rem;vertical-align:middle;' />` : ''}`+
+                    `<span style='vertical-align:middle;'><span style='font-weight:bold;font-size:1.2em;'>${lowerThird.title}</span><br><span style='font-size:1em;'>${lowerThird.subtitle}</span></span>`;
+                containerEl.appendChild(ltWrap);
+                playTransition(ltWrap,'in',lowerThird.transitionIn);
+                prevLowerThirdKey = key;
+            }
         } else {
-            containerEl.innerHTML = '';
+            const ltWrap = containerEl.firstElementChild;
+            if (ltWrap) playTransition(ltWrap,'out',prevLowerThirdData?.transitionOut);
+            prevLowerThirdKey = '';
         }
-        const ltWrap = document.createElement('div');
-        ltWrap.className = styleClass;
-        ltWrap.style.position = 'absolute';
-        ltWrap.style.cssText += stylePos + `min-width:300px;font-family:${branding.font};`;
-        ltWrap.innerHTML = `${branding.logoPrimary ? `<img src='${resolveAssetPath(branding.logoPrimary)}' alt='Logo' style='height:32px;display:inline-block;margin-right:1rem;vertical-align:middle;' />` : ''}`+
-            `<span style='vertical-align:middle;'><span style='font-weight:bold;font-size:1.2em;'>${lowerThird.title}</span><br><span style='font-size:1em;'>${lowerThird.subtitle}</span></span>`;
-        containerEl.appendChild(ltWrap);
-        playTransition(ltWrap,'in',lowerThird.transitionIn);
-    } else if (!previewMode) {
-        const ltWrap = document.getElementById('lower-third').firstElementChild;
-        if (ltWrap) playTransition(ltWrap,'out',prevLowerThirdData?.transitionOut);
-        else document.getElementById('lower-third').innerHTML = '';
+        prevLowerThirdId = liveLowerThirdId;
+        prevLowerThirdData = lowerThird;
     }
-    prevLowerThirdId = liveLowerThirdId;
-    prevLowerThirdData = lowerThird;
     // Sponsor Lower Third Banner
     let spEl = overlayContainer.querySelector('#sponsor-lt');
     const spUrl = state && state.sponsorLtUrl;
@@ -363,9 +416,9 @@ function renderOverlayFromFirebase(state, graphics, branding) {
                 sponsorHtml = `<div style='display:flex;gap:1rem;justify-content:space-around;margin-top:0.5rem;'>${sponsors.slice(0,4).map(s=>`<img src='${s.logo}' alt='${s.name}' style='height:60px;'>`).join('')}</div>`;
             }
         }
-        let html = `<div class='font-bold text-lg mb-2'>Program</div>`;
+        let html = `<div class='font-bold text-lg mb-2'>Schedule</div>`;
         if(eventLogo && layout==='center') html += `<img src='${eventLogo}' alt='Logo' style='height:80px;margin:0.5rem auto;'>`;
-        html += `<table><tbody>${program.map(item=>`<tr><td class='pr-4'>${item.time}</td><td class='pr-4'>${item.title}</td><td>${item.presenter}</td></tr>`).join('')}</tbody></table>`;
+        html += `<table><tbody>${program.map(item=>`<tr class='${item.done?'opacity-60 line-through':''}'><td class='pr-4'>${item.time}</td><td class='pr-4'>${item.title}</td><td class='pr-4'>${item.type||''}</td><td>${(item.speakers||[]).join(', ')}</td></tr>`).join('')}</tbody></table>`;
         html += sponsorHtml;
         programOverlay.innerHTML = html;
     } else if (previewMode && state && state.previewProgramVisible && program && program.length) {
@@ -417,9 +470,9 @@ function renderOverlayFromFirebase(state, graphics, branding) {
                 sponsorHtml2 = `<div style='display:flex;gap:1rem;justify-content:space-around;margin-top:0.5rem;'>${sponsors2.slice(0,4).map(s=>`<img src='${s.logo}' alt='${s.name}' style='height:60px;'>`).join('')}</div>`;
             }
         }
-        let html2 = `<div class='font-bold text-lg mb-2'>Program</div>`;
+        let html2 = `<div class='font-bold text-lg mb-2'>Schedule</div>`;
         if(eventLogo2 && layoutPrev==='center') html2 += `<img src='${eventLogo2}' alt='Logo' style='height:80px;margin:0.5rem auto;'>`;
-        html2 += `<table><tbody>${program.map(item=>`<tr><td class='pr-4'>${item.time}</td><td class='pr-4'>${item.title}</td><td>${item.presenter}</td></tr>`).join('')}</tbody></table>`;
+        html2 += `<table><tbody>${program.map(item=>`<tr class='${item.done?'opacity-60 line-through':''}'><td class='pr-4'>${item.time}</td><td class='pr-4'>${item.title}</td><td class='pr-4'>${item.type||''}</td><td>${(item.speakers||[]).join(', ')}</td></tr>`).join('')}</tbody></table>`;
         html2 += sponsorHtml2;
         programOverlay.innerHTML = html2;
     } else if (programOverlay) {
@@ -467,54 +520,24 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         if (!fixturesOverlay) {
             fixturesOverlay = document.createElement('div');
             fixturesOverlay.id = 'fixtures-overlay';
+            fixturesOverlay.className = 'info-overlay';
             overlayContainer.appendChild(fixturesOverlay);
         }
-        fixturesOverlay.style.position = 'absolute';
-        fixturesOverlay.style.top = '0';
-        fixturesOverlay.style.left = '0';
-        fixturesOverlay.style.width = '100vw';
-        fixturesOverlay.style.height = '100vh';
-        fixturesOverlay.style.background = 'rgba(0,0,0,0.8)';
-        fixturesOverlay.style.color = '#fff';
-        fixturesOverlay.style.display = 'flex';
-        fixturesOverlay.style.alignItems = 'center';
-        fixturesOverlay.style.justifyContent = 'center';
-        fixturesOverlay.style.zIndex = '110';
-        fixturesOverlay.style.fontFamily = branding.font;
         fixturesOverlay.style.opacity = previewMode ? '0.6' : '1';
         const listHtml = (fixturesData.list||[]).map(f=>`<div>${f.home} vs ${f.away}</div>`).join('');
-        fixturesOverlay.innerHTML = `<div style="font-size:3rem;text-align:center;">${listHtml || 'No fixtures'}</div>`;
+        fixturesOverlay.innerHTML = buildInfoWindow('Fixtures', listHtml || 'No fixtures', branding, sponsorPlacements.intro, fixturesData.style || 'style1');
+        if(!prevFixturesVisible){
+            const sp = sponsorsData[sponsorPlacements.intro];
+            if(sp) addSponsorLog(eventId,{ts:Date.now(),placement:'intro',sponsor:sponsorPlacements.intro,action:'show'});
+        }
     } else if (fixturesOverlay) {
+        if(prevFixturesVisible){
+            const sp = sponsorsData[sponsorPlacements.intro];
+            if(sp) addSponsorLog(eventId,{ts:Date.now(),placement:'intro',sponsor:sponsorPlacements.intro,action:'hide'});
+        }
         fixturesOverlay.remove();
     }
-
-    // Formation Overlay
-    let formationOverlay = overlayContainer.querySelector('#formation-overlay');
-    const formationData = state && state.formation;
-    const formationShow = previewMode ? state && state.formationPreviewVisible : state && state.formationVisible;
-    if (formationShow && formationData) {
-        if (!formationOverlay) {
-            formationOverlay = document.createElement('div');
-            formationOverlay.id = 'formation-overlay';
-            overlayContainer.appendChild(formationOverlay);
-        }
-        formationOverlay.style.position = 'absolute';
-        formationOverlay.style.top = '0';
-        formationOverlay.style.left = '0';
-        formationOverlay.style.width = '100vw';
-        formationOverlay.style.height = '100vh';
-        formationOverlay.style.background = 'rgba(0,0,0,0.8)';
-        formationOverlay.style.color = '#fff';
-        formationOverlay.style.display = 'flex';
-        formationOverlay.style.alignItems = 'center';
-        formationOverlay.style.justifyContent = 'center';
-        formationOverlay.style.zIndex = '110';
-        formationOverlay.style.fontFamily = branding.font;
-        formationOverlay.style.opacity = previewMode ? '0.6' : '1';
-        formationOverlay.innerHTML = `<div style="font-size:3rem;">${formationData.teamName || 'Formation graphic'}</div>`;
-    } else if (formationOverlay) {
-        formationOverlay.remove();
-    }
+    prevFixturesVisible = fixturesShow;
 
     // Course Overlay
     let courseOverlay = overlayContainer.querySelector('#course-overlay');
@@ -539,10 +562,131 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         courseOverlay.style.zIndex = '110';
         courseOverlay.style.fontFamily = branding.font;
         courseOverlay.style.opacity = previewMode ? '0.6' : '1';
-        courseOverlay.innerHTML = `<div style="font-size:3rem;text-align:center;">${courseData.name || 'Course details'}</div>`;
+        const rows = (courseData.holes||[]).map((h,i)=>`<tr><td>${i+1}</td><td>${h.tee||''}</td><td>${h.length||''}</td><td>${h.par||''}</td></tr>`).join('');
+        courseOverlay.innerHTML = `<div style="text-align:center;">
+            <div style="font-size:3rem;">${courseData.name || 'Course details'}</div>
+            ${rows?`<table style="margin:1rem auto;font-size:2rem;"><thead><tr><th>#</th><th>Tee</th><th>Length</th><th>Par</th></tr></thead><tbody>${rows}</tbody></table>`:''}
+        </div>`;
     } else if (courseOverlay) {
         courseOverlay.remove();
     }
+
+    let eventTitleOverlay = overlayContainer.querySelector('#event-title-overlay');
+    const eventTitleData = state && state.eventTitle;
+    const eventTitleShow = previewMode ? state && state.eventTitlePreviewVisible : state && state.eventTitleVisible;
+    if(eventTitleShow && eventTitleData){
+        if(!eventTitleOverlay){
+            eventTitleOverlay = document.createElement('div');
+            eventTitleOverlay.id = 'event-title-overlay';
+            eventTitleOverlay.className = 'info-overlay';
+            overlayContainer.appendChild(eventTitleOverlay);
+        }
+        eventTitleOverlay.style.opacity = previewMode ? '0.6' : '1';
+        const logosHtml = [eventTitleData.logo1, eventTitleData.logo2].filter(Boolean).map(l=>`<img src='${l}' style='height:60px;margin:0 0.5rem;'>`).join('');
+        const loc = eventTitleData.venue ? `<div style="font-size:1.25rem;margin-bottom:0.5rem;">${eventTitleData.venue}${eventTitleData.location?`, ${eventTitleData.location}`:''}</div>` : '';
+        const bodyHtml = `<div style='text-align:center;'>${loc}${logosHtml?`<div style='margin-top:0.5rem;display:flex;justify-content:center;'>${logosHtml}</div>`:''}</div>`;
+        eventTitleOverlay.innerHTML = buildInfoWindow(eventTitleData.title || '', bodyHtml, branding, sponsorPlacements.intro, 'style1');
+        if(!prevEventTitleVisible){
+            const sp = sponsorsData[sponsorPlacements.intro];
+            if(sp) addSponsorLog(eventId,{ts:Date.now(),placement:'intro',sponsor:sponsorPlacements.intro,action:'show'});
+        }
+    }else if(eventTitleOverlay){
+        if(prevEventTitleVisible){
+            const sp = sponsorsData[sponsorPlacements.intro];
+            if(sp) addSponsorLog(eventId,{ts:Date.now(),placement:'intro',sponsor:sponsorPlacements.intro,action:'hide'});
+        }
+        eventTitleOverlay.remove();
+    }
+    prevEventTitleVisible = eventTitleShow;
+
+    let weatherOverlay = overlayContainer.querySelector('#weather-overlay');
+    const weatherData = state && state.weather;
+    const weatherShow = previewMode ? state && state.weatherPreviewVisible : state && state.weatherVisible;
+    if (weatherShow && weatherData) {
+        if (!weatherOverlay) {
+            weatherOverlay = document.createElement('div');
+            weatherOverlay.id = 'weather-overlay';
+            weatherOverlay.className = 'info-overlay';
+            overlayContainer.appendChild(weatherOverlay);
+        }
+        weatherOverlay.style.opacity = previewMode ? '0.6' : '1';
+        const slotHtml = (weatherData.slots || []).map(s=>`<div style='display:flex;flex-direction:column;align-items:center;padding:0 0.5rem;'><div>${s.time}</div><div>${WEATHER_ICONS[s.icon] || ''}</div><div>${s.temp}</div></div>`).join('');
+        const header = weatherData.weatherLoc ? `<div style="text-align:center;font-size:1.25rem;margin-bottom:0.5rem;">${weatherData.weatherLoc}</div>` : '';
+        const bodyHtml = `${header}<div style='display:flex;justify-content:center;'>${slotHtml}</div>`;
+        weatherOverlay.innerHTML = buildInfoWindow('Weather', bodyHtml, branding, sponsorPlacements.intro, 'style1');
+        if(!prevWeatherVisible){
+            const sp = sponsorsData[sponsorPlacements.intro];
+            if(sp) addSponsorLog(eventId,{ts:Date.now(),placement:'intro',sponsor:sponsorPlacements.intro,action:'show'});
+        }
+    } else if (weatherOverlay) {
+        if(prevWeatherVisible){
+            const sp = sponsorsData[sponsorPlacements.intro];
+            if(sp) addSponsorLog(eventId,{ts:Date.now(),placement:'intro',sponsor:sponsorPlacements.intro,action:'hide'});
+        }
+        weatherOverlay.remove();
+    }
+    prevWeatherVisible = weatherShow;
+
+    let endSlateOverlay = overlayContainer.querySelector('#end-slate-overlay');
+    const endSlateData = state && state.endSlate;
+    const endSlateShow = previewMode ? state && state.endSlatePreviewVisible : state && state.endSlateVisible;
+    if(endSlateShow && endSlateData){
+        if(!endSlateOverlay){
+            endSlateOverlay = document.createElement('div');
+            endSlateOverlay.id = 'end-slate-overlay';
+            overlayContainer.appendChild(endSlateOverlay);
+        }
+        endSlateOverlay.style.position = 'absolute';
+        endSlateOverlay.style.top = '0';
+        endSlateOverlay.style.left = '0';
+        endSlateOverlay.style.width = '100vw';
+        endSlateOverlay.style.height = '100vh';
+        endSlateOverlay.style.display = 'flex';
+        endSlateOverlay.style.flexDirection = 'column';
+        endSlateOverlay.style.justifyContent = 'center';
+        endSlateOverlay.style.alignItems = endSlateData.position === 'left' ? 'flex-start' : endSlateData.position === 'right' ? 'flex-end' : 'center';
+        endSlateOverlay.style.background = endSlateData.transition === 'dip' ? branding.primaryColor : 'transparent';
+        endSlateOverlay.style.opacity = previewMode ? '0.6' : '1';
+        const logoSrc = endSlateData.logoSource === 'primary' ? resolveAssetPath(branding.logoPrimary) : endSlateData.logoSource === 'secondary' ? resolveAssetPath(branding.logoSecondary) : (endSlateData.customLogo || '');
+        const imgHtml = logoSrc ? `<img src='${logoSrc}' alt='logo' style='max-height:30vh;max-width:80vw;'>` : '';
+        const textHtml = endSlateData.text ? `<div style='margin-top:1rem;font-size:1.5rem;text-align:center;'>${endSlateData.text}</div>` : '';
+        endSlateOverlay.innerHTML = `${imgHtml}${textHtml}`;
+        if(!prevEndSlateVisible || JSON.stringify(endSlateData)!==JSON.stringify(prevEndSlateData)){
+            playTransition(endSlateOverlay,'in', endSlateData.transition || 'fade');
+        }
+    } else if(endSlateOverlay){
+        playTransition(endSlateOverlay,'out', prevEndSlateData && prevEndSlateData.transition || 'fade');
+        endSlateOverlay = null;
+    }
+    prevEndSlateVisible = endSlateShow;
+    prevEndSlateData = endSlateData;
+
+    let bannerOverlay = overlayContainer.querySelector('#speakers-banner-overlay');
+    const bannerData = state && state.speakersBanner;
+    const bannerShow = previewMode ? state && state.speakersBannerPreviewVisible : state && state.speakersBannerVisible;
+    if(bannerShow && bannerData && bannerData.length){
+        if(!bannerOverlay){
+            bannerOverlay = document.createElement('div');
+            bannerOverlay.id = 'speakers-banner-overlay';
+            overlayContainer.appendChild(bannerOverlay);
+        }
+        bannerOverlay.style.position = 'absolute';
+        bannerOverlay.style.bottom = '5%';
+        bannerOverlay.style.left = '50%';
+        bannerOverlay.style.transform = 'translateX(-50%)';
+        bannerOverlay.style.display = 'flex';
+        bannerOverlay.style.gap = '1rem';
+        bannerOverlay.style.padding = '0.5rem 1rem';
+        bannerOverlay.style.background = branding.primaryColor + 'cc';
+        bannerOverlay.style.color = '#fff';
+        bannerOverlay.style.borderRadius = '0.5rem';
+        bannerOverlay.style.fontFamily = branding.font;
+        bannerOverlay.style.opacity = previewMode ? '0.6' : '1';
+        bannerOverlay.innerHTML = bannerData.map(s=>`<div style='text-align:center;padding:0 0.5rem;'><div style='font-weight:bold;'>${s.name}</div><div style='font-size:0.8em;'>${s.subtitle||''}</div></div>`).join('');
+    } else if(bannerOverlay){
+        bannerOverlay.remove();
+    }
+    prevSpeakersBannerVisible = bannerShow;
 
     // Scoreboard Overlay
     let scoreboardOverlay = overlayContainer.querySelector('#scoreboard-overlay');
@@ -645,11 +789,6 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         if (scoreboardData.points) info.push('Pts ' + scoreboardData.points.join('-'));
         if (scoreboardData.overs) info.push('Ov ' + scoreboardData.overs.join('-'));
         if (scoreboardData.wickets) info.push('Wk ' + scoreboardData.wickets.join('-'));
-        if (scoreboardData.showPens) {
-            const pA = scoreboardData.pens?.[0] ?? 0;
-            const pB = scoreboardData.pens?.[1] ?? 0;
-            info.push('Pens ' + pA + '-' + pB);
-        }
         const infoHtml = info.length ? `<div class='sb-info'>${info.join(' | ')}</div>` : '';
         const brand = branding.primaryColor || '#e16316';
         const textA = contrastColor(colors[0]);
@@ -698,7 +837,6 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         } else if(style==='football' || style.startsWith('football-')){
             const timePart = timeStr ? `<span class="sb-time">${timeStr}</span>` : '';
             const stopPart = scoreboardData.showStoppage && scoreboardData.stoppage ? `<span class="sb-time">+${scoreboardData.stoppage}</span>` : '';
-            const pensPart = scoreboardData.showPens ? `<span class=\"sb-time\">Pens ${scoreboardData.pens?.[0]||0}-${scoreboardData.pens?.[1]||0}</span>` : '';
             scoreboardOverlay.innerHTML = `
             ${topImg}
             <div class="sb-row">
@@ -707,7 +845,6 @@ function renderOverlayFromFirebase(state, graphics, branding) {
                 <span class="sb-team${aClassB}" style="background:${colors[1]};color:${textB}">${showLogos ? `<img src='${logos[1]}' class='sb-team-logo'>` : ''}${names[1]}</span>
                 ${timePart}
                 ${stopPart}
-                ${pensPart}
             </div>
             ${sbSponsorHtml}
             ${bottomImg}`;
@@ -746,12 +883,17 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             const setsB = scoreboardData.sets?.[1] ?? 0;
             const gamesA = scoreboardData.games?.[0] ?? 0;
             const gamesB = scoreboardData.games?.[1] ?? 0;
+            const pointNames = ['0','15','30','40','Ad'];
+            const ptsA = pointNames[sA] || '0';
+            const ptsB = pointNames[sB] || '0';
+            const serveA = scoreboardData.turn === 0 ? ' serve' : '';
+            const serveB = scoreboardData.turn === 1 ? ' serve' : '';
             scoreboardOverlay.innerHTML = `
             ${topImg}
             <table class="sb-tennis-table">
                 <tr><th></th><th>Sets</th><th>Games</th><th>Pts</th></tr>
-                <tr><td class="sb-team${aClassA}" style="background:${colors[0]};color:${textA}">${names[0]}</td><td>${setsA}</td><td>${gamesA}</td><td>${sA}</td></tr>
-                <tr><td class="sb-team${aClassB}" style="background:${colors[1]};color:${textB}">${names[1]}</td><td>${setsB}</td><td>${gamesB}</td><td>${sB}</td></tr>
+                <tr><td class="sb-team${aClassA}${serveA}" style="background:${colors[0]};color:${textA}">${names[0]}</td><td>${setsA}</td><td>${gamesA}</td><td>${ptsA}</td></tr>
+                <tr><td class="sb-team${aClassB}${serveB}" style="background:${colors[1]};color:${textB}">${names[1]}</td><td>${setsB}</td><td>${gamesB}</td><td>${ptsB}</td></tr>
             </table>
             ${sbSponsorHtml}
             ${bottomImg}`;
@@ -809,6 +951,42 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     prevScoreboardVisible = scoreboardShow;
     prevScoreboardData = scoreboardData;
 
+    // Shootout Overlay
+    let shootOverlay = overlayContainer.querySelector('#shootout-overlay');
+    const shootData = state && state.scoreboard && state.scoreboard.shootout;
+    const shootShow = previewMode ? state && state.shootoutPreviewVisible : state && state.shootoutVisible;
+    if(shootShow && shootData){
+        if(!shootOverlay){
+            shootOverlay = document.createElement('div');
+            shootOverlay.id = 'shootout-overlay';
+            overlayContainer.appendChild(shootOverlay);
+        }
+        shootOverlay.style.position = 'absolute';
+        shootOverlay.style.bottom = '2rem';
+        shootOverlay.style.left = '50%';
+        shootOverlay.style.transform = 'translateX(-50%)';
+        shootOverlay.style.fontFamily = branding.font;
+        shootOverlay.style.opacity = previewMode ? '0.6' : '1';
+        const tA = getTeam(0) || {name:'Team 1'};
+        const tB = getTeam(1) || {name:'Team 2'};
+        const shotsA = shootData.shots?.[0] || [];
+        const shotsB = shootData.shots?.[1] || [];
+        const scoreA = shotsA.filter(s=>s && s.result==='goal').length;
+        const scoreB = shotsB.filter(s=>s && s.result==='goal').length;
+        const rows = Array.from({length:Math.max(shotsA.length, shotsB.length)}).map((_,i)=>{
+            const a = shotsA[i] || {};
+            const b = shotsB[i] || {};
+            const aMark = a.result==='goal' ? '✓' : a.result==='miss' ? '✗' : '';
+            const bMark = b.result==='goal' ? '✓' : b.result==='miss' ? '✗' : '';
+            const aPlayer = a.player || '';
+            const bPlayer = b.player || '';
+            return `<tr><td>${aPlayer}</td><td class='text-center'>${aMark}</td><td class='px-4'></td><td>${bPlayer}</td><td class='text-center'>${bMark}</td></tr>`;
+        }).join('');
+        shootOverlay.innerHTML = `<div class='lower-third-default'><div class='font-bold mb-1'>Shoot-out ${scoreA}-${scoreB}</div><table class='text-sm'><tbody>${rows}</tbody></table></div>`;
+    } else if(shootOverlay){
+        shootOverlay.remove();
+    }
+
     // Corner Sponsors
     ['tl','tr','bl','br'].forEach(pos=>{
         const idx = sponsorPlacements['corner'+pos.toUpperCase()] || '';
@@ -828,6 +1006,35 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         }
     });
 
+    const live = (state && state.sponsorPlacementsLive) || {};
+    const allPlacements = new Set([...Object.keys(prevSponsorLive), ...Object.keys(live)]);
+    allPlacements.forEach(p=>{
+        if(p==='presentationTop') return;
+        const vis = !!live[p];
+        const idx = sponsorPlacements[p];
+        const sponsor = sponsorsData[idx];
+        const id = `manual-sponsor-${p}`;
+        let el = overlayContainer.querySelector('#'+id);
+        if(vis && sponsor){
+            if(!el){
+                el = document.createElement('img');
+                el.id = id;
+                el.className = placementClassMap[p] || '';
+                overlayContainer.appendChild(el);
+            }
+            el.src = sponsor.logo;
+            if(!prevSponsorLive[p]) addSponsorLog(eventId,{ts:Date.now(),placement:p,sponsor:idx,action:'show'});
+            prevSponsorLive[p] = true;
+        } else if(el){
+            el.remove();
+            if(prevSponsorLive[p]) addSponsorLog(eventId,{ts:Date.now(),placement:p,sponsor:idx,action:'hide'});
+            prevSponsorLive[p] = false;
+        } else if(prevSponsorLive[p]){
+            addSponsorLog(eventId,{ts:Date.now(),placement:p,sponsor:idx,action:'hide'});
+            prevSponsorLive[p] = false;
+        }
+    });
+
     // Formation Overlay
     let formOverlay = overlayContainer.querySelector('#formation-overlay');
     const formData = state && state.formation;
@@ -836,19 +1043,20 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         if (!formOverlay) {
             formOverlay = document.createElement('div');
             formOverlay.id = 'formation-overlay';
+            formOverlay.className = 'info-overlay';
             overlayContainer.appendChild(formOverlay);
         }
         const showPhoto = teamsData && teamsData.showPhotosFormation;
-        const bottomSp = sponsorsData[sponsorPlacements.formationBottom];
-        const bottomImg = bottomSp ? `<img src='${bottomSp.logo}' class='sb-sponsor bottom'>` : '';
-        formOverlay.innerHTML = `<div class='formation-pitch'></div>` +
+        const pitchHtml = `<div class='formation-pitch'>`+
             formData.players.map(p=>{
                 const photo = showPhoto && p.photo ? `<img src='${p.photo}' class='formation-photo'>` : '';
                 const num = p.number ? `#${p.number} ` : '';
                 const pos = p.pos ? `<div class='text-xs'>${p.pos}</div>` : '';
                 return `<div class='formation-player' style='top:${p.y}%;left:${p.x}%;font-family:${branding.font};'>${photo}<span>${num}${p.name}</span>${pos}</div>`;
-            }).join('') + bottomImg;
+            }).join('') + `</div>`;
+        formOverlay.innerHTML = buildInfoWindow(formData.teamName || 'Formation', pitchHtml, branding, sponsorPlacements.formationBottom, formData.style || 'style1');
         if(!prevFormationVisible){
+            const bottomSp = sponsorsData[sponsorPlacements.formationBottom];
             if(bottomSp) addSponsorLog(eventId,{ts:Date.now(),placement:'formationBottom',sponsor:sponsorPlacements.formationBottom,action:'show'});
         }
     } else if (formOverlay) {
@@ -863,7 +1071,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     // Lineup Table Overlay
     let tableOverlay = overlayContainer.querySelector('#lineup-table-overlay');
     const tableData = state && state.lineupTable;
-    const tableShow = state && state.lineupTableVisible;
+    const tableShow = previewMode ? state && state.lineupTablePreviewVisible : state && state.lineupTableVisible;
     if(tableShow && tableData){
         if(!tableOverlay){
             tableOverlay = document.createElement('div');
@@ -871,10 +1079,12 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             overlayContainer.appendChild(tableOverlay);
         }
         const showPhoto = teamsData && teamsData.showPhotosFormation;
+        tableOverlay.style.opacity = previewMode ? '0.6' : '1';
         tableOverlay.innerHTML = `<div class='lineup-table' style='font-family:${branding.font};'>`+
             tableData.players.map(p=>{
                 const photo = showPhoto && p.photo ? `<img src='${p.photo}' class='lineup-table-photo'>` : '';
-                return `<div class='lineup-row'>${photo}<span>${p.name}${p.pos?` (${p.pos})`:''}</span></div>`;
+                const num = p.number ? `${p.number} ` : '';
+                return `<div class='lineup-row'>${photo}<span>${num}${p.name}${p.pos?` (${p.pos})`:''}</span></div>`;
             }).join('')+`</div>`;
     } else if(tableOverlay){
         tableOverlay.remove();
@@ -884,22 +1094,40 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     // Results Overlay
     let resOverlay = overlayContainer.querySelector('#results-overlay');
     const resData = state && state.results;
-    const resShow = state && state.resultsVisible;
+    const resShow = state && state.resultsVisible || state && state.resultsPreviewVisible;
     if(resShow && resData){
         if(!resOverlay){
             resOverlay = document.createElement('div');
             resOverlay.id = 'results-overlay';
             overlayContainer.appendChild(resOverlay);
         }
-        resOverlay.innerHTML = `<div class='results-box' style='font-family:${branding.font};'>`+
-            `<div class='results-teams'>${resData.teamA.name} ${resData.teamA.score} - ${resData.teamB.score} ${resData.teamB.name}</div>`+
-            `<div class='results-grid'><div><h3>${resData.teamA.name}</h3>${resData.teamA.scorers.map(s=>`<div>${s}</div>`).join('')}</div>`+
-            `<div><h3>${resData.teamB.name}</h3>${resData.teamB.scorers.map(s=>`<div>${s}</div>`).join('')}</div></div>`+
-            `</div>`;
+        const scorersA = (resData.teamA.scorers||[]).map(s=>`<div>${s}</div>`).join('');
+        const scorersB = (resData.teamB.scorers||[]).map(s=>`<div>${s}</div>`).join('');
+        const body = `<div class='results-teams'>${resData.teamA.name} ${resData.teamA.score} - ${resData.teamB.score} ${resData.teamB.name}</div>`+
+            `<div class='results-grid'><div><h3>${resData.teamA.name}</h3>${scorersA}</div>`+
+            `<div><h3>${resData.teamB.name}</h3>${scorersB}</div></div>`;
+        resOverlay.innerHTML = buildInfoWindow('Match Result', body, branding, resData.sponsor, resData.style||'style1');
     } else if(resOverlay){
         resOverlay.remove();
     }
     prevResultsVisible = resShow;
+
+    // Standings Overlay
+    let standOverlay = overlayContainer.querySelector('#standings-overlay');
+    const standData = state && state.standings;
+    const standShow = state && state.standingsVisible;
+    if(standShow && standData){
+        if(!standOverlay){
+            standOverlay = document.createElement('div');
+            standOverlay.id = 'standings-overlay';
+            overlayContainer.appendChild(standOverlay);
+        }
+        const rows = (standData.rows||[]).map((r,i)=>`<tr><td>${i+1}</td><td>${r.name}</td><td>${r.played}</td><td>${r.won}</td><td>${r.draw}</td><td>${r.lost}</td><td>${r.for}</td><td>${r.against}</td><td>${r.diff}</td><td>${r.points}</td></tr>`).join('');
+        const body = `<table class='standings-table'><thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>F</th><th>A</th><th>GD</th><th>Pts</th></tr></thead><tbody>${rows}</tbody></table>`;
+        standOverlay.innerHTML = buildInfoWindow('Standings', body, branding, standData.sponsor, standData.style||'style1');
+    } else if(standOverlay){
+        standOverlay.remove();
+    }
 
     // Match Log Overlay
     let logOverlay = overlayContainer.querySelector('#log-overlay');
@@ -998,6 +1226,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     let stingerOverlay = overlayContainer.querySelector('#stinger-overlay');
     const stingerData = state && state.stinger;
     const stingerShow = previewMode ? state && state.stingerPreviewVisible : state && state.stingerVisible;
+    const stingerChanged = stingerShow !== prevStingerVisible || JSON.stringify(stingerData) !== JSON.stringify(prevStingerData);
     if (stingerShow && stingerData) {
         if (!stingerOverlay) {
             stingerOverlay = document.createElement('div');
@@ -1006,29 +1235,37 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         }
         stingerOverlay.style.fontFamily = branding.font;
         stingerOverlay.style.opacity = previewMode ? '0.6' : '1';
-        const style = stingerData.style || 'logo';
-        const colors = stingerData.colors || [branding.primaryColor || '#000', branding.secondaryColor1 || '#fff'];
-        const textColor = branding.primaryColor || '#fff';
-        const logoUrl = resolveAssetPath(stingerData.logo);
-        stingerOverlay.style.background = 'transparent';
-        if (style === 'split') {
-            stingerOverlay.innerHTML = `
+        if (stingerChanged) {
+            const style = stingerData.style || 'logo';
+            const colors = stingerData.colors || [branding.primaryColor || '#000', branding.secondaryColor1 || '#fff'];
+            const textColor = branding.primaryColor || '#fff';
+            const logoUrl = resolveAssetPath(stingerData.logo);
+            stingerOverlay.style.background = 'transparent';
+            if (style === 'split') {
+                stingerOverlay.innerHTML = `
                 <div class="stinger-split">
                     <div class="stinger-split-top" style="background:${colors[0]}"></div>
                     <div class="stinger-split-bottom" style="background:${colors[1]}"></div>
                     ${logoUrl ? `<img src='${logoUrl}' class='stinger-logo'>` : stingerData.text ? `<div class='stinger-logo stinger-text' style='color:${textColor}'>${stingerData.text}</div>` : ''}
                 </div>`;
-        } else {
-            stingerOverlay.innerHTML = logoUrl ? `<img src='${logoUrl}'>` : stingerData.text ? `<div class='stinger-text' style='color:${textColor}'>${stingerData.text}</div>` : '';
+            } else {
+                stingerOverlay.innerHTML = logoUrl ? `<img src='${logoUrl}'>` : stingerData.text ? `<div class='stinger-text' style='color:${textColor}'>${stingerData.text}</div>` : '';
+            }
+            clearTimeout(stingerTimeout);
+            stingerTimeout = setTimeout(()=>updateOverlayState(eventId,{stingerVisible:false,stingerPreviewVisible:false}),2000);
         }
     } else if (stingerOverlay) {
         stingerOverlay.remove();
     }
+    prevStingerVisible = stingerShow;
+    prevStingerData = stingerData;
 
     // Presentation Overlay
     let presOverlay = overlayContainer.querySelector('#presentation-overlay');
     const presData = state && state.presentation;
     const presShow = previewMode ? state && state.presentationPreviewVisible : state && state.presentationVisible;
+    const presSponsorLive = presShow && state && state.sponsorPlacementsLive && state.sponsorPlacementsLive.presentationTop;
+    const presSponsor = presSponsorLive ? sponsorsData[sponsorPlacements.presentationTop] : null;
     if(presShow && presData && presData.url){
         if(!presOverlay){
             presOverlay = document.createElement('div');
@@ -1036,11 +1273,35 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             overlayContainer.appendChild(presOverlay);
         }
         presOverlay.className = presData.mode === 'pip' ? 'presentation-overlay pip' : 'presentation-overlay full';
-        presOverlay.style.opacity = previewMode ? '0.6' : '1';
-        presOverlay.innerHTML = `<iframe src='${presData.url}#page=${presData.page||1}'></iframe>`;
+        if(presData.mode === 'pip'){
+            const x = presData.x ?? 60;
+            const y = presData.y ?? 60;
+            const w = presData.w ?? 40;
+            const h = presData.h ?? 40;
+            presOverlay.style.cssText = `top:${y}%;left:${x}%;width:${w}%;height:${h}%;opacity:${previewMode?'0.6':'1'};`;
+        } else {
+            presOverlay.style.opacity = previewMode ? '0.6' : '1';
+        }
+        const sponsorHtml = presSponsor ? `<img src='${presSponsor.logo}' class='presentation-sponsor'>` : '';
+        presOverlay.innerHTML = `${sponsorHtml}<iframe src='${presData.url}#page=${presData.page||1}'></iframe>`;
+        if(presSponsor && presSponsor !== prevPresentationSponsor){
+            addSponsorLog(eventId,{ts:Date.now(),placement:'presentationTop',sponsor:sponsorPlacements.presentationTop,action:'show'});
+        } else if(!presSponsor && prevPresentationSponsor){
+            addSponsorLog(eventId,{ts:Date.now(),placement:'presentationTop',sponsor:sponsorPlacements.presentationTop,action:'hide'});
+        }
+        prevPresentationSponsor = presSponsor;
     } else if(presOverlay){
         presOverlay.remove();
+        if(prevPresentationSponsor){
+            addSponsorLog(eventId,{ts:Date.now(),placement:'presentationTop',sponsor:sponsorPlacements.presentationTop,action:'hide'});
+            prevPresentationSponsor = null;
+        }
+    } else if(prevPresentationSponsor){
+        addSponsorLog(eventId,{ts:Date.now(),placement:'presentationTop',sponsor:sponsorPlacements.presentationTop,action:'hide'});
+        prevPresentationSponsor = null;
     }
+    prevPresentationVisible = presShow;
+    prevPresentationData = presData;
 }
 
 let lastState = null;
@@ -1086,8 +1347,8 @@ listenBranding(eventId, (branding) => {
     lastBranding = branding || DEFAULT_BRANDING;
     updateOverlay();
 });
-onValue(ref(getDatabaseInstance(), `teams/${eventId}`), snap => {
-    teamsData = snap.val() || null;
+listenTeams(eventId, data => {
+    teamsData = data || null;
     updateOverlay();
 });
 onValue(ref(getDatabaseInstance(), `scoreboard/${eventId}`), snap => {

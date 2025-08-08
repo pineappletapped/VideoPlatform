@@ -32,14 +32,14 @@ let loadedVT = null;
 let graphicsMode = 'live';
 
 async function initializeApp(user) {
-    let firebaseStatus = 'Connecting to Firebase...';
+    let firebaseStatus = 'Connecting to server...';
     currentUserId = user ? user.uid.replace('local-','') : '';
     try {
         // Test Firebase connection
         await getOverlayState(eventId);
-        firebaseStatus = 'Connected to Firebase';
+        firebaseStatus = 'Connected to server';
     } catch (e) {
-        firebaseStatus = 'Firebase connection failed';
+        firebaseStatus = 'Server connection failed';
     }
     try {
         // Load event data (from JSON)
@@ -102,7 +102,7 @@ function setupTabs() {
     setActiveTab('vts', '.av-panel');
 }
 
-function updateGraphicsTabs(type) {
+function updateGraphicsTabs(type, corporateType = 'conference') {
     const tabBar = document.getElementById('graphics-tabs');
     if (!tabBar) return;
     const sports = ['scoreboard','stats','teams','sport'];
@@ -121,23 +121,25 @@ function updateGraphicsTabs(type) {
     });
     const scheduleBtn = tabBar.querySelector('[data-tab="schedule"]');
     const schedulePanel = document.getElementById('schedule-panel');
-    if (scheduleBtn && schedulePanel) {
-        if (type === 'sports') {
-            scheduleBtn.classList.add('hidden');
-            schedulePanel.classList.add('hidden');
-        } else {
-            scheduleBtn.classList.remove('hidden');
-            schedulePanel.classList.remove('hidden');
-        }
-    }
     const presBtn = tabBar.querySelector('[data-tab="presentation"]');
     const presPanel = document.getElementById('presentation-panel');
+    const showSchedule = type !== 'sports' && corporateType !== 'podcast';
+    const showPres = type !== 'sports' && corporateType === 'conference';
+    if (scheduleBtn && schedulePanel) {
+        if (showSchedule) {
+            scheduleBtn.classList.remove('hidden');
+            schedulePanel.classList.remove('hidden');
+        } else {
+            scheduleBtn.classList.add('hidden');
+            schedulePanel.classList.add('hidden');
+        }
+    }
     if(presBtn && presPanel){
-        if(type === 'sports'){
-            presBtn.classList.add('hidden');
+        if(showPres){
+            presBtn.classList.remove('hidden');
             presPanel.classList.add('hidden');
         }else{
-            presBtn.classList.remove('hidden');
+            presBtn.classList.add('hidden');
             presPanel.classList.add('hidden');
         }
     }
@@ -166,8 +168,9 @@ async function initializeComponents(eventData) {
 
     // Status bar
     renderStatusBar(document.getElementById('status-bar'), eventData);
-    
-    updateGraphicsTabs(eventData.eventType || 'corporate');
+
+    const corpType = eventData.corporateType || 'conference';
+    updateGraphicsTabs(eventData.eventType || 'corporate', corpType);
     if ((eventData.eventType || 'corporate') === 'sports') {
         const updateTeamsTab = sport => {
             const btn = document.querySelector('[data-tab="teams"]');
@@ -185,7 +188,9 @@ async function initializeComponents(eventData) {
         renderTeamsPanel(document.getElementById('teams-panel'), eventId, eventData.sport);
         updateTeamsTab(eventData.sport);
     } else {
-        renderProgramPreview(document.getElementById('schedule-panel'), eventData, onOverlayStateChange);
+        if(corpType !== 'podcast'){
+            renderProgramPreview(document.getElementById('schedule-panel'), eventData, onOverlayStateChange);
+        }
     }
 
     // Initialize main content panels

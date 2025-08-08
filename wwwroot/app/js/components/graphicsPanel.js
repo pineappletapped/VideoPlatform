@@ -1,6 +1,4 @@
-import { setGraphicsData, updateGraphicsData, getGraphicsData, listenGraphicsData, listenFavorites, updateFavorites, addMatchLog, listenOverlayState } from '../firebase.js';
-import { ref, onValue, set } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
-import { getDatabaseInstance } from '../firebaseApp.js';
+import { setGraphicsData, updateGraphicsData, getGraphicsData, listenGraphicsData, listenFavorites, updateFavorites, addMatchLog, listenOverlayState, listenTeams, setTeams } from '../firebase.js';
 import { sportsData } from '../sportsConfig.js';
 
 const transitions = [
@@ -12,9 +10,12 @@ const transitions = [
     { value: 'slide-down', label: 'Slide Down' }
 ];
 
-const BASE_LOG_EVENTS = ['goal','substitution'];
+const BASE_LOG_EVENTS = ['Goal','Substitution'];
 function getLogEventsForSport(sp){
     return sportsData[sp]?.logEvents || BASE_LOG_EVENTS;
+}
+function formatEventLabel(e){
+    return e.replace(/\b\w/g, c => c.toUpperCase());
 }
 
 let liveLowerThirdId = null;
@@ -22,7 +23,7 @@ let previewLowerThirdId = null;
 let liveTitleSlideId = null;
 let previewTitleSlideId = null;
 let graphicsData = { lowerThirds: [], titleSlides: [], teams: {} };
-let favorites = { lowerThirds: [], titleSlides: [], scoreboard: false };
+let favorites = { lowerThirds: [], titleSlides: [], scoreboard: false, stingers: [], shortcuts: {}, sponsors: [] };
 let overlayState = {};
 
 function saveLiveState(eventId, mode) {
@@ -52,13 +53,10 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
     const sportsMode = eventType === 'sports';
     let teamsData = null;
     let logEvents = [];
-    let db;
-    let teamsRef;
+    let teamsBaseId = eventId;
 
     if (sportsMode) {
-        db = getDatabaseInstance();
-        teamsRef = ref(db, `teams/${eventId}`);
-        onValue(teamsRef, snap => { teamsData = snap.val(); renderPanel(); });
+        listenTeams(eventId, (data, baseId)=>{ teamsBaseId = baseId; teamsData = data; renderPanel(); });
         logEvents = getLogEventsForSport(eventData.sport);
     }
     // Listen for graphics changes from Firebase
@@ -75,7 +73,7 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
         previewTitleSlideId = graphicsData.previewTitleSlideId || null;
         renderPanel();
     }, mode);
-    listenFavorites(eventId, (fav) => { favorites = { lowerThirds: [], titleSlides: [], scoreboard: false, ...(fav || {}) }; renderPanel(); });
+    listenFavorites(eventId, (fav) => { favorites = { lowerThirds: [], titleSlides: [], scoreboard: false, stingers: [], shortcuts: {}, sponsors: [], ...(fav || {}) }; renderPanel(); });
     listenOverlayState(eventId, state => { overlayState = state || {}; });
 
     function renderPanel() {
@@ -189,7 +187,7 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                     <strong>In Game Events:</strong>
                     <div class="flex gap-2 mt-1 text-sm items-center">
                         <select id="ige-type" class="border p-1 flex-1">
-                            ${logEvents.map(e=>`<option value="${e}">${e}</option>`).join('')}
+                            ${logEvents.map(e=>`<option value="${e}">${formatEventLabel(e)}</option>`).join('')}
                         </select>
                         <select id="ige-team" class="border p-1">
                             ${['teamA','teamB'].map(k=>`<option value="${k}">${teamsData[k]?.name || k}</option>`).join('')}
@@ -293,7 +291,7 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                 playerOnSel.innerHTML = onOpts.join('');
             };
             const updateType = () => {
-                playerOnSel.style.display = typeSel.value === 'substitution' ? '' : 'none';
+                playerOnSel.style.display = typeSel.value.toLowerCase() === 'substitution' ? '' : 'none';
             };
             teamSel.onchange = fillPlayers;
             typeSel.onchange = updateType;
@@ -310,7 +308,7 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                 let playerField = '';
                 let playerName = '';
                 let playerNumber = '';
-                if (type === 'substitution') {
+                if (type.toLowerCase() === 'substitution') {
                     subtitle = `${off} → ${on}`;
                     playerField = subtitle;
                     playerName = off;
@@ -334,13 +332,13 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                 const timeStr = formatTime(secs);
                 const logEntry = { ts: Date.now(), type, team: teamKey==='teamA'?'a':'b', player: playerField, playerName, playerNumber, time: timeStr };
                 await addMatchLog(eventId, logEntry);
-                if(type === 'substitution'){
+                if(type.toLowerCase() === 'substitution'){
                     const teamObj = teamsData[teamKey];
                     const offIdx = teamObj.players.findIndex(p=>p.name===off);
                     const onIdx = teamObj.players.findIndex(p=>p.name===on);
                     if(offIdx >= 0) teamObj.players[offIdx].status = 'sub';
                     if(onIdx >= 0) teamObj.players[onIdx].status = 'starting';
-                    if(teamsRef) await set(teamsRef, teamsData);
+                    await setTeams(teamsBaseId, teamsData);
                     fillPlayers();
                 }
                 const obj = {
@@ -416,11 +414,17 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                 } else if (action === 'favorite-lt') {
                     const idx = favorites.lowerThirds.indexOf(id);
                     if (idx >= 0) favorites.lowerThirds.splice(idx,1); else favorites.lowerThirds.push(id);
+                    if(favorites.shortcuts){
+                        Object.keys(favorites.shortcuts).forEach(k=>{ const sc=favorites.shortcuts[k]; if(sc.type==='lowerThird' && sc.id===id) delete favorites.shortcuts[k]; });
+                    }
                     updateFavorites(eventId, favorites);
                     renderPanel();
                 } else if (action === 'favorite-ts') {
                     const idx = favorites.titleSlides.indexOf(id);
                     if (idx >= 0) favorites.titleSlides.splice(idx,1); else favorites.titleSlides.push(id);
+                    if(favorites.shortcuts){
+                        Object.keys(favorites.shortcuts).forEach(k=>{ const sc=favorites.shortcuts[k]; if(sc.type==='titleSlide' && sc.id===id) delete favorites.shortcuts[k]; });
+                    }
                     updateFavorites(eventId, favorites);
                     renderPanel();
                 } else if (action === 'remove-lt') {

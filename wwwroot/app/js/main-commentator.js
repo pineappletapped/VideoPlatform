@@ -1,7 +1,7 @@
 import { requireAuth, logout } from './auth.js';
 import './components/topBar.js';
 import { renderStatusBar } from './components/statusBar.js';
-import { getEventMetadata, updateEventMetadata, listenOverlayState, listenMatchLog } from './firebase.js';
+import { getEventMetadata, updateEventMetadata, listenOverlayState, listenMatchLog, listenTeams, getUserFeatures } from './firebase.js';
 import { getDatabaseInstance } from './firebaseApp.js';
 import { ref, onValue } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
 
@@ -150,20 +150,29 @@ function renderAll(){
     renderTeamColumn('b');
 }
 
-async function init(user){
-    const ev = await getEventMetadata(eventId) || {};
+async function init(user, ev){
+    const meta = ev || await getEventMetadata(eventId) || {};
     updateEventMetadata(eventId, { lastOpened: Date.now() }).catch(()=>{});
     const tb = document.createElement('top-bar');
-    tb.setAttribute('event-name', ev.title || eventId);
+    tb.setAttribute('event-name', meta.title || eventId);
     tb.addEventListener('logout', logout);
     document.getElementById('top-bar').appendChild(tb);
     renderStatusBar(document.getElementById('status-bar'), { id:eventId, status:'Commentator', firebaseStatus:'Connected' }, { overlay:false, listener:false, sport:true, clock:true, atem:false, obs:false });
 
-    onValue(ref(db, `teams/${eventId}`), snap => { teams = snap.val(); renderAll(); });
+    listenTeams(eventId, data => { teams = data; renderAll(); });
     onValue(ref(db, `lineups/${eventId}`), snap => { lineups = snap.val(); renderAll(); });
     onValue(ref(db, `stats/${eventId}`), snap => { stats = snap.val() || []; renderAll(); });
     listenMatchLog(eventId, data => { logs = data || []; renderAll(); });
     listenOverlayState(eventId, state => { scoreboard = state && state.scoreboard; renderScoreboard(); });
 }
 
-requireAuth(`commentator.html?event_id=${eventId}`).then(u=>init(u));
+requireAuth(`commentator.html?event_id=${eventId}`).then(async u => {
+  const ev = await getEventMetadata(eventId).catch(()=>({})) || {};
+  const feats = await getUserFeatures(ev.owner || u.uid);
+  if (!feats.commentator) {
+    alert('Commentator panel not available for your plan.');
+    window.location.href = 'index.html';
+    return;
+  }
+  init(u, ev);
+});

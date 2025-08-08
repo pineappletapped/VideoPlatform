@@ -1,15 +1,12 @@
-import { listenBranding, listenSponsors, updateOverlayState, resolveAssetPath } from '../firebase.js';
-import { getDatabaseInstance } from '../firebaseApp.js';
-import { ref, onValue } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
+import { listenBranding, listenSponsors, updateOverlayState, resolveAssetPath, getFavorites, updateFavorites, listenTeams } from '../firebase.js';
 
 export function renderStingerPanel(container, eventId){
-    const db = getDatabaseInstance();
     let branding = {};
     let teams = null;
     let sponsors = [];
 
     listenBranding(eventId, b=>{ branding = b || {}; render(); });
-    onValue(ref(db, `teams/${eventId}`), snap => { teams = snap.val(); render(); });
+    listenTeams(eventId, data => { teams = data; render(); });
     listenSponsors(eventId, data=>{ sponsors = data || []; render(); });
 
     function buildOptions(){
@@ -72,6 +69,7 @@ export function renderStingerPanel(container, eventId){
                 <div class="flex gap-2">
                     <button id="stinger-preview" class="control-button btn-sm">Preview</button>
                     <button id="stinger-live" class="control-button btn-sm">Live</button>
+                    <button id="stinger-fav" class="control-button btn-sm">Add to Favourites</button>
                 </div>
             </div>`;
         const sel = container.querySelector('#stinger-select');
@@ -85,6 +83,7 @@ export function renderStingerPanel(container, eventId){
         const color2Inp = container.querySelector('#stinger-color2');
         const previewBtn = container.querySelector('#stinger-preview');
         const liveBtn = container.querySelector('#stinger-live');
+        const favBtn = container.querySelector('#stinger-fav');
         let previewing = false;
         let living = false;
         function updateColorControls(){
@@ -151,6 +150,18 @@ export function renderStingerPanel(container, eventId){
                 living = true;
                 previewing = false;
             }
+        };
+        if(favBtn) favBtn.onclick = async () => {
+            const opt = options[parseInt(sel.value||'0',10)];
+            if(!opt) return;
+            const colors = resolveColors(opt);
+            const stingerData = { style: styleSel.value, colors };
+            if (opt.logo) stingerData.logo = opt.logo;
+            if (opt.text) stingerData.text = opt.text;
+            const favs = await getFavorites(eventId) || {};
+            const stingers = favs.stingers || [];
+            stingers.push({ label: opt.label, ...stingerData });
+            updateFavorites(eventId, { stingers });
         };
     }
 }

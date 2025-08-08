@@ -1,4 +1,4 @@
-import { updateOverlayState, listenOverlayState } from '../firebase.js';
+import { updateOverlayState, listenOverlayState, listenTeams, getEventMetadata } from '../firebase.js';
 import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 import { getDatabaseInstance } from "../firebaseApp.js";
 
@@ -21,6 +21,8 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
     let preview = false;
     let teamsData = null;
     let tournamentData = null;
+    let eventType = 'corporate';
+    let corpType = 'conference';
 
     onValue(getIntroRef(eid), snap => {
         intros = snap.val() || [];
@@ -32,8 +34,9 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
         updateOverlayState(eid,{ holdslateSettings:introSettings });
         render();
     });
-    onValue(ref(db, `teams/${eid}`), snap => { teamsData = snap.val(); render(); });
+    listenTeams(eid, data => { teamsData = data; render(); });
     onValue(ref(db, `tournament/${eid}`), snap => { tournamentData = snap.val(); render(); });
+    getEventMetadata(eid).then(meta=>{ eventType = meta?.eventType || 'corporate'; corpType = meta?.corporateType || 'conference'; render(); });
 
     listenOverlayState(eid, state => {
         activeIntro = (state && state.holdslate) || {};
@@ -48,31 +51,33 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
 
     function render(){
         const highlight = visible ? 'ring-4 ring-green-400' : preview ? 'ring-4 ring-brand' : '';
-        const weatherSection = introSettings.weatherLoc ? `<div class="mb-2"><button class="control-button btn-sm" id="hs-edit-weather">Weather Graphic</button></div>` : '';
         const teamOptions = teamsData ? (teamsData.teams ? teamsData.teams.map((t,i)=>`<option value="${i}">${t.name}</option>`).join('') : ['a','b'].map(k=>`<option value="${k}">${teamsData[k==='a'?'teamA':'teamB']?.name || ('Team '+k.toUpperCase())}</option>`).join('')) : '';
-        const formationRow = teamsData ? `<div class="flex items-center gap-2"><span class="flex-1">Formation Graphic</span><select id="formation-team" class="border p-1 flex-1">${teamOptions}</select><button class="control-button btn-sm" id="formation-preview">Preview</button><button class="control-button btn-sm" id="formation-live">Live</button><button class="control-button btn-sm" id="formation-edit">Edit</button></div>` : '';
+        const teamRow = teamsData ? `<div class=\"flex items-center gap-2\"><span class=\"flex-1\">Show Team</span><select id=\"teamlist-team\" class=\"border p-1 flex-1\">${teamOptions}</select><button class=\"control-button btn-sm\" id=\"teamlist-preview\">Preview</button><button class=\"control-button btn-sm\" id=\"teamlist-live\">Live</button><button class=\"control-button btn-sm\" id=\"teamlist-edit\">Edit</button></div>` : '';
+        const formationRow = teamsData ? `<div class=\"flex items-center gap-2\"><span class=\"flex-1\">Formation Graphic</span><select id=\"formation-team\" class=\"border p-1 flex-1\">${teamOptions}</select><button class=\"control-button btn-sm\" id=\"formation-preview\">Preview</button><button class=\"control-button btn-sm\" id=\"formation-live\">Live</button><button class=\"control-button btn-sm\" id=\"formation-edit\">Edit</button></div>` : '';
+        const sportsMode = eventType === 'sports';
+        const fixturesRow = sportsMode ? `<div class=\"flex items-center gap-2\"><span class=\"flex-1\">Show Fixtures</span><button class=\"control-button btn-sm\" id=\"fixtures-preview\">Preview</button><button class=\"control-button btn-sm\" id=\"fixtures-live\">Live</button><button class=\"control-button btn-sm\" id=\"fixtures-edit\">Edit</button></div>` : '';
+        const courseRow = sportsMode ? `<div class=\"flex items-center gap-2\"><span class=\"flex-1\">Course Details</span><button class=\"control-button btn-sm\" id=\"course-preview\">Preview</button><button class=\"control-button btn-sm\" id=\"course-live\">Live</button><button class=\"control-button btn-sm\" id=\"course-edit\">Edit</button></div>` : '';
+        const eventTitleRow = !sportsMode ? `<div class=\"flex items-center gap-2\"><span class=\"flex-1\">Event Title</span><button class=\"control-button btn-sm\" id=\"eventtitle-preview\">Preview</button><button class=\"control-button btn-sm\" id=\"eventtitle-live\">Live</button><button class=\"control-button btn-sm\" id=\"eventtitle-edit\">Edit</button></div>` : '';
+        const scheduleRow = (!sportsMode && corpType==='conference') ? `<div class=\"flex items-center gap-2\"><span class=\"flex-1\">Schedule</span><button class=\"control-button btn-sm\" id=\"schedule-preview\">Preview</button><button class=\"control-button btn-sm\" id=\"schedule-live\">Live</button><button class=\"control-button btn-sm\" id=\"schedule-edit\">Edit</button></div>` : '';
         container.innerHTML = `
             <div class='intro-panel ${highlight}'>
                 <div class="flex items-center justify-between mb-2">
                     <h2 class="font-bold text-lg">Intro Graphics</h2>
-                    <button class="control-button btn-sm" id="hs-input">Input data</button>
                 </div>
                 <div class="space-y-2 mb-4">
-                    <div class="flex items-center gap-2">
-                        <span class="flex-1">Show Fixtures</span>
-                        <button class="control-button btn-sm" id="fixtures-preview">Preview</button>
-                        <button class="control-button btn-sm" id="fixtures-live">Live</button>
-                        <button class="control-button btn-sm" id="fixtures-edit">Edit</button>
-                    </div>
+                    ${eventTitleRow}
+                    ${fixturesRow}
+                    ${teamRow}
                     ${formationRow}
+                    ${courseRow}
                     <div class="flex items-center gap-2">
-                        <span class="flex-1">Course Details</span>
-                        <button class="control-button btn-sm" id="course-preview">Preview</button>
-                        <button class="control-button btn-sm" id="course-live">Live</button>
-                        <button class="control-button btn-sm" id="course-edit">Edit</button>
+                        <span class="flex-1">Weather</span>
+                        <button class="control-button btn-sm" id="weather-preview">Preview</button>
+                        <button class="control-button btn-sm" id="weather-live">Live</button>
+                        <button class="control-button btn-sm" id="weather-edit">Edit</button>
                     </div>
+                    ${scheduleRow}
                 </div>
-                ${weatherSection}
                 <div class="flex items-center justify-between mb-2">
                     <h3 class="font-bold text-md">Holdslates</h3>
                     <button class="control-button btn-sm" id="hs-add">Add</button>
@@ -89,6 +94,12 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
                         </li>
                     `).join('')}
                 </ul>
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="flex-1">End Slate</span>
+                    <button class="control-button btn-sm" id="endslate-preview">Preview</button>
+                    <button class="control-button btn-sm" id="endslate-live">Live</button>
+                    <button class="control-button btn-sm" id="endslate-edit">Edit</button>
+                </div>
                 <div id="hs-modal" class="modal-overlay" style="display:none;">
                     <div class="modal-window">
                         <h3 class="font-bold text-lg mb-2" id="hs-modal-title">Add Intro Graphic</h3>
@@ -124,10 +135,10 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
                         </form>
                     </div>
                 </div>
-                <div id="hs-input-modal" class="modal-overlay" style="display:none;">
+                <div id="hs-weather-modal" class="modal-overlay" style="display:none;">
                     <div class="modal-window">
-                        <h3 class="font-bold text-lg mb-2">Intro Settings</h3>
-                        <form id="hs-input-form">
+                        <h3 class="font-bold text-lg mb-2">Weather Graphic</h3>
+                        <form id="hs-weather-form">
                             <div class="mb-2">
                                 <label class="block text-sm">Venue Location</label>
                                 <input class="border p-1 w-full" name="venue" />
@@ -140,30 +151,43 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
                                 <label class="block text-sm">Weather Location</label>
                                 <input class="border p-1 w-full" name="weatherLoc" />
                             </div>
-                            <div class="flex gap-2 mt-4">
-                                <button type="submit" class="control-button btn-sm">Save</button>
-                                <button type="button" id="hs-input-cancel" class="control-button btn-sm bg-gray-400 hover:bg-gray-600">Cancel</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-                <div id="hs-weather-modal" class="modal-overlay" style="display:none;">
-                    <div class="modal-window">
-                        <h3 class="font-bold text-lg mb-2">Weather Graphic</h3>
-                        <form id="hs-weather-form">
                             <div class="mb-2 flex gap-2">
                                 <input class="border p-1 flex-1" name="time1" placeholder="Time 1" />
-                                <input class="border p-1 flex-1" name="icon1" placeholder="Icon" />
+                                <select class="border p-1 flex-1" name="icon1">
+                                    <option value="sun">Sun</option>
+                                    <option value="cloud">Cloudy</option>
+                                    <option value="rain">Rain</option>
+                                    <option value="thunder">Thunder</option>
+                                    <option value="snow">Snow</option>
+                                    <option value="wind">Windy</option>
+                                    <option value="suncloud">Sun + Cloud</option>
+                                </select>
                                 <input class="border p-1 flex-1" name="temp1" placeholder="Temp" />
                             </div>
                             <div class="mb-2 flex gap-2">
                                 <input class="border p-1 flex-1" name="time2" placeholder="Time 2" />
-                                <input class="border p-1 flex-1" name="icon2" placeholder="Icon" />
+                                <select class="border p-1 flex-1" name="icon2">
+                                    <option value="sun">Sun</option>
+                                    <option value="cloud">Cloudy</option>
+                                    <option value="rain">Rain</option>
+                                    <option value="thunder">Thunder</option>
+                                    <option value="snow">Snow</option>
+                                    <option value="wind">Windy</option>
+                                    <option value="suncloud">Sun + Cloud</option>
+                                </select>
                                 <input class="border p-1 flex-1" name="temp2" placeholder="Temp" />
                             </div>
                             <div class="mb-2 flex gap-2">
                                 <input class="border p-1 flex-1" name="time3" placeholder="Time 3" />
-                                <input class="border p-1 flex-1" name="icon3" placeholder="Icon" />
+                                <select class="border p-1 flex-1" name="icon3">
+                                    <option value="sun">Sun</option>
+                                    <option value="cloud">Cloudy</option>
+                                    <option value="rain">Rain</option>
+                                    <option value="thunder">Thunder</option>
+                                    <option value="snow">Snow</option>
+                                    <option value="wind">Windy</option>
+                                    <option value="suncloud">Sun + Cloud</option>
+                                </select>
                                 <input class="border p-1 flex-1" name="temp3" placeholder="Temp" />
                             </div>
                             <div class="mb-2 flex gap-2">
@@ -177,6 +201,83 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
                             <div class="flex gap-2 mt-4">
                                 <button type="submit" class="control-button btn-sm">Save</button>
                                 <button type="button" id="hs-weather-cancel" class="control-button btn-sm bg-gray-400 hover:bg-gray-600">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div id="hs-endslate-modal" class="modal-overlay" style="display:none;">
+                    <div class="modal-window">
+                        <h3 class="font-bold text-lg mb-2">End Slate</h3>
+                        <form id="hs-endslate-form">
+                            <div class="mb-2">
+                                <label class="block text-sm">Logo Source</label>
+                                <select class="border p-1 w-full" name="logoSource">
+                                    <option value="primary">Event Logo 1</option>
+                                    <option value="secondary">Event Logo 2</option>
+                                    <option value="custom">Custom</option>
+                                </select>
+                            </div>
+                            <div class="mb-2" id="hs-endslate-custom">
+                                <label class="block text-sm">Custom Logo URL</label>
+                                <input class="border p-1 w-full" name="customLogo" />
+                            </div>
+                            <div class="mb-2">
+                                <label class="block text-sm">Position</label>
+                                <select class="border p-1 w-full" name="position">
+                                    <option value="center">Center</option>
+                                    <option value="left">Left</option>
+                                    <option value="right">Right</option>
+                                </select>
+                            </div>
+                            <div class="mb-2">
+                                <label class="block text-sm">Text Line</label>
+                                <input class="border p-1 w-full" name="text" />
+                            </div>
+                            <div class="mb-2">
+                                <label class="block text-sm">Transition</label>
+                                <select class="border p-1 w-full" name="transition">
+                                    <option value="fade">Fade In</option>
+                                    <option value="dip">Dip Colour</option>
+                                </select>
+                            </div>
+                            <div class="flex gap-2 mt-4">
+                                <button type="submit" class="control-button btn-sm">Save</button>
+                                <button type="button" id="hs-endslate-cancel" class="control-button btn-sm bg-gray-400 hover:bg-gray-600">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div id="eventtitle-modal" class="modal-overlay" style="display:none;">
+                    <div class="modal-window">
+                        <h3 class="font-bold text-lg mb-2">Event Title</h3>
+                        <form id="eventtitle-form">
+                            <div class="mb-2">
+                                <label class="block text-sm">Title</label>
+                                <input class="border p-1 w-full" name="title" />
+                            </div>
+                            <div class="mb-2">
+                                <label class="block text-sm">Venue</label>
+                                <input class="border p-1 w-full" name="venue" />
+                            </div>
+                            <div class="mb-2">
+                                <label class="block text-sm">Location</label>
+                                <input class="border p-1 w-full" name="location" />
+                            </div>
+                            <div class="mb-2">
+                                <label class="block text-sm">Logo 1</label>
+                                <input type="file" id="eventtitle-logo1" accept="image/*" />
+                                <button type="button" id="eventtitle-upload1" class="control-button btn-sm mt-1">Upload</button>
+                                <input class="border p-1 w-full mt-1" name="logo1" placeholder="Uploaded image URL" />
+                            </div>
+                            <div class="mb-2">
+                                <label class="block text-sm">Logo 2</label>
+                                <input type="file" id="eventtitle-logo2" accept="image/*" />
+                                <button type="button" id="eventtitle-upload2" class="control-button btn-sm mt-1">Upload</button>
+                                <input class="border p-1 w-full mt-1" name="logo2" placeholder="Uploaded image URL" />
+                            </div>
+                            <div class="flex gap-2 mt-4">
+                                <button type="submit" class="control-button btn-sm">Save</button>
+                                <button type="button" id="eventtitle-cancel" class="control-button btn-sm bg-gray-400 hover:bg-gray-600">Cancel</button>
                             </div>
                         </form>
                     </div>
@@ -253,6 +354,11 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
                                 <input class="border p-1 w-full" name="par" />
                             </div>
                             <div class="mb-2">
+                                <label class="block text-sm">Tees / Holes</label>
+                                <div id="course-holes" class="space-y-1"></div>
+                                <button type="button" id="course-add-hole" class="control-button btn-xs mt-1">Add Tee</button>
+                            </div>
+                            <div class="mb-2">
                                 <label class="block text-sm">Image URL</label>
                                 <input class="border p-1 w-full" name="image" />
                             </div>
@@ -281,6 +387,23 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
                 </div>
             </div>`;
 
+        function buildTeamListData(){
+            if(!teamsData) return { team:'', teamName:'', players:[] };
+            const selEl = container.querySelector('#teamlist-team');
+            const sel = selEl ? selEl.value : 'a';
+            let team = null;
+            let teamName = '';
+            if(teamsData.teams){
+                team = teamsData.teams[parseInt(sel,10)] || {};
+                teamName = team.name || '';
+            } else {
+                team = sel==='b' ? teamsData.teamB : teamsData.teamA;
+                teamName = team?.name || '';
+            }
+            const players = (team?.players || []).map(p=>({ name:p.name, number:p.number, pos:p.pos, photo:p.photo }));
+            return { team: sel, teamName, players };
+        }
+
         function buildFormationData(){
             if(!teamsData) return {};
             const selEl = container.querySelector('#formation-team');
@@ -297,6 +420,19 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
 
         container.querySelector('#hs-add').onclick = () => showModal();
 
+        const etPrev = container.querySelector('#eventtitle-preview');
+        if(etPrev) etPrev.onclick = () => {
+            updateOverlayState(eid,{ eventTitle:introSettings.eventTitle || {}, eventTitlePreviewVisible:true, eventTitleVisible:false });
+            if(onOverlayStateChange) onOverlayStateChange({ eventTitlePreviewVisible:true, eventTitle:introSettings.eventTitle });
+        };
+        const etLive = container.querySelector('#eventtitle-live');
+        if(etLive) etLive.onclick = () => {
+            updateOverlayState(eid,{ eventTitle:introSettings.eventTitle || {}, eventTitleVisible:true, eventTitlePreviewVisible:false });
+            if(onOverlayStateChange) onOverlayStateChange({ eventTitleVisible:true, eventTitle:introSettings.eventTitle, eventTitlePreviewVisible:false });
+        };
+        const etEdit = container.querySelector('#eventtitle-edit');
+        if(etEdit) etEdit.onclick = () => showEventTitleModal();
+
         const fixturesPrev = container.querySelector('#fixtures-preview');
         if(fixturesPrev) fixturesPrev.onclick = () => {
             updateOverlayState(eid,{ fixtures: introSettings.fixtures || {}, fixturesPreviewVisible:true, fixturesVisible:false });
@@ -309,6 +445,21 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
         };
         const fixturesEdit = container.querySelector('#fixtures-edit');
         if(fixturesEdit) fixturesEdit.onclick = () => showFixturesModal();
+
+        const teamPrev = container.querySelector('#teamlist-preview');
+        if(teamPrev) teamPrev.onclick = () => {
+            const data = buildTeamListData();
+            updateOverlayState(eid,{ lineupTable:data, lineupTablePreviewVisible:true, lineupTableVisible:false });
+            if(onOverlayStateChange) onOverlayStateChange({ lineupTablePreviewVisible:true, lineupTable:data });
+        };
+        const teamLive = container.querySelector('#teamlist-live');
+        if(teamLive) teamLive.onclick = () => {
+            const data = buildTeamListData();
+            updateOverlayState(eid,{ lineupTable:data, lineupTableVisible:true, lineupTablePreviewVisible:false });
+            if(onOverlayStateChange) onOverlayStateChange({ lineupTableVisible:true, lineupTable:data, lineupTablePreviewVisible:false });
+        };
+        const teamEdit = container.querySelector('#teamlist-edit');
+        if(teamEdit) teamEdit.onclick = () => { window.location.hash = '#teams'; };
 
         const formationPrev = container.querySelector('#formation-preview');
         if(formationPrev) formationPrev.onclick = () => {
@@ -338,6 +489,49 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
         const courseEdit = container.querySelector('#course-edit');
         if(courseEdit) courseEdit.onclick = () => showCourseModal();
 
+        const weatherPrev = container.querySelector('#weather-preview');
+        if(weatherPrev) weatherPrev.onclick = () => {
+            const data = { weatherLoc:introSettings.weatherLoc || '', slots:introSettings.weatherSlots || [] };
+            updateOverlayState(eid,{ weather:data, weatherPreviewVisible:true, weatherVisible:false });
+            if(onOverlayStateChange) onOverlayStateChange({ weatherPreviewVisible:true, weather:data });
+        };
+        const weatherLive = container.querySelector('#weather-live');
+        if(weatherLive) weatherLive.onclick = () => {
+            const data = { weatherLoc:introSettings.weatherLoc || '', slots:introSettings.weatherSlots || [] };
+            updateOverlayState(eid,{ weather:data, weatherVisible:true, weatherPreviewVisible:false });
+            if(onOverlayStateChange) onOverlayStateChange({ weatherVisible:true, weather:data, weatherPreviewVisible:false });
+        };
+        const weatherEdit = container.querySelector('#weather-edit');
+        if(weatherEdit) weatherEdit.onclick = () => showWeatherModal();
+
+        const esPrev = container.querySelector('#endslate-preview');
+        if(esPrev) esPrev.onclick = () => {
+            const data = introSettings.endSlate || {};
+            updateOverlayState(eid,{ endSlate:data, endSlatePreviewVisible:true, endSlateVisible:false });
+            if(onOverlayStateChange) onOverlayStateChange({ endSlatePreviewVisible:true, endSlate:data });
+        };
+        const esLive = container.querySelector('#endslate-live');
+        if(esLive) esLive.onclick = () => {
+            const data = introSettings.endSlate || {};
+            updateOverlayState(eid,{ endSlate:data, endSlateVisible:true, endSlatePreviewVisible:false });
+            if(onOverlayStateChange) onOverlayStateChange({ endSlateVisible:true, endSlate:data, endSlatePreviewVisible:false });
+        };
+        const esEdit = container.querySelector('#endslate-edit');
+        if(esEdit) esEdit.onclick = () => showEndSlateModal();
+
+        const schedPrev = container.querySelector('#schedule-preview');
+        if(schedPrev) schedPrev.onclick = () => {
+            updateOverlayState(eid,{ previewProgramVisible:true, liveProgramVisible:false });
+            if(onOverlayStateChange) onOverlayStateChange({ previewProgramVisible:true, liveProgramVisible:false });
+        };
+        const schedLive = container.querySelector('#schedule-live');
+        if(schedLive) schedLive.onclick = () => {
+            updateOverlayState(eid,{ liveProgramVisible:true, previewProgramVisible:false });
+            if(onOverlayStateChange) onOverlayStateChange({ liveProgramVisible:true, previewProgramVisible:false });
+        };
+        const schedEdit = container.querySelector('#schedule-edit');
+        if(schedEdit) schedEdit.onclick = () => { window.location.hash = '#schedule'; };
+
         container.querySelectorAll('button[data-action]').forEach(btn=>{
             const idx = parseInt(btn.getAttribute('data-idx'));
             const act = btn.getAttribute('data-action');
@@ -353,10 +547,6 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
             if(act==='remove') btn.onclick=async()=>{ intros.splice(idx,1); await saveIntros(intros); };
         });
 
-        const inputBtn = container.querySelector('#hs-input');
-        if(inputBtn) inputBtn.onclick = () => showInputModal();
-        const weatherBtn = container.querySelector('#hs-edit-weather');
-        if(weatherBtn) weatherBtn.onclick = () => showWeatherModal();
 
         const modal = container.querySelector('#hs-modal');
         const form = container.querySelector('#hs-form');
@@ -410,40 +600,22 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
         if(el) el.textContent = t;
     }
 
-    function showInputModal(){
-        const modal = container.querySelector('#hs-input-modal');
-        const form = container.querySelector('#hs-input-form');
-        if(!modal || !form) return;
-        form.venue.value = introSettings.venue || '';
-        form.eventDate.value = introSettings.eventDate || '';
-        form.weatherLoc.value = introSettings.weatherLoc || '';
-        modal.style.display='flex';
-        form.onsubmit = async e=>{
-            e.preventDefault();
-            const data = Object.fromEntries(new FormData(form));
-            introSettings.venue = data.venue || '';
-            introSettings.eventDate = data.eventDate || '';
-            introSettings.weatherLoc = data.weatherLoc || '';
-            await set(getIntroSettingsRef(eid), introSettings);
-            await updateOverlayState(eid,{ holdslateSettings:introSettings });
-            modal.style.display='none';
-        };
-        form.querySelector('#hs-input-cancel').onclick = ()=>{ modal.style.display='none'; };
-    }
-
     function showWeatherModal(){
         const modal = container.querySelector('#hs-weather-modal');
         const form = container.querySelector('#hs-weather-form');
         if(!modal || !form) return;
         const slots = introSettings.weatherSlots || [];
+        form.venue.value = introSettings.venue || '';
+        form.eventDate.value = introSettings.eventDate || '';
+        form.weatherLoc.value = introSettings.weatherLoc || '';
         form.time1.value = slots[0]?.time || '';
-        form.icon1.value = slots[0]?.icon || '';
+        form.icon1.value = slots[0]?.icon || 'sun';
         form.temp1.value = slots[0]?.temp || '';
         form.time2.value = slots[1]?.time || '';
-        form.icon2.value = slots[1]?.icon || '';
+        form.icon2.value = slots[1]?.icon || 'sun';
         form.temp2.value = slots[1]?.temp || '';
         form.time3.value = slots[2]?.time || '';
-        form.icon3.value = slots[2]?.icon || '';
+        form.icon3.value = slots[2]?.icon || 'sun';
         form.temp3.value = slots[2]?.temp || '';
         form.color1.value = introSettings.color1 || '#ffffff';
         form.color2.value = introSettings.color2 || '#000000';
@@ -459,11 +631,104 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
             introSettings.color1 = form.color1.value;
             introSettings.color2 = form.color2.value;
             introSettings.animation = form.animation.value;
+            introSettings.venue = form.venue.value;
+            introSettings.eventDate = form.eventDate.value;
+            introSettings.weatherLoc = form.weatherLoc.value;
             await set(getIntroSettingsRef(eid), introSettings);
             await updateOverlayState(eid,{ holdslateSettings:introSettings });
             modal.style.display='none';
         };
         form.querySelector('#hs-weather-cancel').onclick = ()=>{ modal.style.display='none'; };
+    }
+
+    function showEndSlateModal(){
+        const modal = container.querySelector('#hs-endslate-modal');
+        const form = container.querySelector('#hs-endslate-form');
+        if(!modal || !form) return;
+        const data = introSettings.endSlate || {};
+        form.logoSource.value = data.logoSource || 'primary';
+        form.customLogo.value = data.customLogo || '';
+        form.position.value = data.position || 'center';
+        form.text.value = data.text || '';
+        form.transition.value = data.transition || 'fade';
+        const customDiv = form.querySelector('#hs-endslate-custom');
+        customDiv.style.display = form.logoSource.value === 'custom' ? 'block' : 'none';
+        form.logoSource.onchange = () => {
+            customDiv.style.display = form.logoSource.value === 'custom' ? 'block' : 'none';
+        };
+        modal.style.display='flex';
+        form.onsubmit = async e=>{
+            e.preventDefault();
+            const f = new FormData(form);
+            introSettings.endSlate = {
+                logoSource: f.get('logoSource'),
+                customLogo: f.get('customLogo'),
+                position: f.get('position'),
+                text: f.get('text'),
+                transition: f.get('transition')
+            };
+            await set(getIntroSettingsRef(eid), introSettings);
+            await updateOverlayState(eid,{ holdslateSettings:introSettings });
+            modal.style.display='none';
+        };
+        form.querySelector('#hs-endslate-cancel').onclick = ()=>{ modal.style.display='none'; };
+    }
+
+    function showEventTitleModal(){
+        const modal = container.querySelector('#eventtitle-modal');
+        const form = container.querySelector('#eventtitle-form');
+        if(!modal || !form) return;
+        const data = introSettings.eventTitle || {};
+        form.title.value = data.title || '';
+        form.venue.value = data.venue || '';
+        form.location.value = data.location || '';
+        form.logo1.value = data.logo1 || '';
+        form.logo2.value = data.logo2 || '';
+        form['eventtitle-logo1'].value = '';
+        form['eventtitle-logo2'].value = '';
+        modal.style.display='flex';
+        form.onsubmit = async e=>{
+            e.preventDefault();
+            let logo1 = form.logo1.value;
+            let logo2 = form.logo2.value;
+            if(form['eventtitle-logo1'].files[0]){
+                const path = `uploads/${eid}/eventtitle/${form['eventtitle-logo1'].files[0].name}`;
+                setStatus('Uploading...');
+                const url = await uploadToServer(form['eventtitle-logo1'].files[0], path);
+                setStatus('');
+                if(url) logo1 = url;
+            }
+            if(form['eventtitle-logo2'].files[0]){
+                const path = `uploads/${eid}/eventtitle/${form['eventtitle-logo2'].files[0].name}`;
+                setStatus('Uploading...');
+                const url = await uploadToServer(form['eventtitle-logo2'].files[0], path);
+                setStatus('');
+                if(url) logo2 = url;
+            }
+            introSettings.eventTitle = { title:form.title.value, venue:form.venue.value, location:form.location.value, logo1, logo2 };
+            await set(getIntroSettingsRef(eid), introSettings);
+            await updateOverlayState(eid,{ holdslateSettings:introSettings });
+            modal.style.display='none';
+        };
+        container.querySelector('#eventtitle-upload1').onclick = async ()=>{
+            if(form['eventtitle-logo1'].files[0]){
+                const path = `uploads/${eid}/eventtitle/${form['eventtitle-logo1'].files[0].name}`;
+                setStatus('Uploading...');
+                const url = await uploadToServer(form['eventtitle-logo1'].files[0], path);
+                setStatus('');
+                if(url) form.logo1.value = url;
+            }
+        };
+        container.querySelector('#eventtitle-upload2').onclick = async ()=>{
+            if(form['eventtitle-logo2'].files[0]){
+                const path = `uploads/${eid}/eventtitle/${form['eventtitle-logo2'].files[0].name}`;
+                setStatus('Uploading...');
+                const url = await uploadToServer(form['eventtitle-logo2'].files[0], path);
+                setStatus('');
+                if(url) form.logo2.value = url;
+            }
+        };
+        container.querySelector('#eventtitle-cancel').onclick = ()=>{ modal.style.display='none'; };
     }
 
     function showFixturesModal(){
@@ -536,11 +801,31 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
         const transSel = form.querySelector('select[name="transition"]');
         styleSel.value = introSettings.course?.style || 'style1';
         transSel.value = introSettings.course?.transition || 'fade';
+        const holesDiv = form.querySelector('#course-holes');
+        const holes = (introSettings.course?.holes && introSettings.course.holes.slice()) || [];
+        function renderHoles(){
+            holesDiv.innerHTML = holes.map((h,i)=>
+                `<div class="flex items-center gap-2"><span class="w-6 text-sm">${i+1}</span>`+
+                `<input class="border p-1 flex-1" name="tee-${i}" placeholder="Tee" value="${h.tee||''}" />`+
+                `<input class="border p-1 w-20" name="len-${i}" placeholder="Length" value="${h.length||''}" />`+
+                `<input class="border p-1 w-16" type="number" name="par-${i}" placeholder="Par" value="${h.par||''}" />`+
+                `</div>`).join('');
+        }
+        renderHoles();
+        const addHoleBtn = form.querySelector('#course-add-hole');
+        if(addHoleBtn) addHoleBtn.onclick = ()=>{ holes.push({tee:'', length:'', par:0}); renderHoles(); };
+
         modal.style.display='flex';
         form.onsubmit = async e=>{
             e.preventDefault();
-            introSettings.course = { name:form.name.value, length:form.length.value, par:form.par.value, image:form.image.value, style:styleSel.value, transition:transSel.value };
+            const savedHoles = holes.map((h,i)=>({
+                tee: form[`tee-${i}`].value,
+                length: form[`len-${i}`].value,
+                par: parseInt(form[`par-${i}`].value)||0
+            }));
+            introSettings.course = { name:form.name.value, length:form.length.value, par:form.par.value, image:form.image.value, style:styleSel.value, transition:transSel.value, holes:savedHoles };
             await set(getIntroSettingsRef(eid), introSettings);
+            await set(ref(db, `golf/${eid}/course`), introSettings.course);
             await updateOverlayState(eid,{ holdslateSettings:introSettings });
             modal.style.display='none';
         };
