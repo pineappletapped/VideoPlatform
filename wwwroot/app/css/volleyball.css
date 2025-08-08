@@ -1,0 +1,11 @@
+.sb-volleyball { background:var(--brand-secondary1, rgba(0,0,0,0.6)); border-radius:0.5rem; padding:0.25rem; }
+.sb-volleyball-table { width:100%; border-collapse:collapse; }
+.sb-volleyball-table th, .sb-volleyball-table td { padding:0.25rem 0.5rem; text-align:center; }
+.sb-volleyball-table th { background:var(--brand-secondary1, rgba(0,0,0,0.6)); color:#fff; }
+.sb-volleyball-table td { background:rgba(0,0,0,0.5); color:#fff; }
+.sb-volleyball-table .serve::before { content:'\25CF'; margin-right:0.25rem; font-size:0.8em; }
+
+/* Volleyball styles */
+.sb-volley-court { background:#1e3a8a; border-radius:0.25rem; padding:0.25rem 0.75rem; }
+.sb-volley-beach { background:linear-gradient(90deg,#fef3c7,#fcd34d); padding:0.25rem 0.75rem; border-bottom:4px solid #f59e0b; }
+.sb-volley-classic { background:#f8fafc; border:2px solid #1e3a8a; padding:0.25rem 0.75rem; }

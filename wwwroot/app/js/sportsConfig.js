@@ -203,8 +203,8 @@ export const sportsData = {
     playersPerTeam: 6,
     subs: 6,
     positions: ["Setter","Opposite","Outside","Middle","Libero","Defensive Specialist"],
-    scoreboard: { games: true, points: true },
-    scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
+    scoreboard: { sets: true, turn: true },
+    scoreboardStyles: ['volley-court','volley-beach','volley-classic','style1','style2','style3','style4','style5','h1','h2'],
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }],
     logEvents: ['Point','Ace','Block','Timeout','Substitution']
   },
@@ -213,8 +213,8 @@ export const sportsData = {
     playersPerTeam: 1,
     subs: 0,
     positions: ["Player"],
-    scoreboard: { games: true, points: true },
-    scoreboardStyles: ['style1','style2','style3','style4','style5'],
+    scoreboard: { games: true, turn: true },
+    scoreboardStyles: ['badminton-shuttle','badminton-net','badminton-classic','style1','style2','style3','style4','style5'],
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }],
     logEvents: ['Point','Fault','Timeout','Game Won']
   },

@@ -33,6 +33,14 @@ const DEFAULT_STYLES = [
     { id: 'ten-baseline', label: 'Baseline Burst' },
     { id: 'ten-chic', label: 'Grand Slam Chic' },
     { id: 'ten-digital', label: 'Court Digital' },
+    // Volleyball
+    { id: 'volley-court', label: 'Indoor Court' },
+    { id: 'volley-beach', label: 'Beach Breeze' },
+    { id: 'volley-classic', label: 'Classic Volleyball' },
+    // Badminton
+    { id: 'badminton-shuttle', label: 'Shuttle Speed' },
+    { id: 'badminton-net', label: 'Net Play' },
+    { id: 'badminton-classic', label: 'Classic Badminton' },
     // Existing generic styles
     { id: 'football', label: 'Football Row' },
     { id: 'style1', label: 'Classic' },
@@ -400,7 +408,8 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         if (cfg.scoreboard.turn) {
             const optA = getTeam(0).name || 'Team 1';
             const optB = getTeam(1).name || 'Team 2';
-            const turnLabel = sport === 'Tennis' ? 'Serve' : 'In Play';
+            const serveSports = ['Tennis','Table Tennis','Volleyball','Badminton'];
+            const turnLabel = serveSports.includes(sport) ? 'Serve' : 'In Play';
             htmlParts.push(`<tr><td class="pr-2">${turnLabel}:</td><td><select id="sb-turn" class="border p-1"><option value="0">${optA}</option><option value="1">${optB}</option></select></td></tr>`);
         }
         table.innerHTML = htmlParts.join('');

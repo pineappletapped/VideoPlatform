@@ -13,6 +13,8 @@ import { renderTableTennisScoreboard } from './templates/tableTennisScoreboard.j
 import { renderPoolScoreboard } from './templates/poolScoreboard.js';
 import { renderBasketballScoreboard } from './templates/basketballScoreboard.js';
 import { renderNetballScoreboard } from './templates/netballScoreboard.js';
+import { renderVolleyballScoreboard } from './templates/volleyballScoreboard.js';
+import { renderBadmintonScoreboard } from './templates/badmintonScoreboard.js';
 import { renderCricketScoreboard } from './templates/cricketScoreboard.js';
 import { renderGolfScoreboard } from './templates/golfScoreboard.js';
 import { renderAmericanFootballScoreboard } from './templates/americanFootballScoreboard.js';
@@ -782,6 +784,8 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         else if(style === 'tabletennis' || style.startsWith('tt-')) baseClass = 'sb-tabletennis ';
         else if(style === 'basketball' || style.startsWith('basketball-')) baseClass = 'sb-basketball ';
         else if(style === 'netball' || style.startsWith('netball-')) baseClass = 'sb-netball ';
+        else if(style === 'volleyball' || style.startsWith('volley-')) baseClass = 'sb-volleyball ';
+        else if(style === 'badminton' || style.startsWith('badminton-')) baseClass = 'sb-badminton ';
         else if(style === 'cricket' || style.startsWith('cricket-')) baseClass = 'sb-cricket ';
         else if(style === 'baseball' || style.startsWith('baseball-')) baseClass = 'sb-baseball ';
         else if(style.startsWith('af-')) baseClass = 'sb-af ';
@@ -1140,6 +1144,48 @@ function renderOverlayFromFirebase(state, graphics, branding) {
                 scoreB: sB,
                 timeStr,
                 period: scoreboardData.period || 1,
+                turn: scoreboardData.turn,
+                sbSponsorHtml,
+                topImg,
+                bottomImg,
+                aClassA,
+                aClassB,
+                textA,
+                textB,
+                brand,
+                textBrand
+            });
+        } else if(style==='volleyball' || style.startsWith('volley-')){
+            scoreboardOverlay.innerHTML = renderVolleyballScoreboard({
+                names,
+                colors,
+                logos,
+                showLogos,
+                scoreA: sA,
+                scoreB: sB,
+                setsA: scoreboardData.sets?.[0] ?? 0,
+                setsB: scoreboardData.sets?.[1] ?? 0,
+                turn: scoreboardData.turn,
+                sbSponsorHtml,
+                topImg,
+                bottomImg,
+                aClassA,
+                aClassB,
+                textA,
+                textB,
+                brand,
+                textBrand
+            });
+        } else if(style==='badminton' || style.startsWith('badminton-')){
+            scoreboardOverlay.innerHTML = renderBadmintonScoreboard({
+                names,
+                colors,
+                logos,
+                showLogos,
+                scoreA: sA,
+                scoreB: sB,
+                gamesA: scoreboardData.games?.[0] ?? 0,
+                gamesB: scoreboardData.games?.[1] ?? 0,
                 turn: scoreboardData.turn,
                 sbSponsorHtml,
                 topImg,
