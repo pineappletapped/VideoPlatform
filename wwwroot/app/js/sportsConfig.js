@@ -223,8 +223,8 @@ export const sportsData = {
     playersPerTeam: 1,
     subs: 0,
     positions: ["Player"],
-    scoreboard: { games: true, points: true },
-    scoreboardStyles: ['style1','style2','style3','style4','style5'],
+    scoreboard: { games: true, points: true, turn: true },
+    scoreboardStyles: ['squash-glass','squash-court','squash-classic','style1','style2','style3','style4','style5'],
     scoringButtons: [{ label: "+1", value: 1, color: "#10b981" }],
     logEvents: ['Point','Stroke','Timeout','Game Won']
   },
@@ -238,11 +238,11 @@ export const sportsData = {
       "Centre Forward","Wing Forward","Corner Forward","Full Forward",
       "Corner Forward"
     ],
-    scoreboard: { periods: 2, periodLabel: "Half", time: true, timeDirection: 'up' },
-    scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
+    scoreboard: { periods: 2, periodLabel: "Half", time: true, timeDirection: 'up', goals: true, points: true },
+    scoreboardStyles: ['gaelic-celtic','gaelic-emerald','gaelic-classic','style1','style2','style3','style4','style5','h1','h2'],
     scoringButtons: [
-      { label: "Point", value: 1, color: "#10b981" },
-      { label: "Goal", value: 3, color: "#ef4444" }
+      { label: "Point", value: 1, color: "#10b981", type: 'point' },
+      { label: "Goal", value: 3, color: "#ef4444", type: 'goal' }
     ],
     logEvents: ['Point','Goal','Free Kick','Substitution','Yellow Card','Red Card']
   },
@@ -256,11 +256,11 @@ export const sportsData = {
       "Centre Forward","Wing Forward","Corner Forward","Full Forward",
       "Corner Forward"
     ],
-    scoreboard: { periods: 2, periodLabel: "Half", time: true, timeDirection: 'up' },
-    scoreboardStyles: ['style1','style2','style3','style4','style5','h1','h2'],
+    scoreboard: { periods: 2, periodLabel: "Half", time: true, timeDirection: 'up', goals: true, points: true },
+    scoreboardStyles: ['hurl-stick','hurl-sliotar','hurl-classic','style1','style2','style3','style4','style5','h1','h2'],
     scoringButtons: [
-      { label: "Point", value: 1, color: "#10b981" },
-      { label: "Goal", value: 3, color: "#ef4444" }
+      { label: "Point", value: 1, color: "#10b981", type: 'point' },
+      { label: "Goal", value: 3, color: "#ef4444", type: 'goal' }
     ],
     logEvents: ['Point','Goal','Free Puck','Substitution','Yellow Card','Red Card']
   }

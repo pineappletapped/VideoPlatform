@@ -156,7 +156,7 @@ both sides plus a secondary bar for run rate, target and required rate, closely
 matching the detail seen on Sky Sports broadcasts. Choose between this and the
 regular styles from the options modal. Tennis bugs show set and game progression
 with serve indicators, while snooker displays frame scores, current breaks and
-highest breaks. Golf introduces a leaderboard-style bug that highlights the course name and player totals, and the intro panel now includes an intuitive course editor for tees, yardages and pars. Baseball scorebugs track the inning along with pitch count, outs and base runners, American football layouts pair quarter and game clock readouts with gridiron-themed styling, volleyball scoreboards show set tallies with rally points and a serve indicator, and badminton boards display games and points in a familiar tournament format.
+highest breaks. Golf introduces a leaderboard-style bug that highlights the course name and player totals, and the intro panel now includes an intuitive course editor for tees, yardages and pars. Baseball scorebugs track the inning along with pitch count, outs and base runners, American football layouts pair quarter and game clock readouts with gridiron-themed styling, volleyball scoreboards show set tallies with rally points and a serve indicator, badminton boards display games and points in a familiar tournament format, squash adds similar game and point tracking with serve markers, and Gaelic football and hurling bugs present goals and points in traditional GAA fashion.
 
 ### Logo Stingers
 

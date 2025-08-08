@@ -1,0 +1,19 @@
+.sb-hurling .sb-row { align-items:center; gap:0.5rem; }
+.sb-hurling .sb-time { margin-left:0.5rem; }
+
+/* Hurling styles */
+.sb-hurl-stick {
+  background:#78350f;
+  border-bottom:4px solid #fbbf24;
+  padding:0.25rem 0.75rem;
+}
+.sb-hurl-sliotar {
+  background:#1e3a8a;
+  border-bottom:4px solid #f8fafc;
+  padding:0.25rem 0.75rem;
+}
+.sb-hurl-classic {
+  background:#f3f4f6;
+  border:2px solid #111827;
+  padding:0.25rem 0.75rem;
+}

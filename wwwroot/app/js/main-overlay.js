@@ -19,6 +19,9 @@ import { renderCricketScoreboard } from './templates/cricketScoreboard.js';
 import { renderGolfScoreboard } from './templates/golfScoreboard.js';
 import { renderAmericanFootballScoreboard } from './templates/americanFootballScoreboard.js';
 import { renderBaseballScoreboard } from './templates/baseballScoreboard.js';
+import { renderSquashScoreboard } from './templates/squashScoreboard.js';
+import { renderGaelicFootballScoreboard } from './templates/gaelicFootballScoreboard.js';
+import { renderHurlingScoreboard } from './templates/hurlingScoreboard.js';
 import { ref, onValue, set } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
 
 const params = new URLSearchParams(window.location.search);
@@ -786,6 +789,9 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         else if(style === 'netball' || style.startsWith('netball-')) baseClass = 'sb-netball ';
         else if(style === 'volleyball' || style.startsWith('volley-')) baseClass = 'sb-volleyball ';
         else if(style === 'badminton' || style.startsWith('badminton-')) baseClass = 'sb-badminton ';
+        else if(style === 'squash' || style.startsWith('squash-')) baseClass = 'sb-squash ';
+        else if(style === 'gaelic' || style.startsWith('gaelic-')) baseClass = 'sb-gaelic ';
+        else if(style === 'hurling' || style.startsWith('hurl-')) baseClass = 'sb-hurling ';
         else if(style === 'cricket' || style.startsWith('cricket-')) baseClass = 'sb-cricket ';
         else if(style === 'baseball' || style.startsWith('baseball-')) baseClass = 'sb-baseball ';
         else if(style.startsWith('af-')) baseClass = 'sb-af ';
@@ -1187,6 +1193,71 @@ function renderOverlayFromFirebase(state, graphics, branding) {
                 gamesA: scoreboardData.games?.[0] ?? 0,
                 gamesB: scoreboardData.games?.[1] ?? 0,
                 turn: scoreboardData.turn,
+                sbSponsorHtml,
+                topImg,
+                bottomImg,
+                aClassA,
+                aClassB,
+                textA,
+                textB,
+                brand,
+                textBrand
+            });
+        } else if(style==='squash' || style.startsWith('squash-')){
+            scoreboardOverlay.innerHTML = renderSquashScoreboard({
+                names,
+                colors,
+                logos,
+                showLogos,
+                scoreA: sA,
+                scoreB: sB,
+                gamesA: scoreboardData.games?.[0] ?? 0,
+                gamesB: scoreboardData.games?.[1] ?? 0,
+                turn: scoreboardData.turn,
+                sbSponsorHtml,
+                topImg,
+                bottomImg,
+                aClassA,
+                aClassB,
+                textA,
+                textB,
+                brand,
+                textBrand
+            });
+        } else if(style==='gaelic' || style.startsWith('gaelic-')){
+            scoreboardOverlay.innerHTML = renderGaelicFootballScoreboard({
+                names,
+                colors,
+                logos,
+                showLogos,
+                goalsA: scoreboardData.goals?.[0] ?? Math.floor(sA/3),
+                pointsA: scoreboardData.points?.[0] ?? (sA % 3),
+                goalsB: scoreboardData.goals?.[1] ?? Math.floor(sB/3),
+                pointsB: scoreboardData.points?.[1] ?? (sB % 3),
+                timeStr,
+                period: scoreboardData.period || 1,
+                sbSponsorHtml,
+                topImg,
+                bottomImg,
+                aClassA,
+                aClassB,
+                textA,
+                textB,
+                brand,
+                textBrand
+            });
+        } else if(style==='hurling' || style.startsWith('hurl-')){
+            scoreboardOverlay.innerHTML = renderHurlingScoreboard({
+                names,
+                colors,
+                logos,
+                showLogos,
+                goalsA: scoreboardData.goals?.[0] ?? Math.floor(sA/3),
+                pointsA: scoreboardData.points?.[0] ?? (sA % 3),
+                goalsB: scoreboardData.goals?.[1] ?? Math.floor(sB/3),
+                pointsB: scoreboardData.points?.[1] ?? (sB % 3),
+                timeStr,
+                period: scoreboardData.period || 1,
                 sbSponsorHtml,
                 topImg,
                 bottomImg,

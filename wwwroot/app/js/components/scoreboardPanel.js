@@ -41,6 +41,18 @@ const DEFAULT_STYLES = [
     { id: 'badminton-shuttle', label: 'Shuttle Speed' },
     { id: 'badminton-net', label: 'Net Play' },
     { id: 'badminton-classic', label: 'Classic Badminton' },
+    // Squash
+    { id: 'squash-glass', label: 'Glass Court' },
+    { id: 'squash-court', label: 'Pro Court' },
+    { id: 'squash-classic', label: 'Classic Squash' },
+    // Gaelic Football
+    { id: 'gaelic-celtic', label: 'Celtic Knot' },
+    { id: 'gaelic-emerald', label: 'Emerald Field' },
+    { id: 'gaelic-classic', label: 'Classic Gaelic' },
+    // Hurling
+    { id: 'hurl-stick', label: 'Hurling Stick' },
+    { id: 'hurl-sliotar', label: 'Sliotar Spin' },
+    { id: 'hurl-classic', label: 'Classic Hurling' },
     // Existing generic styles
     { id: 'football', label: 'Football Row' },
     { id: 'style1', label: 'Classic' },
@@ -189,6 +201,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             base.frameTarget = 1;
         }
         if (cfg.scoreboard.legs) base.legs = scores.map(() => 0);
+        if (cfg.scoreboard.goals) base.goals = scores.map(() => 0);
         if (cfg.scoreboard.points) base.points = scores.map(() => 0);
         if (cfg.scoreboard.overs) base.overs = scores.map(() => 0);
         if (cfg.scoreboard.balls) base.balls = scores.map(() => 0);
@@ -361,6 +374,9 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         if (cfg.scoreboard.legs) {
             htmlParts.push(`<tr><td class="pr-2">Legs:</td><td>${Array.from({length:count}).map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-leg-${i}" value="${(data.legs && data.legs[i]) || 0}">`).join('')}</td></tr>`);
         }
+        if (cfg.scoreboard.goals) {
+            htmlParts.push(`<tr><td class="pr-2">Goals:</td><td>${Array.from({length:count}).map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-goal-${i}" value="${(data.goals && data.goals[i]) || 0}">`).join('')}</td></tr>`);
+        }
         if (cfg.scoreboard.points) {
             htmlParts.push(`<tr><td class="pr-2">Points:</td><td>${Array.from({length:count}).map((_,i)=>`<input type="number" class="border p-1 w-12 mx-1" id="sb-point-${i}" value="${(data.points && data.points[i]) || 0}">`).join('')}</td></tr>`);
         }
@@ -460,12 +476,34 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         updateDartStats();
         (data.scores || []).forEach((_, i) => {
             const input = container.querySelector(`#team-score-${i}`);
+            const goalInput = container.querySelector(`#sb-goal-${i}`);
+            const pointInput = container.querySelector(`#sb-point-${i}`);
             if (input) {
                 input.addEventListener('input', () => {
                     const val = parseInt(input.value) || 0;
                     data.scores[i] = val;
                     const cSpan = container.querySelector(`#checkout-${i}`);
                     if (cSpan) cSpan.textContent = getCheckout(val) || '';
+                });
+            }
+            if (goalInput) {
+                goalInput.addEventListener('input', () => {
+                    const g = parseInt(goalInput.value) || 0;
+                    data.goals[i] = g;
+                    const p = parseInt(pointInput?.value) || 0;
+                    const total = g*3 + p;
+                    if(input){ input.value = total; }
+                    data.scores[i] = total;
+                });
+            }
+            if (pointInput) {
+                pointInput.addEventListener('input', () => {
+                    const p = parseInt(pointInput.value) || 0;
+                    data.points[i] = p;
+                    const g = parseInt(goalInput?.value) || 0;
+                    const total = g*3 + p;
+                    if(input){ input.value = total; }
+                    data.scores[i] = total;
                 });
             }
             const holder = container.querySelector(`#score-btns-${i}`);
@@ -503,6 +541,24 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                             data.scores[i] = val;
                             if (otherInput) { otherInput.value = otherVal; data.scores[other] = otherVal; }
                             await saveData(getFormData());
+                        } else if (cfg.scoreboard.goals && btnCfg.type === 'goal') {
+                            const g = (parseInt(goalInput?.value) || 0) + 1;
+                            if(goalInput) goalInput.value = g;
+                            data.goals[i] = g;
+                            const p = parseInt(pointInput?.value) || 0;
+                            const total = g*3 + p;
+                            if(input) input.value = total;
+                            data.scores[i] = total;
+                            await saveData(getFormData());
+                        } else if (cfg.scoreboard.points && btnCfg.type === 'point') {
+                            const p = (parseInt(pointInput?.value) || 0) + 1;
+                            if(pointInput) pointInput.value = p;
+                            data.points[i] = p;
+                            const g = parseInt(goalInput?.value) || 0;
+                            const total = g*3 + p;
+                            if(input) input.value = total;
+                            data.scores[i] = total;
+                            await saveData(getFormData());
                         } else {
                             const val = parseInt(input.value) || 0;
                             const newVal = val + btnCfg.value;
@@ -518,7 +574,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                                     if (hb && parseInt(br.value) > (parseInt(hb.value) || 0)) hb.value = br.value;
                                 }
                             }
-                            if(goalSport && btnCfg.value === 1){
+                            if(goalSport && btnCfg.label === 'Goal'){
                                 const res = await promptGoal(i);
                                 if(res){
                                     const teamKey = i===0?'a':'b';
@@ -728,6 +784,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                 }
             }
             if (cfg.scoreboard.legs) obj.legs = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-leg-${i}`).value) || 0);
+            if (cfg.scoreboard.goals) obj.goals = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-goal-${i}`).value) || 0);
             if (cfg.scoreboard.points) obj.points = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-point-${i}`).value) || 0);
             if (cfg.scoreboard.overs) obj.overs = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-over-${i}`).value) || 0);
             if (cfg.scoreboard.balls) obj.balls = (data.scores || []).map((_,i)=>parseInt(container.querySelector(`#sb-ball-${i}`).value) || 0);
@@ -866,6 +923,8 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             const textBrand = contrastColor(brand);
             if(styleSel.value.startsWith('cricket')){
                 prevDiv.innerHTML = `<div class="sb-container sb-cricket sb-${styleSel.value}" style="--sb-team-width:${longest}ch"><div class="sb-row"><span class="sb-team" style="background:${colA};color:${textA}">${nameA}</span><span class="sb-score" style="background:${brand};color:${textBrand}">0/0</span><span class="sb-overs">0.0</span><span class="sb-team" style="background:${colB};color:${textB}">${nameB}</span><span class="sb-score" style="background:${brand};color:${textBrand}">0/0</span><span class="sb-overs">0.0</span></div><div class="sb-row detail"><span class="sb-detail">RR 0</span><span class="sb-detail">Target 0</span><span class="sb-detail">Req 0</span></div></div>`;
+            }else if(styleSel.value.startsWith('gaelic') || styleSel.value.startsWith('hurl')){
+                prevDiv.innerHTML = `<div class="sb-container sb-${styleSel.value}" style="--sb-team-width:${longest}ch"><div class="sb-row"><span class="sb-team" style="background:${colA};color:${textA}">${nameA}</span><span class="sb-score" style="background:${brand};color:${textBrand}">0-0 | 0-0</span><span class="sb-team" style="background:${colB};color:${textB}">${nameB}</span></div></div>`;
             }else{
                 prevDiv.innerHTML = `
                 <div class="sb-container sb-${styleSel.value}" style="--sb-team-width:${longest}ch">
