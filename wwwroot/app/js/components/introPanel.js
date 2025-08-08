@@ -63,7 +63,6 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
             <div class='intro-panel ${highlight}'>
                 <div class="flex items-center justify-between mb-2">
                     <h2 class="font-bold text-lg">Intro Graphics</h2>
-                    <button class="control-button btn-sm" id="hs-input">Input data</button>
                 </div>
                 <div class="space-y-2 mb-4">
                     ${eventTitleRow}
@@ -548,8 +547,6 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
             if(act==='remove') btn.onclick=async()=>{ intros.splice(idx,1); await saveIntros(intros); };
         });
 
-        const inputBtn = container.querySelector('#hs-input');
-        if(inputBtn) inputBtn.onclick = () => showWeatherModal();
 
         const modal = container.querySelector('#hs-modal');
         const form = container.querySelector('#hs-form');
