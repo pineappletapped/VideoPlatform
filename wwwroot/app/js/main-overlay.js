@@ -749,8 +749,8 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     const scoreboardShow = previewMode
         ? state && (state.scoreboardPreviewVisible || state.scoreboardVisible)
         : state && state.scoreboardVisible;
-    const topSp = sponsorsData[sponsorPlacements.scoreboardTop];
-    const bottomSp = sponsorsData[sponsorPlacements.scoreboardBottom];
+    const topSp = sponsorPlacements?.scoreboardTop ? sponsorsData[sponsorPlacements.scoreboardTop] : null;
+    const bottomSp = sponsorPlacements?.scoreboardBottom ? sponsorsData[sponsorPlacements.scoreboardBottom] : null;
     const topImg = topSp ? `<img src='${topSp.logo}' alt='${topSp.name}' class='${placementClassMap.scoreboardTop}'>` : '';
     const bottomImg = bottomSp ? `<img src='${bottomSp.logo}' alt='${bottomSp.name}' class='${placementClassMap.scoreboardBottom}'>` : '';
     const breakVisible = state && state.breakVisible;
@@ -1421,8 +1421,8 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     }
     if (!scoreboardShow && scoreboardOverlay && prevScoreboardVisible) {
         playTransition(scoreboardOverlay,'out',prevScoreboardData?.transitionOut);
-        const topSp = sponsorsData[sponsorPlacements.scoreboardTop];
-        const bottomSp = sponsorsData[sponsorPlacements.scoreboardBottom];
+        const topSp = sponsorPlacements?.scoreboardTop ? sponsorsData[sponsorPlacements.scoreboardTop] : null;
+        const bottomSp = sponsorPlacements?.scoreboardBottom ? sponsorsData[sponsorPlacements.scoreboardBottom] : null;
         if(topSp) addSponsorLog(eventId,{ts:Date.now(),placement:'scoreboardTop',sponsor:sponsorPlacements.scoreboardTop,action:'hide'});
         if(bottomSp) addSponsorLog(eventId,{ts:Date.now(),placement:'scoreboardBottom',sponsor:sponsorPlacements.scoreboardBottom,action:'hide'});
         scoreboardOverlay = null;
