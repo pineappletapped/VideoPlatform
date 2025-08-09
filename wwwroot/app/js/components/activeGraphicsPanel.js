@@ -266,9 +266,10 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
         if(handleShortcut(key)) e.preventDefault();
     });
 
-    if(window.location.hostname === 'localhost'){
+    const companionWsUrl = localStorage.getItem('companionWsUrl');
+    if(companionWsUrl && ['localhost','127.0.0.1','::1'].includes(window.location.hostname)){
         try {
-            const companionWs = new WebSocket('ws://localhost:8766');
+            const companionWs = new WebSocket(companionWsUrl);
             companionWs.addEventListener('message', ev => {
                 let msg;
                 try { msg = JSON.parse(ev.data); } catch{}
