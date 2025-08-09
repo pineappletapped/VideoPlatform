@@ -1755,6 +1755,32 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     }
     prevPresentationVisible = presShow;
     prevPresentationData = presData;
+
+    // Generic overlays for awards and religious events
+    const extraOverlays = [
+        'category-reveal','winner-announcement','countdown','sponsor-roll','social-prompt',
+        'agenda','memoriam','lyrics','scripture','service-agenda','donation','prayer-request','announcement'
+    ];
+    extraOverlays.forEach(id => {
+        const key = id.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+        let el = overlayContainer.querySelector(`#${id}-overlay`);
+        const show = previewMode ? state && state[`${key}PreviewVisible`] : state && state[`${key}Visible`];
+        if (show) {
+            if (!el) {
+                el = document.createElement('div');
+                el.id = `${id}-overlay`;
+                overlayContainer.appendChild(el);
+            }
+            el.style.position = 'absolute';
+            el.style.top = '0';
+            el.style.left = '0';
+            el.style.width = '100vw';
+            el.style.height = '100vh';
+            el.style.opacity = previewMode ? '0.6' : '1';
+        } else if (el) {
+            el.remove();
+        }
+    });
 }
 }
 

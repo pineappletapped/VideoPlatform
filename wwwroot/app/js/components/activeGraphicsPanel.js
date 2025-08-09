@@ -15,7 +15,7 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
     let sponsorPlacementLabels = { scoreboardTop:'Above Scoreboard', scoreboardBottom:'Below Scoreboard', formationBottom:'Bottom of Formation', substitutionTop:'Top of Substitution', cornerTL:'Top Left Corner', cornerTR:'Top Right Corner', cornerBL:'Bottom Left Corner', cornerBR:'Bottom Right Corner', intro:'Intro Graphic', presentationTop:'Above Presentation' };
 
     getEventMetadata(eventId).then(meta=>{
-        if(meta && meta.eventType === 'corporate'){
+        if(meta && meta.eventType && meta.eventType !== 'sports'){
             sponsorPlacementLabels = { intro:'Info Window', cornerTL:'Top Left Corner', cornerTR:'Top Right Corner', cornerBL:'Bottom Left Corner', cornerBR:'Bottom Right Corner', presentationTop:'Above Presentation' };
             render();
             renderFav();
