@@ -79,6 +79,38 @@ const WEATHER_ICONS = {
     suncloud: `<svg width="40" height="40" viewBox="0 0 64 64"><circle cx="20" cy="20" r="10" fill="yellow"/><g stroke="yellow" stroke-width="3"><line x1="20" y1="4" x2="20" y2="12"/><line x1="20" y1="28" x2="20" y2="36"/><line x1="4" y1="20" x2="12" y2="20"/><line x1="28" y1="20" x2="36" y2="20"/><line x1="8" y1="8" x2="12" y2="12"/><line x1="28" y1="28" x2="32" y2="32"/><line x1="8" y1="32" x2="12" y2="28"/><line x1="28" y1="12" x2="32" y2="8"/></g><ellipse cx="40" cy="40" rx="20" ry="12" fill="#ccc"/><ellipse cx="32" cy="34" rx="12" ry="8" fill="#ccc"/><ellipse cx="48" cy="34" rx="12" ry="8" fill="#ccc"/></svg>`
 };
 
+const loadedSportCss = new Set();
+function ensureSportCss(style) {
+    let sport = '';
+    if (style === 'football' || style.startsWith('football-')) sport = 'football';
+    else if (style === 'rugby' || style.startsWith('rugby-')) sport = 'rugby';
+    else if (style === 'hockey' || style.startsWith('hockey-')) sport = 'hockey';
+    else if (style === 'icehockey' || style.startsWith('icehockey-')) sport = 'icehockey';
+    else if (style === 'boxing' || style.startsWith('boxing-')) sport = 'boxing';
+    else if (style === 'darts' || style.startsWith('darts-')) sport = 'darts';
+    else if (style === 'snooker' || style.startsWith('snooker-')) sport = 'snooker';
+    else if (style === 'pool' || style.startsWith('pool-')) sport = 'pool';
+    else if (style === 'tabletennis' || style.startsWith('tt-')) sport = 'tabletennis';
+    else if (style === 'basketball' || style.startsWith('basketball-')) sport = 'basketball';
+    else if (style === 'netball' || style.startsWith('netball-')) sport = 'netball';
+    else if (style === 'volleyball' || style.startsWith('volley-')) sport = 'volleyball';
+    else if (style === 'badminton' || style.startsWith('badminton-')) sport = 'badminton';
+    else if (style === 'squash' || style.startsWith('squash-')) sport = 'squash';
+    else if (style === 'gaelic' || style.startsWith('gaelic-')) sport = 'gaelicfootball';
+    else if (style === 'hurling' || style.startsWith('hurl-')) sport = 'hurling';
+    else if (style === 'cricket' || style.startsWith('cricket-')) sport = 'cricket';
+    else if (style === 'baseball' || style.startsWith('baseball-')) sport = 'baseball';
+    else if (style.startsWith('af-')) sport = 'americanfootball';
+    else if (style === 'tennis' || style.startsWith('ten-')) sport = 'tennis';
+    else if (style === 'golf' || style.startsWith('golf-')) sport = 'golf';
+    if (!sport || loadedSportCss.has(sport)) return;
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = `css/${sport}.css?v=20240802`;
+    document.head.appendChild(link);
+    loadedSportCss.add(sport);
+}
+
 function contrastColor(hex) {
     let c = hex.replace('#', '');
     if (c.length === 3) c = c.split('').map(x => x + x).join('');
@@ -747,6 +779,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
                 playTransition(scoreboardOverlay,'in',scoreboardData.transitionIn);
             }
             const style = scoreboardData.style || 'golf-links';
+            ensureSportCss(style);
             const pos = scoreboardData.position || 'bottom-center';
             scoreboardOverlay.className = `sb-container sb-golf sb-${style}`;
             scoreboardOverlay.style.position = 'absolute';
@@ -779,6 +812,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             playTransition(scoreboardOverlay,'in',scoreboardData.transitionIn);
         }
         const style = scoreboardData.style || 'modern';
+        ensureSportCss(style);
         const pos = scoreboardData.position || 'bottom-center';
         let baseClass = '';
         if(style === 'football' || style.startsWith('football-')) baseClass = 'sb-football ';
