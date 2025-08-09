@@ -769,6 +769,10 @@ function renderOverlayFromFirebase(state, graphics, branding) {
                 sbSponsorHtml = `<div style='display:flex;gap:1rem;justify-content:space-around;margin-top:0.25rem;'>${sbSponsors.slice(0,4).map(s=>`<img src='${s.logo}' alt='${s.name}' style='height:50px;'>`).join('')}</div>`;
             }
         }
+        const topSp = sponsorsData[sponsorPlacements.scoreboardTop];
+        const bottomSp = sponsorsData[sponsorPlacements.scoreboardBottom];
+        const topImg = topSp ? `<img src='${topSp.logo}' alt='${topSp.name}' class='${placementClassMap.scoreboardTop}'>` : '';
+        const bottomImg = bottomSp ? `<img src='${bottomSp.logo}' alt='${bottomSp.name}' class='${placementClassMap.scoreboardBottom}'>` : '';
         if(scoreboardData.golf){
             if(!scoreboardOverlay){
                 scoreboardOverlay = document.createElement('div');

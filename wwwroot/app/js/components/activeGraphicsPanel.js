@@ -266,16 +266,18 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
         if(handleShortcut(key)) e.preventDefault();
     });
 
-    try {
-        const companionWs = new WebSocket('ws://localhost:8766');
-        companionWs.addEventListener('message', ev => {
-            let msg;
-            try { msg = JSON.parse(ev.data); } catch{}
-            const key = (msg && (msg.key || msg.button)) ? (msg.key || msg.button) : ev.data;
-            if(typeof key === 'string') handleShortcut(String(key).toLowerCase());
-        });
-    } catch(err){
-        console.warn('Companion WebSocket not available', err);
+    if(window.location.hostname === 'localhost'){
+        try {
+            const companionWs = new WebSocket('ws://localhost:8766');
+            companionWs.addEventListener('message', ev => {
+                let msg;
+                try { msg = JSON.parse(ev.data); } catch{}
+                const key = (msg && (msg.key || msg.button)) ? (msg.key || msg.button) : ev.data;
+                if(typeof key === 'string') handleShortcut(String(key).toLowerCase());
+            });
+        } catch(err){
+            console.warn('Companion WebSocket not available', err);
+        }
     }
 
     function render() {
