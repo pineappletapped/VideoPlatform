@@ -778,7 +778,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         } else if (!prevScoreboardVisible) {
             playTransition(scoreboardOverlay,'in',scoreboardData.transitionIn);
         }
-        const style = scoreboardData.style || 'style1';
+        const style = scoreboardData.style || 'modern';
         const pos = scoreboardData.position || 'bottom-center';
         let baseClass = '';
         if(style === 'football' || style.startsWith('football-')) baseClass = 'sb-football ';

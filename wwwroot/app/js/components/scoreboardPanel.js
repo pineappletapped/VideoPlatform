@@ -5,6 +5,7 @@ import { updateOverlayState, listenOverlayState, addMatchLog, listenFavorites, u
 import { suggestAbbreviation } from "../teamUtils.js";
 
 const DEFAULT_STYLES = [
+    { id: 'modern', label: 'Modern Bar' },
     // Football / Soccer
     { id: 'football-pulse', label: 'Pitch Pulse' },
     { id: 'football-terrace', label: 'Modern Terrace' },
@@ -103,9 +104,9 @@ const DEFAULT_STYLES = [
 ];
 
 function getStylesForSport(sport){
-    const ids = sportsData[sport]?.scoreboardStyles;
-    if(!ids) return DEFAULT_STYLES;
-    return ids.map(id=>DEFAULT_STYLES.find(s=>s.id===id) || {id,label:id});
+    const ids = sportsData[sport]?.scoreboardStyles || [];
+    const withModern = ['modern', ...ids.filter(id => id !== 'modern')];
+    return withModern.map(id=>DEFAULT_STYLES.find(s=>s.id===id) || {id,label:id});
 }
 const scoreboardPositions = [
     { value: 'top-left', label: 'Top Left' },
@@ -219,7 +220,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
     function defaultData() {
         const startVal = cfg.scoreboard.start || 0;
         const scores = Array.from({ length: cfg.teamCount }).map(() => startVal);
-        const base = { scores, style: 'style1', position: 'bottom-center', transitionIn: 'fade', transitionOut: 'fade', abbreviate: false, showLogos: true, start: startVal };
+        const base = { scores, style: 'modern', position: 'bottom-center', transitionIn: 'fade', transitionOut: 'fade', abbreviate: false, showLogos: true, start: startVal };
         if (cfg.scoreboard.periods) base.period = 1;
         if (cfg.scoreboard.time) {
             base.time = '00:00';
@@ -862,7 +863,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
                 obj.dartStats = data.dartStats || [];
                 obj.dartLogs = data.dartLogs || [];
             }
-            obj.style = data.style || 'style1';
+            obj.style = data.style || 'modern';
             obj.position = data.position || 'bottom-center';
             obj.transitionIn = data.transitionIn || 'fade';
             obj.transitionOut = data.transitionOut || 'fade';
@@ -1014,7 +1015,7 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
         if (showLogoChk) showLogoChk.onchange = updatePreview;
         if (container.querySelector('#sb-edit')) {
             container.querySelector('#sb-edit').onclick = () => {
-                if (styleSel) styleSel.value = data.style || 'style1';
+                if (styleSel) styleSel.value = data.style || 'modern';
                 if (posSel) posSel.value = data.position || 'bottom-center';
                 if (transInSel) transInSel.value = data.transitionIn || 'fade';
                 if (transOutSel) transOutSel.value = data.transitionOut || 'fade';
