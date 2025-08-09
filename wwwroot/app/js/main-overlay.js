@@ -713,14 +713,14 @@ function renderOverlayFromFirebase(state, graphics, branding) {
 
     // Scoreboard Overlay
     let scoreboardOverlay = overlayContainer.querySelector('#scoreboard-overlay');
-    const scoreboardData = state && state.scoreboard;
+    const scoreboardData = (state && state.scoreboard) || {};
     const scoreboardShow = previewMode
         ? state && (state.scoreboardPreviewVisible || state.scoreboardVisible)
         : state && state.scoreboardVisible;
     const breakVisible = state && state.breakVisible;
     const breakPlayer = state && state.breakPlayer;
     const highBreakVisible = state && state.highBreakVisible;
-    if (scoreboardShow && scoreboardData) {
+    if (scoreboardShow) {
         const sbSponsors = branding.sponsors || [];
         const sbPlacement = branding.scheduleSponsorPlacement || 'bottom-spaced';
         let sbSponsorHtml = '';
