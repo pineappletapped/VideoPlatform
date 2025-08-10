@@ -1796,7 +1796,8 @@ function renderOverlayFromFirebase(state, graphics, branding) {
 
     // Generic overlays for awards and religious events
     const extraOverlays = [
-        'category-reveal','winner-announcement','countdown','sponsor-roll','social-prompt',
+        'category-reveal','category-nominees','runner-up','winner-announcement','winner-montage',
+        'countdown','sponsor-roll','social-prompt',
         'agenda','memoriam','lyrics','scripture','service-agenda','donation','prayer-request','announcement'
     ];
     extraOverlays.forEach(id => {

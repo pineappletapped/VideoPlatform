@@ -183,7 +183,7 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
     const hideBtn = container.querySelector('#hide-selected');
     if(hideBtn) hideBtn.addEventListener('click', ()=>{
         const checks = container.querySelectorAll('#active-list input[type="checkbox"]');
-        checks.forEach((ch,i)=>{ if(ch.checked){ const itemIndex=i; const items=[]; if(overlayState.holdslateVisible) items.push({type:'holdslate'}); if(overlayState.stingerVisible) items.push({type:'stinger'}); if(overlayState.liveProgramVisible) items.push({type:'program'}); if(overlayState.scoreboardVisible||overlayState.scoreboardPreviewVisible) items.push({type:'scoreboard'}); const liveSponsors=overlayState.sponsorPlacementsLive||{}; Object.keys(liveSponsors).forEach(p=>{ if(liveSponsors[p]) items.push({type:'sponsor', placement:p}); }); if(graphicsData.liveLowerThirdId) items.push({type:'lowerThird'}); if(graphicsData.liveTitleSlideId) items.push({type:'titleSlide'}); if(overlayState.statVisible) items.push({type:'stat'}); const item=items[itemIndex]; if(item) hideItem(item.type,item.placement); }});
+        checks.forEach((ch,i)=>{ if(ch.checked){ const itemIndex=i; const items=[]; if(overlayState.holdslateVisible) items.push({type:'holdslate'}); if(overlayState.stingerVisible) items.push({type:'stinger'}); if(overlayState.liveProgramVisible) items.push({type:'program'}); if(overlayState.scoreboardVisible||overlayState.scoreboardPreviewVisible) items.push({type:'scoreboard'}); if(overlayState.categoryRevealVisible) items.push({type:'categoryReveal'}); if(overlayState.categoryNomineesVisible) items.push({type:'categoryNominees'}); if(overlayState.runnerUpVisible) items.push({type:'runnerUp'}); if(overlayState.winnerAnnouncementVisible) items.push({type:'winnerAnnouncement'}); if(overlayState.winnerMontageVisible) items.push({type:'winnerMontage'}); const liveSponsors=overlayState.sponsorPlacementsLive||{}; Object.keys(liveSponsors).forEach(p=>{ if(liveSponsors[p]) items.push({type:'sponsor', placement:p}); }); if(graphicsData.liveLowerThirdId) items.push({type:'lowerThird'}); if(graphicsData.liveTitleSlideId) items.push({type:'titleSlide'}); if(overlayState.statVisible) items.push({type:'stat'}); const item=items[itemIndex]; if(item) hideItem(item.type,item.placement); }});
     });
     const favLiveBtn = container.querySelector('#fav-live');
     if(favLiveBtn) favLiveBtn.addEventListener('click', ()=>{
@@ -291,6 +291,11 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
         if (overlayState.liveProgramVisible) items.push({ key:'program', label:'Program', type:'program' });
         if (overlayState.statVisible) items.push({ key:'stat', label:'Stat', type:'stat' });
         if (overlayState.scoreboardVisible || overlayState.scoreboardPreviewVisible) items.push({ key:'scoreboard', label:'Scoreboard', type:'scoreboard' });
+        if (overlayState.categoryRevealVisible || overlayState.categoryRevealPreviewVisible) items.push({ key:'category', label:'Category', type:'categoryReveal' });
+        if (overlayState.categoryNomineesVisible || overlayState.categoryNomineesPreviewVisible) items.push({ key:'category-nominees', label:'Nominees', type:'categoryNominees' });
+        if (overlayState.runnerUpVisible || overlayState.runnerUpPreviewVisible) items.push({ key:'runner-up', label:'Runner Up', type:'runnerUp' });
+        if (overlayState.winnerAnnouncementVisible || overlayState.winnerAnnouncementPreviewVisible) items.push({ key:'winner', label:'Winner', type:'winnerAnnouncement' });
+        if (overlayState.winnerMontageVisible || overlayState.winnerMontagePreviewVisible) items.push({ key:'winner-montage', label:'Winner Montage', type:'winnerMontage' });
         const liveSponsors = overlayState.sponsorPlacementsLive || {};
         Object.keys(liveSponsors).forEach(p=>{
             if(liveSponsors[p]){
@@ -328,6 +333,11 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
         else if(type==='fixtures') updateOverlayState(eventId,{fixturesVisible:false,fixturesPreviewVisible:false});
         else if(type==='formation') updateOverlayState(eventId,{formationVisible:false,formationPreviewVisible:false});
         else if(type==='course') updateOverlayState(eventId,{courseVisible:false,coursePreviewVisible:false});
+        else if(type==='categoryReveal') updateOverlayState(eventId,{categoryRevealVisible:false,categoryRevealPreviewVisible:false});
+        else if(type==='categoryNominees') updateOverlayState(eventId,{categoryNomineesVisible:false,categoryNomineesPreviewVisible:false});
+        else if(type==='runnerUp') updateOverlayState(eventId,{runnerUpVisible:false,runnerUpPreviewVisible:false});
+        else if(type==='winnerAnnouncement') updateOverlayState(eventId,{winnerAnnouncementVisible:false,winnerAnnouncementPreviewVisible:false});
+        else if(type==='winnerMontage') updateOverlayState(eventId,{winnerMontageVisible:false,winnerMontagePreviewVisible:false});
         else if(type==='sponsor' && placement){
             const lp = { ...(overlayState.sponsorPlacementsLive||{}) };
             lp[placement] = false;
