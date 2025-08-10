@@ -929,6 +929,8 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             await saveData(newData);
             const show = !sbPreview;
             await updateOverlayState(eventId, { scoreboardPreviewVisible: show });
+            sbPreview = show;
+            render(newData);
         };
         const liveBtn = container.querySelector('#sb-live');
         if (liveBtn) liveBtn.onclick = async () => {
@@ -936,6 +938,8 @@ export function renderScoreboardPanel(container, sport = 'Football', eventId = '
             await saveData(newData);
             const show = !sbVisible;
             await updateOverlayState(eventId, { scoreboardVisible: show, scoreboardPreviewVisible: false });
+            sbVisible = show;
+            render(newData);
         };
 
         const breakBtn = container.querySelector('#sb-show-break');

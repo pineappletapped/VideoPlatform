@@ -1419,7 +1419,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             hb.remove();
         }
     }
-    if (!scoreboardShow && scoreboardOverlay && prevScoreboardVisible) {
+    if (!scoreboardShow && scoreboardOverlay) {
         playTransition(scoreboardOverlay,'out',prevScoreboardData?.transitionOut);
         const topSp = sponsorPlacements?.scoreboardTop ? sponsorsData[sponsorPlacements.scoreboardTop] : null;
         const bottomSp = sponsorPlacements?.scoreboardBottom ? sponsorsData[sponsorPlacements.scoreboardBottom] : null;
