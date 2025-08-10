@@ -751,8 +751,8 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         : state && state.scoreboardVisible;
     const topSp = sponsorPlacements?.scoreboardTop ? sponsorsData[sponsorPlacements.scoreboardTop] : null;
     const bottomSp = sponsorPlacements?.scoreboardBottom ? sponsorsData[sponsorPlacements.scoreboardBottom] : null;
-    const topImg = topSp ? `<img src='${topSp.logo}' alt='${topSp.name}' class='${placementClassMap.scoreboardTop}'>` : '';
-    const bottomImg = bottomSp ? `<img src='${bottomSp.logo}' alt='${bottomSp.name}' class='${placementClassMap.scoreboardBottom}'>` : '';
+    const topImg = topSp && topSp.logo ? `<img src='${topSp.logo}' alt='${topSp.name}' class='${placementClassMap.scoreboardTop}' onerror="this.remove()">` : '';
+    const bottomImg = bottomSp && bottomSp.logo ? `<img src='${bottomSp.logo}' alt='${bottomSp.name}' class='${placementClassMap.scoreboardBottom}' onerror="this.remove()">` : '';
     const breakVisible = state && state.breakVisible;
     const breakPlayer = state && state.breakPlayer;
     const highBreakVisible = state && state.highBreakVisible;
@@ -858,8 +858,8 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         else { scoreboardOverlay.style.bottom = '2rem'; scoreboardOverlay.style.left = '50%'; scoreboardOverlay.style.transform = 'translateX(-50%)'; }
         const teamA = getTeam(0) || { name: 'Team 1', abbrev: 'T1', color: '#333', logo: '' };
         const teamB = getTeam(1) || { name: 'Team 2', abbrev: 'T2', color: '#333', logo: '' };
-        teamA.logo = resolveAssetPath(teamA.logo);
-        teamB.logo = resolveAssetPath(teamB.logo);
+        const logoA = teamA.logo ? resolveAssetPath(teamA.logo) : '';
+        const logoB = teamB.logo ? resolveAssetPath(teamB.logo) : '';
         const nameAF = teamA.name || 'Team 1';
         const nameBF = teamB.name || 'Team 2';
         const abbrA = teamA.abbrev || suggestAbbreviation(nameAF);
@@ -867,8 +867,8 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         const useAbbrev = scoreboardData.abbreviate;
         const names = [useAbbrev ? abbrA : nameAF, useAbbrev ? abbrB : nameBF];
         const colors = [teamA.color || '#333', teamB.color || '#333'];
-        const logos = scoreboardData.showLogos !== false ? [teamA.logo || null, teamB.logo || null] : [null,null];
-        const showLogos = logos[0] && logos[1];
+        const showLogos = scoreboardData.showLogos !== false && logoA && logoB;
+        const logos = showLogos ? [logoA, logoB] : ['', ''];
         const longest = Math.max(names[0].length, names[1].length);
         scoreboardOverlay.style.setProperty('--sb-team-width', `${longest}ch`);
         const sA = scoreboardData.scores?.[0] ?? 0;
@@ -1564,7 +1564,7 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         const showPhoto = teamsData && teamsData.showPhotosFormation;
         tableOverlay.style.opacity = previewMode ? '0.6' : '1';
         tableOverlay.innerHTML = `<div class='lineup-table' style='font-family:${branding.font};'>`+
-            tableData.players.map(p=>{
+            (tableData.players || []).map(p=>{
                 const photo = showPhoto && p.photo ? `<img src='${p.photo}' class='lineup-table-photo'>` : '';
                 const num = p.number ? `${p.number} ` : '';
                 return `<div class='lineup-row'>${photo}<span>${num}${p.name}${p.pos?` (${p.pos})`:''}</span></div>`;
