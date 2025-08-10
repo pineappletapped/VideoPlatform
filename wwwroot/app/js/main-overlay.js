@@ -1529,8 +1529,9 @@ function renderOverlayFromFirebase(state, graphics, branding) {
         }
         const showPhoto = teamsData && teamsData.showPhotosFormation;
         formOverlay.style.opacity = previewMode ? '0.6' : '1';
+        const players = Array.isArray(formData.players) ? formData.players : [];
         const pitchHtml = `<div class='formation-pitch'>`+
-            formData.players.map(p=>{
+            players.map(p=>{
                 const photo = showPhoto && p.photo ? `<img src='${p.photo}' class='formation-photo'>` : '';
                 const num = p.number ? `#${p.number} ` : '';
                 const pos = p.pos ? `<div class='text-xs'>${p.pos}</div>` : '';
