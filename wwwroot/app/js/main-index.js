@@ -1,5 +1,5 @@
 import { onAuth, login, register, logout } from './auth.js';
-import { getAllEventsMetadata, setEventMetadata, getUser, getAllUsers, getOverlayState, deleteEvent, getPlanFeatures } from './firebase.js';
+import { getAllEventsMetadata, setEventMetadata, getUser, getAllUsers, getOverlayState, deleteEvent, getPlanFeatures, setGraphicsData, setBranding, setOverlayState } from './firebase.js';
 import './components/topBar.js';
 import { renderBrandingModal } from './components/brandingModal.js';
 let SQUARE_APP_ID = '';
@@ -291,6 +291,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div id="tournament-wrap" class="mb-2 hidden">
               <label class="inline-flex items-center text-sm"><input type="checkbox" name="tournament" class="mr-1">Tournament mode</label>
             </div>
+            <div class="mb-2">
+              <label class="inline-flex items-center text-sm"><input type="checkbox" name="demo" class="mr-1">Use demo data</label>
+            </div>
             <div class="flex gap-2 mt-2">
               <button type="submit" class="control-button btn-sm">Create</button>
               <button type="button" id="create-cancel" class="control-button btn-sm bg-gray-400 hover:bg-gray-600">Cancel</button>
@@ -336,6 +339,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         meta.serviceType = data.serviceType || 'Sunday Service';
       }
       await setEventMetadata(data.id, meta);
+      if (data.demo === 'on') {
+        try {
+          const resp = await fetch('assets/demo-event.json');
+          if (resp.ok) {
+            const demo = await resp.json();
+            if (demo.branding) await setBranding(data.id, demo.branding);
+            if (demo.graphics) {
+              await Promise.all([
+                setGraphicsData(data.id, demo.graphics),
+                setGraphicsData(data.id, demo.graphics, 'dev')
+              ]);
+            }
+            if (demo.overlays) await setOverlayState(data.id, demo.overlays);
+          }
+        } catch (e) {
+          console.warn('Demo data load failed', e);
+        }
+      }
       window.location.href = `graphics.html?event_id=${data.id}&setup=1`;
     };
   }
