@@ -60,7 +60,23 @@ export function setOverlayState(eventId, state) {
 }
 
 export function updateOverlayState(eventId, state) {
-  return update(ref(db, `overlays/${eventId}`), state);
+  function stripUndefined(obj) {
+    if (Array.isArray(obj)) {
+      return obj
+        .filter(v => v !== undefined)
+        .map(v => (v && typeof v === 'object' ? stripUndefined(v) : v));
+    } else if (obj && typeof obj === 'object') {
+      const clean = {};
+      Object.entries(obj).forEach(([k, v]) => {
+        if (v !== undefined) {
+          clean[k] = v && typeof v === 'object' ? stripUndefined(v) : v;
+        }
+      });
+      return clean;
+    }
+    return obj;
+  }
+  return update(ref(db, `overlays/${eventId}`), stripUndefined(state));
 }
 
 export function listenOverlayState(eventId, callback) {

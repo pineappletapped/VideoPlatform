@@ -1,5 +1,5 @@
 import { onAuth, login, register, logout } from './auth.js';
-import { getAllEventsMetadata, setEventMetadata, getUser, getAllUsers, getOverlayState, deleteEvent, getPlanFeatures } from './firebase.js';
+import { getAllEventsMetadata, setEventMetadata, getUser, getAllUsers, getOverlayState, deleteEvent, getPlanFeatures, setGraphicsData, setBranding, setOverlayState } from './firebase.js';
 import './components/topBar.js';
 import { renderBrandingModal } from './components/brandingModal.js';
 let SQUARE_APP_ID = '';
@@ -60,7 +60,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       const id = entry.id;
       const name = ev.title || id;
       const corpLabel = ev.corporateType ? ev.corporateType.charAt(0).toUpperCase() + ev.corporateType.slice(1) : 'Conference';
-      const typeInfo = ev.eventType === 'sports' ? `Sports Event > ${ev.sport}` : `Corporate Event > ${corpLabel}`;
+      let typeInfo;
+      if (ev.eventType === 'sports') {
+        typeInfo = `Sports Event > ${ev.sport}`;
+      } else if (ev.eventType === 'awards') {
+        typeInfo = 'Awards Event';
+      } else if (ev.eventType === 'religious') {
+        const serv = ev.serviceType ? ` > ${ev.serviceType}` : '';
+        typeInfo = `Religious Event${serv}`;
+      } else {
+        typeInfo = `Corporate Event > ${corpLabel}`;
+      }
       const gfx = `graphics.html?event_id=${id}`;
       const ovl = `overlay.html?event_id=${id}`;
       const sportsLink = ev.eventType === 'sports'
@@ -254,12 +264,23 @@ document.addEventListener('DOMContentLoaded', async () => {
             <select name="eventType" id="create-type" class="border p-1 w-full mb-2">
               <option value="corporate">Corporate Event</option>
               <option value="sports">Sports Event</option>
+              <option value="awards">Awards Event</option>
+              <option value="religious">Religious Event</option>
             </select>
             <div id="corp-wrap" class="mb-2">
               <select name="corporateType" class="border p-1 w-full">
                 <option value="conference">Conference</option>
                 <option value="podcast">Podcast</option>
                 <option value="panel">Panel Discussion</option>
+              </select>
+            </div>
+            <div id="religious-wrap" class="mb-2 hidden">
+              <select name="serviceType" class="border p-1 w-full">
+                <option value="Sunday Service">Sunday Service</option>
+                <option value="Wedding">Wedding</option>
+                <option value="Christening">Christening</option>
+                <option value="Baptism">Baptism</option>
+                <option value="Funeral">Funeral</option>
               </select>
             </div>
             <div id="sport-wrap" class="mb-2 hidden">
@@ -269,6 +290,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
             <div id="tournament-wrap" class="mb-2 hidden">
               <label class="inline-flex items-center text-sm"><input type="checkbox" name="tournament" class="mr-1">Tournament mode</label>
+            </div>
+            <div class="mb-2">
+              <label class="inline-flex items-center text-sm"><input type="checkbox" name="demo" class="mr-1">Use demo data</label>
             </div>
             <div class="flex gap-2 mt-2">
               <button type="submit" class="control-button btn-sm">Create</button>
@@ -282,17 +306,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     const typeSel = createModal.querySelector('#create-type');
     const sportWrap = createModal.querySelector('#sport-wrap');
     const corpWrap = createModal.querySelector('#corp-wrap');
+    const religiousWrap = createModal.querySelector('#religious-wrap');
     const tournamentWrap = createModal.querySelector('#tournament-wrap');
     const allowTournament = !!planFeatures.tournament;
     if(!allowTournament) tournamentWrap.remove();
     typeSel.onchange = () => {
       const sports = typeSel.value === 'sports';
+      const showCorp = typeSel.value === 'corporate';
+      const showRel = typeSel.value === 'religious';
       sportWrap.style.display = sports ? 'block' : 'none';
       if(allowTournament){
         tournamentWrap.style.display = sports ? 'block' : 'none';
       }
-      corpWrap.style.display = sports ? 'none' : 'block';
+      corpWrap.style.display = showCorp ? 'block' : 'none';
+      religiousWrap.style.display = showRel ? 'block' : 'none';
     };
+    typeSel.onchange();
     createModal.querySelector('#create-cancel').onclick = () => {
       createModal.classList.add('hidden');
       createModal.innerHTML = '';
@@ -304,10 +333,30 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (data.eventType === 'sports') {
         meta.sport = data.sport;
         if (data.tournament === 'on' && allowTournament) meta.tournament = true;
-      } else {
+      } else if (data.eventType === 'corporate') {
         meta.corporateType = data.corporateType || 'conference';
+      } else if (data.eventType === 'religious') {
+        meta.serviceType = data.serviceType || 'Sunday Service';
       }
       await setEventMetadata(data.id, meta);
+      if (data.demo === 'on') {
+        try {
+          const resp = await fetch('assets/demo-event.json');
+          if (resp.ok) {
+            const demo = await resp.json();
+            if (demo.branding) await setBranding(data.id, demo.branding);
+            if (demo.graphics) {
+              await Promise.all([
+                setGraphicsData(data.id, demo.graphics),
+                setGraphicsData(data.id, demo.graphics, 'dev')
+              ]);
+            }
+            if (demo.overlays) await setOverlayState(data.id, demo.overlays);
+          }
+        } catch (e) {
+          console.warn('Demo data load failed', e);
+        }
+      }
       window.location.href = `graphics.html?event_id=${data.id}&setup=1`;
     };
   }

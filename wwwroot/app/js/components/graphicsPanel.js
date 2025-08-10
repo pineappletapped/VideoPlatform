@@ -1,4 +1,4 @@
-import { setGraphicsData, updateGraphicsData, getGraphicsData, listenGraphicsData, listenFavorites, updateFavorites, addMatchLog, listenOverlayState, listenTeams, setTeams } from '../firebase.js';
+import { setGraphicsData, updateGraphicsData, getGraphicsData, listenGraphicsData, listenFavorites, updateFavorites, addMatchLog, listenOverlayState, listenTeams, setTeams, updateOverlayState } from '../firebase.js';
 import { sportsData } from '../sportsConfig.js';
 
 const transitions = [
@@ -22,7 +22,7 @@ let liveLowerThirdId = null;
 let previewLowerThirdId = null;
 let liveTitleSlideId = null;
 let previewTitleSlideId = null;
-let graphicsData = { lowerThirds: [], titleSlides: [], teams: {} };
+let graphicsData = { lowerThirds: [], titleSlides: [], teams: {}, categories: [], hymnLines: [], orderOfService: [], funeralPhotos: [] };
 let favorites = { lowerThirds: [], titleSlides: [], scoreboard: false, stingers: [], shortcuts: {}, sponsors: [] };
 let overlayState = {};
 
@@ -51,6 +51,7 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
     const eventId = eventData.id || 'demo';
     const eventType = eventData.eventType || 'corporate';
     const sportsMode = eventType === 'sports';
+    const awardsMode = eventType === 'awards';
     let teamsData = null;
     let logEvents = [];
     let teamsBaseId = eventId;
@@ -65,7 +66,7 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
             graphicsData = { ...(eventData.graphics || {}) };
             setGraphicsData(eventId, graphicsData, mode);
         } else {
-            graphicsData = { lowerThirds: [], titleSlides: [], teams: {}, ...(data || {}) };
+            graphicsData = { lowerThirds: [], titleSlides: [], teams: {}, categories: [], hymnLines: [], orderOfService: [], funeralPhotos: [], ...(data || {}) };
         }
         liveLowerThirdId = graphicsData.liveLowerThirdId || null;
         previewLowerThirdId = graphicsData.previewLowerThirdId || null;
@@ -79,6 +80,7 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
     function renderPanel() {
         const lowerThirds = graphicsData.lowerThirds || [];
         const titleSlides = graphicsData.titleSlides || [];
+        const categories = graphicsData.categories || [];
         // Modal HTML (hidden by default)
         const modalHtml = `
             <div id="graphics-modal" class="modal-overlay" style="display:none;">
@@ -182,6 +184,63 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                         </tbody>
                     </table>
                 </div>
+                ${awardsMode ? `
+                <div class="mt-4">
+                    <div class="flex items-center justify-between mb-1">
+                        <strong>Awards Categories:</strong>
+                        <button class="control-button btn-sm" id="add-cat">Add</button>
+                    </div>
+                    <table class="w-full text-sm">
+                        <tbody>
+                            ${categories.length === 0 ? `<tr><td class='text-gray-400'>No categories yet.</td></tr>` : categories.map(cat => `
+                                <tr data-id="${cat.id}">
+                                    <td class="pr-2 py-1">${cat.title}</td>
+                                    <td class="py-1"><button class="control-button btn-xs" data-action="preview-cat" data-id="${cat.id}">Preview Category</button></td>
+                                    <td class="py-1"><button class="control-button btn-xs" data-action="live-cat" data-id="${cat.id}">Live Category</button></td>
+                                    <td class="py-1"><button class="control-button btn-xs" data-action="preview-nom" data-id="${cat.id}">Preview Nominees</button></td>
+                                    <td class="py-1"><button class="control-button btn-xs" data-action="live-nom" data-id="${cat.id}">Live Nominees</button></td>
+                                    <td class="py-1"><button class="control-button btn-xs" data-action="preview-runner" data-id="${cat.id}">Preview Runner Up</button></td>
+                                    <td class="py-1"><button class="control-button btn-xs" data-action="live-runner" data-id="${cat.id}">Live Runner Up</button></td>
+                                    <td class="py-1"><button class="control-button btn-xs" data-action="preview-win" data-id="${cat.id}">Preview Winner</button></td>
+                                    <td class="py-1"><button class="control-button btn-xs" data-action="live-win" data-id="${cat.id}">Live Winner</button></td>
+                                    <td class="py-1"><button class="control-button btn-xs" data-action="preview-montage" data-id="${cat.id}">Preview Montage</button></td>
+                                    <td class="py-1"><button class="control-button btn-xs" data-action="live-montage" data-id="${cat.id}">Live Montage</button></td>
+                                    <td class="py-1"><button class="control-button btn-xs" data-action="edit-cat" data-id="${cat.id}">Edit</button></td>
+                                    <td class="py-1"><button class="control-button btn-xs btn-remove" data-action="remove-cat" data-id="${cat.id}">Remove</button></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                ` : ''}
+                ${eventType === 'religious' ? `
+                <div class="mt-4">
+                    <strong>Service Elements:</strong>
+                    <div class="mt-2">
+                        <label class="block text-sm">Hymn Lyrics (one line per entry)</label>
+                        <textarea id="hymn-lines" class="border p-1 w-full mb-1" rows="3">${(graphicsData.hymnLines||[]).join('\\n')}</textarea>
+                        <button class="control-button btn-sm" data-action="save-hymn">Save</button>
+                        <button class="control-button btn-sm" data-action="preview-hymn">Preview</button>
+                        <button class="control-button btn-sm" data-action="live-hymn">Live</button>
+                    </div>
+                    <div class="mt-2">
+                        <label class="block text-sm">Order of Service (one per line)</label>
+                        <textarea id="service-lines" class="border p-1 w-full mb-1" rows="3">${(graphicsData.orderOfService||[]).join('\\n')}</textarea>
+                        <button class="control-button btn-sm" data-action="save-order">Save</button>
+                        <button class="control-button btn-sm" data-action="preview-order">Preview</button>
+                        <button class="control-button btn-sm" data-action="live-order">Live</button>
+                    </div>
+                    ${eventData.serviceType === 'Funeral' ? `
+                    <div class="mt-2">
+                        <label class="block text-sm">Funeral Photos (one URL per line)</label>
+                        <textarea id="funeral-lines" class="border p-1 w-full mb-1" rows="3">${(graphicsData.funeralPhotos||[]).join('\\n')}</textarea>
+                        <button class="control-button btn-sm" data-action="save-funeral">Save</button>
+                        <button class="control-button btn-sm" data-action="preview-funeral">Preview</button>
+                        <button class="control-button btn-sm" data-action="live-funeral">Live</button>
+                    </div>
+                    ` : ''}
+                </div>
+                ` : ''}
                 ${teamsData ? `
                 <div class="mt-4">
                     <strong>In Game Events:</strong>
@@ -274,6 +333,60 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
             idInput.value = '';
             modal.style.display = 'flex';
         };
+        if (awardsMode) {
+            const addBtn = container.querySelector('#add-cat');
+            if(addBtn) addBtn.onclick = () => {
+                const title = prompt('Category title?');
+                if(!title) return;
+                const nominees = (prompt('Nominees (comma separated)?')||'').split(',').map(s=>s.trim()).filter(Boolean);
+                const runnerUp = prompt('Runner Up?')||'';
+                const winner = prompt('Winner?')||'';
+                const montage = prompt('Winner montage URL?')||'';
+                const id = (Date.now()+Math.random()).toString(36);
+                categories.push({ id, title, nominees, runnerUp, winner, montage });
+                saveGraphicsData(eventId,{ categories }, mode);
+            };
+            container.addEventListener('click', e=>{
+                const action = e.target.getAttribute('data-action');
+                const id = e.target.getAttribute('data-id');
+                if(!action || !id) return;
+                const idx = categories.findIndex(c=>c.id===id);
+                if(idx<0) return;
+                const cat = categories[idx];
+                if(action==='edit-cat'){
+                    const title = prompt('Category title?', cat.title)||cat.title;
+                    const nominees = (prompt('Nominees (comma separated)?', (cat.nominees||[]).join(', '))||'').split(',').map(s=>s.trim()).filter(Boolean);
+                    const runnerUp = prompt('Runner Up?', cat.runnerUp||'')||'';
+                    const winner = prompt('Winner?', cat.winner||'')||'';
+                    const montage = prompt('Winner montage URL?', cat.montage||'')||'';
+                    categories[idx] = { id:cat.id, title, nominees, runnerUp, winner, montage };
+                    saveGraphicsData(eventId,{ categories }, mode);
+                } else if(action==='remove-cat'){
+                    categories.splice(idx,1);
+                    saveGraphicsData(eventId,{ categories }, mode);
+                } else if(action==='preview-cat'){
+                    updateOverlayState(eventId,{ awardsCategory:cat, categoryRevealPreviewVisible:true, categoryRevealVisible:false });
+                } else if(action==='live-cat'){
+                    updateOverlayState(eventId,{ awardsCategory:cat, categoryRevealVisible:true, categoryRevealPreviewVisible:false });
+                } else if(action==='preview-nom'){
+                    updateOverlayState(eventId,{ awardsCategory:cat, categoryNomineesPreviewVisible:true, categoryNomineesVisible:false });
+                } else if(action==='live-nom'){
+                    updateOverlayState(eventId,{ awardsCategory:cat, categoryNomineesVisible:true, categoryNomineesPreviewVisible:false });
+                } else if(action==='preview-runner'){
+                    updateOverlayState(eventId,{ awardsCategory:cat, runnerUpPreviewVisible:true, runnerUpVisible:false });
+                } else if(action==='live-runner'){
+                    updateOverlayState(eventId,{ awardsCategory:cat, runnerUpVisible:true, runnerUpPreviewVisible:false });
+                } else if(action==='preview-win'){
+                    updateOverlayState(eventId,{ awardsCategory:cat, winnerAnnouncementPreviewVisible:true, winnerAnnouncementVisible:false });
+                } else if(action==='live-win'){
+                    updateOverlayState(eventId,{ awardsCategory:cat, winnerAnnouncementVisible:true, winnerAnnouncementPreviewVisible:false });
+                } else if(action==='preview-montage'){
+                    updateOverlayState(eventId,{ awardsCategory:cat, winnerMontagePreviewVisible:true, winnerMontageVisible:false });
+                } else if(action==='live-montage'){
+                    updateOverlayState(eventId,{ awardsCategory:cat, winnerMontageVisible:true, winnerMontagePreviewVisible:false });
+                }
+            });
+        }
         if (teamsData) {
             const typeSel = container.querySelector('#ige-type');
             const teamSel = container.querySelector('#ige-team');
@@ -359,7 +472,31 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
             btn.onclick = e => {
                 const action = btn.getAttribute('data-action');
                 const id = btn.getAttribute('data-id');
-                if (action === 'preview-lt') {
+                if (action === 'save-hymn') {
+                    const lines = container.querySelector('#hymn-lines').value.split('\n').map(l=>l.trim()).filter(Boolean);
+                    saveGraphicsData(eventId,{ hymnLines:lines }, mode);
+                } else if (action === 'preview-hymn') {
+                    updateOverlayState(eventId,{ hymn:graphicsData.hymnLines||[], hymnPreviewVisible:!overlayState.hymnPreviewVisible, hymnVisible:false });
+                } else if (action === 'live-hymn') {
+                    const show = !overlayState.hymnVisible;
+                    updateOverlayState(eventId,{ hymn:graphicsData.hymnLines||[], hymnVisible:show, hymnPreviewVisible:false });
+                } else if (action === 'save-order') {
+                    const lines = container.querySelector('#service-lines').value.split('\n').map(l=>l.trim()).filter(Boolean);
+                    saveGraphicsData(eventId,{ orderOfService:lines }, mode);
+                } else if (action === 'preview-order') {
+                    updateOverlayState(eventId,{ orderOfService:graphicsData.orderOfService||[], orderOfServicePreviewVisible:!overlayState.orderOfServicePreviewVisible, orderOfServiceVisible:false });
+                } else if (action === 'live-order') {
+                    const show = !overlayState.orderOfServiceVisible;
+                    updateOverlayState(eventId,{ orderOfService:graphicsData.orderOfService||[], orderOfServiceVisible:show, orderOfServicePreviewVisible:false });
+                } else if (action === 'save-funeral') {
+                    const photos = container.querySelector('#funeral-lines').value.split('\n').map(l=>l.trim()).filter(Boolean);
+                    saveGraphicsData(eventId,{ funeralPhotos:photos }, mode);
+                } else if (action === 'preview-funeral') {
+                    updateOverlayState(eventId,{ funeralPhotos:graphicsData.funeralPhotos||[], funeralMontagePreviewVisible:!overlayState.funeralMontagePreviewVisible, funeralMontageVisible:false });
+                } else if (action === 'live-funeral') {
+                    const show = !overlayState.funeralMontageVisible;
+                    updateOverlayState(eventId,{ funeralPhotos:graphicsData.funeralPhotos||[], funeralMontageVisible:show, funeralMontagePreviewVisible:false });
+                } else if (action === 'preview-lt') {
                     if (previewLowerThirdId === id) {
                         previewLowerThirdId = null;
                     } else {

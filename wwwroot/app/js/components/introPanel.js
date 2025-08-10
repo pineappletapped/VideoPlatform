@@ -431,7 +431,7 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
         const etLive = container.querySelector('#eventtitle-live');
         if(etLive) etLive.onclick = () => {
             updateOverlayState(eid,{ eventTitle:introSettings.eventTitle || {}, eventTitleVisible:true, eventTitlePreviewVisible:false });
-            if(onOverlayStateChange) onOverlayStateChange({ eventTitleVisible:true, eventTitle:introSettings.eventTitle, eventTitlePreviewVisible:false });
+            if(onOverlayStateChange) onOverlayStateChange({ eventTitleVisible:true, eventTitle:introSettings.eventTitle || {}, eventTitlePreviewVisible:false });
         };
         const etEdit = container.querySelector('#eventtitle-edit');
         if(etEdit) etEdit.onclick = () => showEventTitleModal();
@@ -439,12 +439,12 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
         const fixturesPrev = container.querySelector('#fixtures-preview');
         if(fixturesPrev) fixturesPrev.onclick = () => {
             updateOverlayState(eid,{ fixtures: introSettings.fixtures || {}, fixturesPreviewVisible:true, fixturesVisible:false });
-            if(onOverlayStateChange) onOverlayStateChange({ fixturesPreviewVisible:true, fixtures:introSettings.fixtures });
+            if(onOverlayStateChange) onOverlayStateChange({ fixturesPreviewVisible:true, fixtures:introSettings.fixtures || {} });
         };
         const fixturesLive = container.querySelector('#fixtures-live');
         if(fixturesLive) fixturesLive.onclick = () => {
             updateOverlayState(eid,{ fixtures: introSettings.fixtures || {}, fixturesVisible:true, fixturesPreviewVisible:false });
-            if(onOverlayStateChange) onOverlayStateChange({ fixturesVisible:true, fixtures:introSettings.fixtures, fixturesPreviewVisible:false });
+            if(onOverlayStateChange) onOverlayStateChange({ fixturesVisible:true, fixtures:introSettings.fixtures || {}, fixturesPreviewVisible:false });
         };
         const fixturesEdit = container.querySelector('#fixtures-edit');
         if(fixturesEdit) fixturesEdit.onclick = () => showFixturesModal();
@@ -482,12 +482,12 @@ export function renderIntroPanel(container, eventId, onOverlayStateChange) {
         const coursePrev = container.querySelector('#course-preview');
         if(coursePrev) coursePrev.onclick = () => {
             updateOverlayState(eid,{ course:introSettings.course || {}, coursePreviewVisible:true, courseVisible:false });
-            if(onOverlayStateChange) onOverlayStateChange({ coursePreviewVisible:true, course:introSettings.course });
+            if(onOverlayStateChange) onOverlayStateChange({ coursePreviewVisible:true, course:introSettings.course || {} });
         };
         const courseLive = container.querySelector('#course-live');
         if(courseLive) courseLive.onclick = () => {
             updateOverlayState(eid,{ course:introSettings.course || {}, courseVisible:true, coursePreviewVisible:false });
-            if(onOverlayStateChange) onOverlayStateChange({ courseVisible:true, course:introSettings.course, coursePreviewVisible:false });
+            if(onOverlayStateChange) onOverlayStateChange({ courseVisible:true, course:introSettings.course || {}, coursePreviewVisible:false });
         };
         const courseEdit = container.querySelector('#course-edit');
         if(courseEdit) courseEdit.onclick = () => showCourseModal();

@@ -15,7 +15,7 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
     let sponsorPlacementLabels = { scoreboardTop:'Above Scoreboard', scoreboardBottom:'Below Scoreboard', formationBottom:'Bottom of Formation', substitutionTop:'Top of Substitution', cornerTL:'Top Left Corner', cornerTR:'Top Right Corner', cornerBL:'Bottom Left Corner', cornerBR:'Bottom Right Corner', intro:'Intro Graphic', presentationTop:'Above Presentation' };
 
     getEventMetadata(eventId).then(meta=>{
-        if(meta && meta.eventType === 'corporate'){
+        if(meta && meta.eventType && meta.eventType !== 'sports'){
             sponsorPlacementLabels = { intro:'Info Window', cornerTL:'Top Left Corner', cornerTR:'Top Right Corner', cornerBL:'Bottom Left Corner', cornerBR:'Bottom Right Corner', presentationTop:'Above Presentation' };
             render();
             renderFav();
@@ -183,7 +183,7 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
     const hideBtn = container.querySelector('#hide-selected');
     if(hideBtn) hideBtn.addEventListener('click', ()=>{
         const checks = container.querySelectorAll('#active-list input[type="checkbox"]');
-        checks.forEach((ch,i)=>{ if(ch.checked){ const itemIndex=i; const items=[]; if(overlayState.holdslateVisible) items.push({type:'holdslate'}); if(overlayState.stingerVisible) items.push({type:'stinger'}); if(overlayState.liveProgramVisible) items.push({type:'program'}); if(overlayState.scoreboardVisible||overlayState.scoreboardPreviewVisible) items.push({type:'scoreboard'}); const liveSponsors=overlayState.sponsorPlacementsLive||{}; Object.keys(liveSponsors).forEach(p=>{ if(liveSponsors[p]) items.push({type:'sponsor', placement:p}); }); if(graphicsData.liveLowerThirdId) items.push({type:'lowerThird'}); if(graphicsData.liveTitleSlideId) items.push({type:'titleSlide'}); if(overlayState.statVisible) items.push({type:'stat'}); const item=items[itemIndex]; if(item) hideItem(item.type,item.placement); }});
+        checks.forEach((ch,i)=>{ if(ch.checked){ const itemIndex=i; const items=[]; if(overlayState.holdslateVisible||overlayState.holdslatePreviewVisible) items.push({type:'holdslate'}); if(overlayState.stingerVisible||overlayState.stingerPreviewVisible) items.push({type:'stinger'}); if(overlayState.liveProgramVisible||overlayState.previewProgramVisible) items.push({type:'program'}); if(overlayState.scoreboardVisible||overlayState.scoreboardPreviewVisible) items.push({type:'scoreboard'}); if(overlayState.categoryRevealVisible||overlayState.categoryRevealPreviewVisible) items.push({type:'categoryReveal'}); if(overlayState.categoryNomineesVisible||overlayState.categoryNomineesPreviewVisible) items.push({type:'categoryNominees'}); if(overlayState.runnerUpVisible||overlayState.runnerUpPreviewVisible) items.push({type:'runnerUp'}); if(overlayState.winnerAnnouncementVisible||overlayState.winnerAnnouncementPreviewVisible) items.push({type:'winnerAnnouncement'}); if(overlayState.winnerMontageVisible||overlayState.winnerMontagePreviewVisible) items.push({type:'winnerMontage'}); if(overlayState.hymnVisible||overlayState.hymnPreviewVisible) items.push({type:'hymn'}); if(overlayState.orderOfServiceVisible||overlayState.orderOfServicePreviewVisible) items.push({type:'orderOfService'}); if(overlayState.funeralMontageVisible||overlayState.funeralMontagePreviewVisible) items.push({type:'funeralMontage'}); const liveSponsors=overlayState.sponsorPlacementsLive||{}; Object.keys(liveSponsors).forEach(p=>{ if(liveSponsors[p]) items.push({type:'sponsor', placement:p}); }); if(graphicsData.liveLowerThirdId||graphicsData.previewLowerThirdId) items.push({type:'lowerThird'}); if(graphicsData.liveTitleSlideId||graphicsData.previewTitleSlideId) items.push({type:'titleSlide'}); if(overlayState.statVisible||overlayState.statPreviewVisible) items.push({type:'stat'}); const item=items[itemIndex]; if(item) hideItem(item.type,item.placement); }});
     });
     const favLiveBtn = container.querySelector('#fav-live');
     if(favLiveBtn) favLiveBtn.addEventListener('click', ()=>{
@@ -266,16 +266,19 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
         if(handleShortcut(key)) e.preventDefault();
     });
 
-    try {
-        const companionWs = new WebSocket('ws://localhost:8766');
-        companionWs.addEventListener('message', ev => {
-            let msg;
-            try { msg = JSON.parse(ev.data); } catch{}
-            const key = (msg && (msg.key || msg.button)) ? (msg.key || msg.button) : ev.data;
-            if(typeof key === 'string') handleShortcut(String(key).toLowerCase());
-        });
-    } catch(err){
-        console.warn('Companion WebSocket not available', err);
+    const companionWsUrl = localStorage.getItem('companionWsUrl');
+    if(companionWsUrl && ['localhost','127.0.0.1','::1'].includes(window.location.hostname)){
+        try {
+            const companionWs = new WebSocket(companionWsUrl);
+            companionWs.addEventListener('message', ev => {
+                let msg;
+                try { msg = JSON.parse(ev.data); } catch{}
+                const key = (msg && (msg.key || msg.button)) ? (msg.key || msg.button) : ev.data;
+                if(typeof key === 'string') handleShortcut(String(key).toLowerCase());
+            });
+        } catch(err){
+            console.warn('Companion WebSocket not available', err);
+        }
     }
 
     function render() {
@@ -288,6 +291,14 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
         if (overlayState.liveProgramVisible) items.push({ key:'program', label:'Program', type:'program' });
         if (overlayState.statVisible) items.push({ key:'stat', label:'Stat', type:'stat' });
         if (overlayState.scoreboardVisible || overlayState.scoreboardPreviewVisible) items.push({ key:'scoreboard', label:'Scoreboard', type:'scoreboard' });
+        if (overlayState.categoryRevealVisible || overlayState.categoryRevealPreviewVisible) items.push({ key:'category', label:'Category', type:'categoryReveal' });
+        if (overlayState.categoryNomineesVisible || overlayState.categoryNomineesPreviewVisible) items.push({ key:'category-nominees', label:'Nominees', type:'categoryNominees' });
+        if (overlayState.runnerUpVisible || overlayState.runnerUpPreviewVisible) items.push({ key:'runner-up', label:'Runner Up', type:'runnerUp' });
+        if (overlayState.winnerAnnouncementVisible || overlayState.winnerAnnouncementPreviewVisible) items.push({ key:'winner', label:'Winner', type:'winnerAnnouncement' });
+        if (overlayState.winnerMontageVisible || overlayState.winnerMontagePreviewVisible) items.push({ key:'winner-montage', label:'Winner Montage', type:'winnerMontage' });
+        if (overlayState.hymnVisible || overlayState.hymnPreviewVisible) items.push({ key:'hymn', label:'Hymn', type:'hymn' });
+        if (overlayState.orderOfServiceVisible || overlayState.orderOfServicePreviewVisible) items.push({ key:'order', label:'Order of Service', type:'orderOfService' });
+        if (overlayState.funeralMontageVisible || overlayState.funeralMontagePreviewVisible) items.push({ key:'funeral', label:'Funeral Montage', type:'funeralMontage' });
         const liveSponsors = overlayState.sponsorPlacementsLive || {};
         Object.keys(liveSponsors).forEach(p=>{
             if(liveSponsors[p]){
@@ -325,6 +336,14 @@ export function renderActiveGraphicsPanel(container, eventId, mode = 'live') {
         else if(type==='fixtures') updateOverlayState(eventId,{fixturesVisible:false,fixturesPreviewVisible:false});
         else if(type==='formation') updateOverlayState(eventId,{formationVisible:false,formationPreviewVisible:false});
         else if(type==='course') updateOverlayState(eventId,{courseVisible:false,coursePreviewVisible:false});
+        else if(type==='categoryReveal') updateOverlayState(eventId,{categoryRevealVisible:false,categoryRevealPreviewVisible:false});
+        else if(type==='categoryNominees') updateOverlayState(eventId,{categoryNomineesVisible:false,categoryNomineesPreviewVisible:false});
+        else if(type==='runnerUp') updateOverlayState(eventId,{runnerUpVisible:false,runnerUpPreviewVisible:false});
+        else if(type==='winnerAnnouncement') updateOverlayState(eventId,{winnerAnnouncementVisible:false,winnerAnnouncementPreviewVisible:false});
+        else if(type==='winnerMontage') updateOverlayState(eventId,{winnerMontageVisible:false,winnerMontagePreviewVisible:false});
+        else if(type==='hymn') updateOverlayState(eventId,{hymnVisible:false,hymnPreviewVisible:false});
+        else if(type==='orderOfService') updateOverlayState(eventId,{orderOfServiceVisible:false,orderOfServicePreviewVisible:false});
+        else if(type==='funeralMontage') updateOverlayState(eventId,{funeralMontageVisible:false,funeralMontagePreviewVisible:false});
         else if(type==='sponsor' && placement){
             const lp = { ...(overlayState.sponsorPlacementsLive||{}) };
             lp[placement] = false;
