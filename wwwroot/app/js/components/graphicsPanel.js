@@ -22,7 +22,7 @@ let liveLowerThirdId = null;
 let previewLowerThirdId = null;
 let liveTitleSlideId = null;
 let previewTitleSlideId = null;
-let graphicsData = { lowerThirds: [], titleSlides: [], teams: {}, categories: [] };
+let graphicsData = { lowerThirds: [], titleSlides: [], teams: {}, categories: [], hymnLines: [], orderOfService: [], funeralPhotos: [] };
 let favorites = { lowerThirds: [], titleSlides: [], scoreboard: false, stingers: [], shortcuts: {}, sponsors: [] };
 let overlayState = {};
 
@@ -66,7 +66,7 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
             graphicsData = { ...(eventData.graphics || {}) };
             setGraphicsData(eventId, graphicsData, mode);
         } else {
-            graphicsData = { lowerThirds: [], titleSlides: [], teams: {}, categories: [], ...(data || {}) };
+            graphicsData = { lowerThirds: [], titleSlides: [], teams: {}, categories: [], hymnLines: [], orderOfService: [], funeralPhotos: [], ...(data || {}) };
         }
         liveLowerThirdId = graphicsData.liveLowerThirdId || null;
         previewLowerThirdId = graphicsData.previewLowerThirdId || null;
@@ -211,6 +211,34 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
                             `).join('')}
                         </tbody>
                     </table>
+                </div>
+                ` : ''}
+                ${eventType === 'religious' ? `
+                <div class="mt-4">
+                    <strong>Service Elements:</strong>
+                    <div class="mt-2">
+                        <label class="block text-sm">Hymn Lyrics (one line per entry)</label>
+                        <textarea id="hymn-lines" class="border p-1 w-full mb-1" rows="3">${(graphicsData.hymnLines||[]).join('\\n')}</textarea>
+                        <button class="control-button btn-sm" data-action="save-hymn">Save</button>
+                        <button class="control-button btn-sm" data-action="preview-hymn">Preview</button>
+                        <button class="control-button btn-sm" data-action="live-hymn">Live</button>
+                    </div>
+                    <div class="mt-2">
+                        <label class="block text-sm">Order of Service (one per line)</label>
+                        <textarea id="service-lines" class="border p-1 w-full mb-1" rows="3">${(graphicsData.orderOfService||[]).join('\\n')}</textarea>
+                        <button class="control-button btn-sm" data-action="save-order">Save</button>
+                        <button class="control-button btn-sm" data-action="preview-order">Preview</button>
+                        <button class="control-button btn-sm" data-action="live-order">Live</button>
+                    </div>
+                    ${eventData.serviceType === 'Funeral' ? `
+                    <div class="mt-2">
+                        <label class="block text-sm">Funeral Photos (one URL per line)</label>
+                        <textarea id="funeral-lines" class="border p-1 w-full mb-1" rows="3">${(graphicsData.funeralPhotos||[]).join('\\n')}</textarea>
+                        <button class="control-button btn-sm" data-action="save-funeral">Save</button>
+                        <button class="control-button btn-sm" data-action="preview-funeral">Preview</button>
+                        <button class="control-button btn-sm" data-action="live-funeral">Live</button>
+                    </div>
+                    ` : ''}
                 </div>
                 ` : ''}
                 ${teamsData ? `
@@ -444,7 +472,31 @@ export function renderGraphicsPanel(container, eventData, mode = 'live') {
             btn.onclick = e => {
                 const action = btn.getAttribute('data-action');
                 const id = btn.getAttribute('data-id');
-                if (action === 'preview-lt') {
+                if (action === 'save-hymn') {
+                    const lines = container.querySelector('#hymn-lines').value.split('\n').map(l=>l.trim()).filter(Boolean);
+                    saveGraphicsData(eventId,{ hymnLines:lines }, mode);
+                } else if (action === 'preview-hymn') {
+                    updateOverlayState(eventId,{ hymn:graphicsData.hymnLines||[], hymnPreviewVisible:!overlayState.hymnPreviewVisible, hymnVisible:false });
+                } else if (action === 'live-hymn') {
+                    const show = !overlayState.hymnVisible;
+                    updateOverlayState(eventId,{ hymn:graphicsData.hymnLines||[], hymnVisible:show, hymnPreviewVisible:false });
+                } else if (action === 'save-order') {
+                    const lines = container.querySelector('#service-lines').value.split('\n').map(l=>l.trim()).filter(Boolean);
+                    saveGraphicsData(eventId,{ orderOfService:lines }, mode);
+                } else if (action === 'preview-order') {
+                    updateOverlayState(eventId,{ orderOfService:graphicsData.orderOfService||[], orderOfServicePreviewVisible:!overlayState.orderOfServicePreviewVisible, orderOfServiceVisible:false });
+                } else if (action === 'live-order') {
+                    const show = !overlayState.orderOfServiceVisible;
+                    updateOverlayState(eventId,{ orderOfService:graphicsData.orderOfService||[], orderOfServiceVisible:show, orderOfServicePreviewVisible:false });
+                } else if (action === 'save-funeral') {
+                    const photos = container.querySelector('#funeral-lines').value.split('\n').map(l=>l.trim()).filter(Boolean);
+                    saveGraphicsData(eventId,{ funeralPhotos:photos }, mode);
+                } else if (action === 'preview-funeral') {
+                    updateOverlayState(eventId,{ funeralPhotos:graphicsData.funeralPhotos||[], funeralMontagePreviewVisible:!overlayState.funeralMontagePreviewVisible, funeralMontageVisible:false });
+                } else if (action === 'live-funeral') {
+                    const show = !overlayState.funeralMontageVisible;
+                    updateOverlayState(eventId,{ funeralPhotos:graphicsData.funeralPhotos||[], funeralMontageVisible:show, funeralMontagePreviewVisible:false });
+                } else if (action === 'preview-lt') {
                     if (previewLowerThirdId === id) {
                         previewLowerThirdId = null;
                     } else {

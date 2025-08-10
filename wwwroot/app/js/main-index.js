@@ -66,7 +66,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else if (ev.eventType === 'awards') {
         typeInfo = 'Awards Event';
       } else if (ev.eventType === 'religious') {
-        typeInfo = 'Religious Event';
+        const serv = ev.serviceType ? ` > ${ev.serviceType}` : '';
+        typeInfo = `Religious Event${serv}`;
       } else {
         typeInfo = `Corporate Event > ${corpLabel}`;
       }
@@ -273,6 +274,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <option value="panel">Panel Discussion</option>
               </select>
             </div>
+            <div id="religious-wrap" class="mb-2 hidden">
+              <select name="serviceType" class="border p-1 w-full">
+                <option value="Sunday Service">Sunday Service</option>
+                <option value="Wedding">Wedding</option>
+                <option value="Christening">Christening</option>
+                <option value="Baptism">Baptism</option>
+                <option value="Funeral">Funeral</option>
+              </select>
+            </div>
             <div id="sport-wrap" class="mb-2 hidden">
               <select name="sport" class="border p-1 w-full">
                 ${Object.keys(sportsData).map(s=>`<option value="${s}">${s}</option>`).join('')}
@@ -293,18 +303,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     const typeSel = createModal.querySelector('#create-type');
     const sportWrap = createModal.querySelector('#sport-wrap');
     const corpWrap = createModal.querySelector('#corp-wrap');
+    const religiousWrap = createModal.querySelector('#religious-wrap');
     const tournamentWrap = createModal.querySelector('#tournament-wrap');
     const allowTournament = !!planFeatures.tournament;
     if(!allowTournament) tournamentWrap.remove();
     typeSel.onchange = () => {
       const sports = typeSel.value === 'sports';
       const showCorp = typeSel.value === 'corporate';
+      const showRel = typeSel.value === 'religious';
       sportWrap.style.display = sports ? 'block' : 'none';
       if(allowTournament){
         tournamentWrap.style.display = sports ? 'block' : 'none';
       }
       corpWrap.style.display = showCorp ? 'block' : 'none';
+      religiousWrap.style.display = showRel ? 'block' : 'none';
     };
+    typeSel.onchange();
     createModal.querySelector('#create-cancel').onclick = () => {
       createModal.classList.add('hidden');
       createModal.innerHTML = '';
@@ -318,6 +332,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (data.tournament === 'on' && allowTournament) meta.tournament = true;
       } else if (data.eventType === 'corporate') {
         meta.corporateType = data.corporateType || 'conference';
+      } else if (data.eventType === 'religious') {
+        meta.serviceType = data.serviceType || 'Sunday Service';
       }
       await setEventMetadata(data.id, meta);
       window.location.href = `graphics.html?event_id=${data.id}&setup=1`;

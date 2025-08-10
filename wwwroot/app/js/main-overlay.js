@@ -1798,7 +1798,8 @@ function renderOverlayFromFirebase(state, graphics, branding) {
     const extraOverlays = [
         'category-reveal','category-nominees','runner-up','winner-announcement','winner-montage',
         'countdown','sponsor-roll','social-prompt',
-        'agenda','memoriam','lyrics','scripture','service-agenda','donation','prayer-request','announcement'
+        'agenda','memoriam','lyrics','scripture','service-agenda','donation','prayer-request','announcement',
+        'hymn','order-of-service','funeral-montage'
     ];
     extraOverlays.forEach(id => {
         const key = id.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
@@ -1816,6 +1817,12 @@ function renderOverlayFromFirebase(state, graphics, branding) {
             el.style.width = '100vw';
             el.style.height = '100vh';
             el.style.opacity = previewMode ? '0.6' : '1';
+            const data = state ? state[key] : null;
+            if (Array.isArray(data)) {
+                el.innerHTML = `<div class="p-4 text-4xl text-white">${data.join('<br>')}</div>`;
+            } else if (typeof data === 'string') {
+                el.innerHTML = `<div class="p-4 text-4xl text-white">${data}</div>`;
+            }
         } else if (el) {
             el.remove();
         }
